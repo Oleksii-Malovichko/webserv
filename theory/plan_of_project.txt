@@ -1,0 +1,36 @@
+1) create and stable loop
+один epoll()
+non-blocking fd
+accept / read / write только через epoll()
+корректное закрытие клиентов (по таймауту)
+
+2) state machine
+Типичные состояния клиента:
+READING_HEADERS
+READING_BODY
+PROCESSING
+WRITING_RESPONSE
+CLOSED
+Ты здесь закладываешь:
+поддержку chunked / content-length
+POST / CGI
+частичные read/write
+
+3) http parsing
+не предпологать что recv вернет сразу все
+
+4) static files
+GET -> файл -> responce
+тут же:
+status code (200, 403, 404)
+autoindex (если включен)
+index file
+content-type
+
+5) cgi
+самое сложное:
+fork (только тут!)
+pipe
+env
+non-blocking
+EOF-handling
