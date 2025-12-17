@@ -24,7 +24,10 @@ int create_listen_socket(int port)
 		exit(1);
 	}
 
-	int flags = fcntl(sock, F_GETFL, 0);
+	int flags = fcntl(sock, F_GETFL, 0); // to make the socket NON-BLOCKING
+	/* чтобы сервер не завис на одном клиенте, благодаря этому такие ф-ии как accept (не ждет подключения); recv()/read() не ждут данныхя; 
+	send()/write (не ждут пока освободится буфер)
+	*/
 	fcntl(sock, F_SETFL, flags | O_NONBLOCK);
 
 	int opt = 1;
@@ -60,20 +63,20 @@ int main()
 	}
 
 	epoll_event ev{};
-	ev.events = EPOLLIN;
+	ev.events = EPOLLIN; // это значит: "сообщи когда можно читать"
 	ev.data.fd = listen_sock;
 	epoll_ctl(epfd, EPOLL_CTL_ADD, listen_sock, &ev);
 
-	std::unordered_map<int, Client> clients;
-	const int MAX_EVENTS = 10;
+	std::unordered_map<int, Client> clients; // храню fd клиента и время последней активности
+	const int MAX_EVENTS = 10; // за один раз дать не более 10 событий (размер лок буфера куда epoll кладет клиентов)
 	const int TIMEOUT_MS = 1000; // check timeout on time per sec
 	const int CLIENT_TIMEOUT_SEC = 30; // close a client, if no actions > 30 sec
 
 	epoll_event events[MAX_EVENTS];
 
-	while (true)
+	while (true) // главный цикл сервера
 	{
-		int n = epoll_wait(epfd, events, MAX_EVENTS, TIMEOUT_MS);
+		int n = epoll_wait(epfd, events, MAX_EVENTS, TIMEOUT_MS); // будет возвращать когда можно читать, если нет готовых fd, оно спит. Возвращает n к-во fd
 
 		auto now = std::chrono::steady_clock::now();
 
@@ -85,7 +88,7 @@ int main()
 			{
 				std::cout << "Close idle client fd=" << it->first << " after 30 seconds of non-action" << std::endl;
 				close(it->first);
-				epoll_ctl(epfd, EPOLL_CTL_DEL, it->first, nullptr);
+				epoll_ctl(epfd, EPOLL_CTL_DEL, it->first, nullptr); // удалить из epoll наблюдения
 				it = clients.erase(it);
 			}
 			else
@@ -96,7 +99,7 @@ int main()
 		{
 			int fd = events[i].data.fd;
 
-			if (fd == listen_sock)
+			if (fd == listen_sock) // new client
 			{
 				sockaddr_in client_addr{};
 				socklen_t len = sizeof(client_addr);
@@ -109,12 +112,12 @@ int main()
 				epoll_event client_ev{};
 				client_ev.events = EPOLLIN;
 				client_ev.data.fd = client_fd;
-				epoll_ctl(epfd, EPOLL_CTL_ADD, client_fd, &client_ev);
+				epoll_ctl(epfd, EPOLL_CTL_ADD, client_fd, &client_ev); // добавить в список наблюдения epoll
 
-				clients[client_fd] = {client_fd, now};
+				clients[client_fd] = {client_fd, now}; // save client
 				std::cout << "New client fd=" << client_fd << std::endl;
 			}
-			else
+			else // event from the client
 			{
 				// read / echo
 				char buf[1024];
