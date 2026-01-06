@@ -59,7 +59,7 @@ void handle_client(int *client_fd)
 	bytes = read(*client_fd, buffer, sizeof(buffer));
 	if (bytes < 0) // error (close conn)
 	{
-		if (errno == EAGAIN || errno == EWOULDBLOCK) // read didn't get any data (return)
+		if (errno == EINTR || errno == EWOULDBLOCK || errno == EAGAIN) // read didn't get any data (return)
 			return ;
 		perror("read");
 		close(*client_fd);
@@ -92,7 +92,7 @@ int main()
 		client_fd = accept(server_fd, NULL, NULL);
 		if (client_fd == -1)
 		{
-			if (errno != EAGAIN && errno != EWOULDBLOCK)
+			if (errno != EAGAIN && errno != EWOULDBLOCK && errno != EAGAIN)
 				perror("accept");
 		}
 		else
