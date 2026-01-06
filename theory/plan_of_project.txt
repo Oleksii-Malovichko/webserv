@@ -9,8 +9,9 @@ accept / read / write только через epoll()
 READING_HEADERS
 READING_BODY
 PROCESSING
+WAITING_CGI   (если есть CGI)
 WRITING_RESPONSE
-CLOSED
+DONE / CLOSED
 Ты здесь закладываешь:
 поддержку chunked / content-length
 POST / CGI
