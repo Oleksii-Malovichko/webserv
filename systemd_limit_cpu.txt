@@ -1,0 +1,14 @@
+Ограничение процесса к CPU:
+systemd-run --user --pty -p CPUQuota=20% -p MemoryMax=200M ./server
+
+Просмотреть юниты (статуы):
+systemctl --user list-units --type=service
+или для конкрентного:
+systemctl --user status run-p11111-i11112.service
+
+Убить процесс:
+systemctl --user stop run-p11111-i11112.service
+или
+systemctl --user kill run-p11111-i11112.service
+или
+systemctl --user stop

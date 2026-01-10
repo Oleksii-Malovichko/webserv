@@ -7,7 +7,7 @@ C_FLAGS = -Wall -Wextra -Werror
 
 # SRCS1 = ft_printf/funcs.c ft_printf/funcs2.c ft_printf/ft_printf.c ft_printf/process_string.c ft_printf/process_string2.c
 SRCS2 = client.c
-SRCS3 = server.c
+SRCS3 = correct_server.c
 
 # OBJS1 = $(SRCS1:.c=.o)
 OBJS2 = $(SRCS2:.c=.o)
