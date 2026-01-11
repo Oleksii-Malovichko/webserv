@@ -4,8 +4,10 @@
 #include <unistd.h>
 #include <arpa/inet.h> // для sockaddr_in, inet_pton
 #include <sys/socket.h>
+#include <pthread.h>
+#include <errno.h>
 
-int main()
+int connect_socket()
 {
 	int sock_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sock_fd == -1)
@@ -32,18 +34,79 @@ int main()
 		close(sock_fd);
 		exit(1);
 	}
+	return sock_fd;
+}
 
-	char buffer[1024];
-	ssize_t bytes = -1;
-	printf("Enter some data to server:\n");
+void *write_to_server(void *arg)
+{
+	int sock_fd = *(int *)arg;
+	char buffer[4096];
+
+	ssize_t bytes;
+	printf("Enter some data:\n");
 	while ((bytes = read(STDIN_FILENO, &buffer, sizeof(buffer))) > 0)
 	{
-		if (write(sock_fd, &buffer, bytes) == -1)
+		if (write(sock_fd, buffer, bytes) == -1)
 		{
-			perror("write");
+			perror("[write_to_server] write");
 			break;
 		}
 	}
+	return NULL;
+}
+
+void *read_from_server(void *arg)
+{
+	int sock_fd = *(int *)arg;
+	char buffer[4096];
+
+	ssize_t bytes;
+	while ((bytes = read(sock_fd, buffer, sizeof(buffer))) > 0)
+	{
+		if (write(STDOUT_FILENO, buffer, bytes) == -1)
+		{
+			perror("[read_from_server] write");
+			break;
+		}
+	}
+	return NULL;
+}
+
+int main()
+{
+	int sock_fd = connect_socket();
+	pthread_t p1;
+	pthread_t p2;
+	int rc;
+
+	rc = pthread_create(&p1, NULL, write_to_server, &sock_fd);
+	if (rc != 0)
+	{
+		fprintf(stderr, "pthread_create: %s\n", strerror(rc));
+		close(sock_fd);
+		exit(1);
+	}
+	rc = pthread_create(&p2, NULL, read_from_server, &sock_fd);
+	if (rc != 0)
+	{
+		fprintf(stderr, "pthread_create: %s\n", strerror(rc));
+		close(sock_fd);
+		exit(1);
+	}
+
+	rc = pthread_join(p1, NULL);
+	if (rc != 0)
+	{
+		fprintf(stderr, "pthread_join: %s\n", strerror(rc));
+		close(sock_fd);
+		exit(1);
+	}
+	rc = pthread_join(p2, NULL);
+	if (rc != 0)
+	{
+		fprintf(stderr, "pthread_join: %s\n", strerror(rc));
+		close(sock_fd);
+		exit(1);
+	}
 	close(sock_fd);
-	return 0;
 }
