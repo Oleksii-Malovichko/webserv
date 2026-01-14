@@ -152,7 +152,7 @@ int main()
 		FD_ZERO(&readfd);
 		FD_ZERO(&writefd);
 		FD_SET(server_fd, &readfd);
-		FD_SET(server_fd, &writefd);
+		// FD_SET(server_fd, &writefd);
 		int maxfd = server_fd;
 
 		i = 0;
@@ -168,7 +168,7 @@ int main()
 			i++;
 		}
 		
-		int activity = select(maxfd + 1, &readfd, &writefd, NULL, NULL);
+		int activity = select(maxfd + 1, &readfd, &writefd, NULL, NULL); // 1250 == max clients the select can handle; epoll == infite
 		if (activity < 0)
 		{
 			if (errno == EINTR) // был прерван сигналом - продолжаем работу без ошибки

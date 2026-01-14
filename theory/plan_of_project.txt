@@ -1,6 +1,6 @@
 1) create and stable loop
 один epoll()
-non-blocking fd
+non-blocking fd (fcntl)
 accept / read / write только через epoll()
 корректное закрытие клиентов (по таймауту)
 
