@@ -85,7 +85,7 @@ int main()
 		close(server_fd);
 		exit(1);
 	}
-	rc = pthread_create(&p1, NULL, send_msg, &server_fd);
+	rc = pthread_create(&p2, NULL, send_msg, &server_fd);
 	if (rc != 0)
 	{
 		fprintf(stderr, "pthread_create: %s\n", strerror(rc));
