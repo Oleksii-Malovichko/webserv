@@ -180,10 +180,13 @@ int main()
 			i = 0;
 			while (i < MAX_CLIENTS)
 			{
-				if (write(clients_fds[i], write_bf, strlen(write_bf)) == -1)
+				if (clients_fds[i] != -1)
 				{
-					perror("write");
-					break;
+					if (write(clients_fds[i], write_bf, strlen(write_bf)) == -1)
+					{
+						perror("write");
+						break;
+					}
 				}
 				i++;
 			}

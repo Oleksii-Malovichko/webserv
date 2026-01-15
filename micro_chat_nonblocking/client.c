@@ -20,7 +20,7 @@ int connect_server()
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(8080);
-	if (inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr) <= 0)
+	if (inet_pton(AF_INET, "192.168.0.8", &addr.sin_addr) <= 0)
 	{
 		perror("inet_pton");
 		close(server_fd);
