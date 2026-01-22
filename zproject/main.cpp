@@ -1,0 +1,179 @@
+#include "WebServConfig.hpp"
+#include "ListeningSocket.hpp"
+// #include "ClientSocket.hpp"
+#include "Epoll.hpp"
+#include "Client.hpp"
+
+void parser_emulation(WebServConfig &config)
+{
+	ServerConfig s1;
+	s1.setPort(8080);
+	config.addServer(s1);
+
+	ServerConfig s2;
+	s2.setPort(8081);
+	config.addServer(s2);
+}
+
+int main(int argc, char *argv[])
+{
+	(void)argc; (void)argv;
+	WebServConfig config;
+	parser_emulation(config);
+	
+	std::vector<ListeningSocket> listeningSockets;
+	const std::vector<ServerConfig>& servers = config.getServers();
+	for (size_t i = 0; i < servers.size(); i++)
+	{
+		try
+		{
+			listeningSockets.emplace_back(ListeningSocket(servers[i].getPort()));
+			std::cout << "Listening on port " << servers[i].getPort() << std::endl;
+		}
+		catch (const std::exception &e)
+		{
+			std::cerr << "Failed to create socket on port " << servers[i].getPort() << ": " << e.what() << std::endl;
+		}
+	}
+	std::cout << "Checking if the sockets were closed automatically" << std::endl;
+	
+	// while (1)
+	// {
+	// 	sleep(1);
+	// }
+}
+
+// google-chrome --new-tab ../en.subject.pdf 
+
+// struct Client
+// {
+// 	int fd;
+// 	std::chrono::steady_clock::time_point last_activity;
+// };
+
+// int create_listen_socket(int port)
+// {
+// 	int sock = socket(AF_INET, SOCK_STREAM, 0);
+// 	if (sock < 0)
+// 	{
+// 		perror("socket");
+// 		exit(1);
+// 	}
+
+// 	int flags = fcntl(sock, F_GETFL, 0); // to make the socket NON-BLOCKING
+// 	/* чтобы сервер не завис на одном клиенте, благодаря этому такие ф-ии как accept (не ждет подключения); recv()/read() не ждут данныхя; 
+// 	send()/write (не ждут пока освободится буфер)
+// 	*/
+// 	fcntl(sock, F_SETFL, flags | O_NONBLOCK);
+
+// 	int opt = 1;
+// 	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+// 	sockaddr_in addr{};
+// 	addr.sin_family = AF_INET;
+// 	addr.sin_addr.s_addr = INADDR_ANY;
+// 	addr.sin_port = htons(port);
+
+// 	if (bind(sock, (sockaddr *)&addr, sizeof(addr)) < 0)
+// 	{
+// 		perror("bind");
+// 		exit(1);
+// 	}
+// 	if (listen(sock, 10) < 0)
+// 	{
+// 		perror("listen");
+// 		exit(1);
+// 	}
+// 	return sock;
+// }
+
+// int main()
+// {
+// 	int listen_sock = create_listen_socket(8080);
+
+// 	int epfd = epoll_create1(0);
+// 	if (epfd < 0)
+// 	{
+// 		perror("epoll_create1");
+// 		exit(1);
+// 	}
+
+// 	epoll_event ev{};
+// 	ev.events = EPOLLIN; // это значит: "сообщи когда можно читать"
+// 	ev.data.fd = listen_sock;
+// 	epoll_ctl(epfd, EPOLL_CTL_ADD, listen_sock, &ev);
+
+// 	std::unordered_map<int, Client> clients; // храню fd клиента и время последней активности
+// 	const int MAX_EVENTS = 10; // за один раз дать не более 10 событий (размер лок буфера куда epoll кладет клиентов)
+// 	const int TIMEOUT_MS = 1000; // check timeout on time per sec
+// 	const int CLIENT_TIMEOUT_SEC = 30; // close a client, if no actions > 30 sec
+
+// 	epoll_event events[MAX_EVENTS];
+
+// 	while (true) // главный цикл сервера
+// 	{
+// 		int n = epoll_wait(epfd, events, MAX_EVENTS, TIMEOUT_MS); // будет возвращать когда можно читать, если нет готовых fd, оно спит. Возвращает n к-во fd
+
+// 		auto now = std::chrono::steady_clock::now();
+
+// 		// check the timeout
+// 		for (auto it = clients.begin(); it != clients.end();)
+// 		{
+// 			auto duration = std::chrono::duration_cast<std::chrono::seconds>(now - it->second.last_activity);
+// 			if (duration.count() > CLIENT_TIMEOUT_SEC)
+// 			{
+// 				std::cout << "Close idle client fd=" << it->first << " after 30 seconds of non-action" << std::endl;
+// 				close(it->first);
+// 				epoll_ctl(epfd, EPOLL_CTL_DEL, it->first, nullptr); // удалить из epoll наблюдения
+// 				it = clients.erase(it);
+// 			}
+// 			else
+// 				it++;
+// 		}
+
+// 		for (int i = 0; i < n; i++)
+// 		{
+// 			int fd = events[i].data.fd;
+
+// 			if (fd == listen_sock) // new client
+// 			{
+// 				sockaddr_in client_addr{};
+// 				socklen_t len = sizeof(client_addr);
+// 				int client_fd = accept(listen_sock, (sockaddr*)&client_addr, &len);
+// 				if (client_fd < 0)
+// 					continue;
+// 				int flags = fcntl(client_fd, F_GETFL, 0);
+// 				fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
+
+// 				epoll_event client_ev{};
+// 				client_ev.events = EPOLLIN;
+// 				client_ev.data.fd = client_fd;
+// 				epoll_ctl(epfd, EPOLL_CTL_ADD, client_fd, &client_ev); // добавить в список наблюдения epoll
+
+// 				clients[client_fd] = {client_fd, now}; // save client
+// 				std::cout << "New client fd=" << client_fd << std::endl;
+// 			}
+// 			else // event from the client
+// 			{
+// 				// read / echo
+// 				char buf[1024];
+// 				int nread = read(fd, buf, sizeof(buf));
+// 				if (nread <= 0)
+// 				{
+// 					std::cout << "Closing client fd=" << fd << std::endl;
+// 					close(fd);
+// 					epoll_ctl(epfd, EPOLL_CTL_DEL, fd, nullptr);
+// 					clients.erase(fd);
+// 				}
+// 				else
+// 				{
+// 					write(fd, buf, nread); // just echo
+// 					clients[fd].last_activity = now;
+// 				}
+// 			}
+// 		}
+// 	}
+// 	close(listen_sock);
+// 	close(epfd);
+// 	return 0;
+// }

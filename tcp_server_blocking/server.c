@@ -104,7 +104,7 @@ int create_socket()
 		exit(1);
 	}
 
-	if (listen(server_fd, 5) == -1)
+	if (listen(server_fd, 5) == -1) // тут стоит ограничение на ОЧЕРЕДЬ подключений до accept. Если есть 5 клиентов в очереди и подключается 6-й, то tcp может его просто отклонить
 	{
 		perror("listen");
 		close(server_fd);

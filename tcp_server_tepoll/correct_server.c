@@ -134,6 +134,7 @@ int main()
 		close(server_fd);
 		exit(1);
 	}
+
 	struct epoll_event events[MAX_EVENTS]; // будующий массив, где мы будем хранить к-во измененных дескрипторов за раз
 
 	while (1)
