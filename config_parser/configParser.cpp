@@ -179,12 +179,12 @@ configParser::~configParser(void)
 int configParser::checkInputArguments(
 	int argc, char** argv)
 {
-	std::string config_end = "config";
+	std::string config_end = "_config";
 
 	
 	if (argc == 1)
 	{
-		std::cout 	<< YELLOW << "Default configfile aplied: "
+		std::cout 	<< YELLOW << "Default configfile applied: "
 					<< BLUE << "../configuration_files"
 					<< "/default_config" 
 					<<DEFAULT << std::endl;
@@ -223,15 +223,49 @@ int configParser::checkInputArguments(
 int configParser::readConfigFile(
 	const std::string& path)
 {
-	size_t readbyte = 1;
+	int readbyte = 1;
+	char buffer[BUFFER_SIZE + 1];
+	std::string line = "";
+	size_t count_line = 0;
+
+	int config_fd = open(path.c_str(), O_RDONLY);
+	if (config_fd == -1)
+	{
+		std::cerr 	<< RED << "Failed to open config file: "
+					<< YELLOW << path 
+					<< DEFAULT << std::endl;
+		return (-1);
+	}
 
 	std::cout << GREEN << "Config file: "
 			  << BLUE << path 
 			  << DEFAULT << std::endl;
-	return (2);
 	
 	while (readbyte > 0)
 	{
-		// read file
+		readbyte = read(config_fd, buffer, BUFFER_SIZE);
+		if (readbyte == -1)
+		{
+			std::cerr 	<< RED << "Failed to read config file: "
+						<< YELLOW << path 
+						<< DEFAULT << std::endl;
+			close(config_fd);
+			return (-1);
+		}
+		else if (readbyte == 0)
+		{
+			break;
+		}
+
+		buffer[readbyte] = '\0';
+
+		count_line++;
+		line += std::string(buffer);
+
+		std::cout	<< BLUE << "The " << count_line 
+					<< " line of the config file is:\n" 
+					<< MAGENTA << line << DEFAULT << std::endl;
 	}
+	close(config_fd);
+	return (0);
 }

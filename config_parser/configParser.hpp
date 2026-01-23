@@ -4,6 +4,8 @@
 # include <string>
 # include <vector>
 # include <iostream>
+# include <unistd.h>
+# include <fcntl.h>
 # include <map>
 # include <set>
 
@@ -14,6 +16,8 @@
 # define MAGENTA "\033[1;35m"
 # define CYAN "\033[1;36m"
 # define DEFAULT "\033[0m"
+
+# define BUFFER_SIZE 1024
 
 class httpMethods
 {
