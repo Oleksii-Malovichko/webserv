@@ -22,7 +22,7 @@ void Server::run()
 	while (running)
 	{
 		// epoll делает всю работу
-		epoll.handleEvents(50);
+		epoll.handleEvents(1000); // дефолтное значение таймаута, пока нет клиентов
 		
 		// Сервер решает, что делать с данными
 		const auto &clients = epoll.getClients();

@@ -9,6 +9,13 @@
 
 #define MAX_BYTES 4096
 
+typedef struct t_data
+{
+	int server_fd;
+	pthread_t p1;
+	pthread_t p2;
+} s_data;
+
 int connect_server()
 {
 	int server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -42,30 +49,45 @@ int connect_server()
 void *read_data(void *arg)
 {
 	char buffer[MAX_BYTES];
-	int server_fd = *(int *)arg;
-
+	s_data *data = (s_data *)arg;
 	ssize_t bytes;
-	while ((bytes = read(server_fd, buffer, sizeof(buffer))) > 0)
+
+	while (1)
 	{
+		bytes = read(data->server_fd, buffer, sizeof(buffer));
+		if (bytes == 0)
+		{
+			printf("Server dissconnected\n");
+			break;
+		}
+		if (bytes < 0)
+		{
+			perror("read");
+			break;
+		}
 		if (write(STDOUT_FILENO, buffer, bytes) == -1)
 		{
 			perror("[read_data] write");
 			break;
 		}
 	}
+	pthread_cancel(data->p2); // to stop the write_data thread
 	return NULL;
 }
 
 void *write_data(void *arg)
 {
 	char buffer[MAX_BYTES];
-	int server_fd = *(int *)arg;
-
+	s_data *data = (s_data *)arg;
 	ssize_t bytes;
+
 	printf("Enter some data:\n");
-	while ((bytes = read(STDIN_FILENO, buffer, sizeof(buffer))) > 0)
+	while (1)
 	{
-		if (write(server_fd, buffer, bytes) == -1)
+		bytes = read(STDIN_FILENO, buffer, sizeof(buffer));
+		if (bytes <= 0)
+			break;
+		if (write(data->server_fd, buffer, bytes) == -1)
 		{
 			perror("[write_data] write");
 			break;
@@ -76,39 +98,39 @@ void *write_data(void *arg)
 
 int main()
 {
-	pthread_t p1;
-	pthread_t p2;
 	int rc;
-	int server_fd = connect_server();
+	s_data data;
+	data.server_fd = connect_server();
 
-	rc = pthread_create(&p1, NULL, write_data, &server_fd);
+	rc = pthread_create(&data.p1, NULL, read_data, &data);
 	if (rc != 0)
 	{
 		fprintf(stderr, "pthread_create: %s\n", strerror(rc));
-		close(server_fd);
+		close(data.server_fd);
 		exit(1);
 	}
-	rc = pthread_create(&p2, NULL, read_data, &server_fd);
+	rc = pthread_create(&data.p2, NULL, write_data, &data);
 	if (rc != 0)
 	{
 		fprintf(stderr, "pthread_create: %s\n", strerror(rc));
-		close(server_fd);
+		close(data.server_fd);
 		exit(1);
 	}
 
-	rc = pthread_join(p1, NULL);
+	rc = pthread_join(data.p1, NULL);
 	if (rc != 0)
 	{
 		fprintf(stderr, "pthread_join: %s\n", strerror(rc));
-		close(server_fd);
+		close(data.server_fd);
 		exit(1);
 	}
-	rc = pthread_join(p2, NULL);
+	rc = pthread_join(data.p2, NULL);
 	if (rc != 0)
 	{
 		fprintf(stderr, "pthread_join: %s\n", strerror(rc));
-		close(server_fd);
+		close(data.server_fd);
 		exit(1);
 	}
+	close(data.server_fd);
 	return 0;
 }
