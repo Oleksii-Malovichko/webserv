@@ -95,7 +95,7 @@ class configParser
 
 		int checkInputArguments(int argc, char** argv);
 		int readConfigFile(const std::string& path);
-
+		void addServer(const std::string& line);
 
 };
 

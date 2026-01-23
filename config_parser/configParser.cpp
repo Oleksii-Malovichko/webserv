@@ -164,6 +164,13 @@ serverInfo::~serverInfo(void)
 
 }
 
+void serverInfo::parseServerBlock(
+	const std::string& serverblock)
+{
+	// To be implemented: parsing logic for server block
+	(void)serverblock; // Placeholder to avoid unused parameter warning
+}
+
 
 // Constructors for configParser class
 configParser::configParser(void)
@@ -220,6 +227,31 @@ int configParser::checkInputArguments(
 	}
 }
 
+void configParser::addServer(
+	const std::string& line)
+{
+	std::string server = "server{";
+	std::string substring = "";
+	size_t server_pos = 0;
+	size_t next_server_pos = 0;
+
+	while ((server_pos = line.find(
+		server, server_pos)) != std::string::npos)
+	{
+		// Parse server block
+		serverInfo new_server;
+		server_pos += server.length();
+		next_server_pos = line.find(
+			server, server_pos);
+		
+		substring = line.substr(
+				server_pos, next_server_pos - server_pos);
+		
+		new_server.parseServerBlock(substring);
+		_servers.push_back(new_server);
+	}
+}
+
 int configParser::readConfigFile(
 	const std::string& path)
 {
@@ -260,7 +292,7 @@ int configParser::readConfigFile(
 		buffer[readbyte] = '\0';
 
 		count_line++;
-		line += std::string(buffer);
+		line = std::string(buffer);
 
 		std::cout	<< BLUE << "The " << count_line 
 					<< " line of the config file is:\n" 
