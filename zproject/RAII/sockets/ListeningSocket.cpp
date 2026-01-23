@@ -37,7 +37,7 @@ int ListeningSocket::getFD() const
 }
 
 
-void error(const char *err, int fd)
+static void error(const char *err, int fd)
 {
 	if (fd != -1)
 		::close(fd);

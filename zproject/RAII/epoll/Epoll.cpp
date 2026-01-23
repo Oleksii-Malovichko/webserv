@@ -50,6 +50,7 @@ void Epoll::addListeningSocket(ListeningSocket &&sock)
 		throw std::runtime_error(std::string("epoll_ctl ADD(server): ") + strerror(errno));
 	
 	listeningSockets.push_back(std::move(sock));
+	std::cout << "Added listening socket(" << serverFD << ")" << std::endl;
 }
 
 void Epoll::addClient(Client &&client)
@@ -63,9 +64,9 @@ void Epoll::addClient(Client &&client)
 	cev.data.fd = clientFD;
 	if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, clientFD, &cev) == -1)
 		throw std::runtime_error(std::string("epoll_ctl ADD(client): ") + strerror(errno));
-
-	// clients.push_back(std::move(client));
+	
 	clients.emplace(clientFD, std::move(client));
+	std::cout << "Added client(" << clientFD << ")" << std::endl;
 }
 
 void Epoll::removeClient(int clientFD)
@@ -88,7 +89,7 @@ Client *Epoll::getClientByFD(int fd)
 }
 
 // сердце управления epoll
-void Epoll::handleEvents(int defaultTimeoutMs = -1) // epoll.handleEvents(CLIENT_TIMEOUT_MS); то есть, каждые 60 секунд проверять проверять активность клиентов
+void Epoll::handleEvents(int defaultTimeoutMs) // epoll.handleEvents(CLIENT_TIMEOUT_MS); то есть, каждые 60 секунд проверять проверять активность клиентов
 {
 	auto now = std::chrono::steady_clock::now();
 	// определяем timeout для epoll_wait на основе активности клиентов
@@ -165,9 +166,13 @@ void Epoll::handleEvents(int defaultTimeoutMs = -1) // epoll.handleEvents(CLIENT
 			{
 				ssize_t bytes = client->readFromSocket();
 				if (bytes == 0)
+				{
 					removeClient(fd);
+					continue;
+				}
 				else
 					client->updateLastActivity();
+				std::cout << "Client(" << client->getFD() << "): " << client->getReadBuffer() << std::endl;
 			}
 
 			if (ev & EPOLLOUT)
@@ -205,9 +210,9 @@ void Epoll::updateClientEvents(Client &client)
 	// то есть тут мы получаем state клиента и меняем его в epollin
 	if (client.getState() == Client::State::READING)
 		ev.events |= EPOLLIN;
-	if (client.getState() == Client::State::WRITING && client.hasPendingWrite())
+	else if (client.getState() == Client::State::WRITING && client.hasPendingWrite())
 		ev.events |= EPOLLOUT;
-	
+
 	if (epoll_ctl(epfd, EPOLL_CTL_MOD, fd, &ev) == -1)
 		throw std::runtime_error(std::string("epoll_ctl MOD: ") + strerror(errno));
 }
@@ -222,7 +227,12 @@ const std::vector<ListeningSocket> &Epoll::getListeningSockets() const
 	return this->listeningSockets;
 }
 
-const std::unordered_map<int, Client> &Epoll::getClients() const
+const std::unordered_map<int, Client> &Epoll::getClients() const // only for reading
+{
+	return this->clients;
+}
+
+std::unordered_map<int, Client> &Epoll::getClients() // for writing and changing (for example closing the fd of client)
 {
 	return this->clients;
 }

@@ -1,46 +1,23 @@
-#include "WebServConfig.hpp"
-#include "ListeningSocket.hpp"
-// #include "ClientSocket.hpp"
-#include "Epoll.hpp"
-#include "Client.hpp"
-
-void parser_emulation(WebServConfig &config)
-{
-	ServerConfig s1;
-	s1.setPort(8080);
-	config.addServer(s1);
-
-	ServerConfig s2;
-	s2.setPort(8081);
-	config.addServer(s2);
-}
+#include "Server.hpp"
+#include <csignal>
 
 int main(int argc, char *argv[])
 {
 	(void)argc; (void)argv;
-	WebServConfig config;
-	parser_emulation(config);
-	
-	std::vector<ListeningSocket> listeningSockets;
-	const std::vector<ServerConfig>& servers = config.getServers();
-	for (size_t i = 0; i < servers.size(); i++)
+
+	std::cout << "Pid: " << getpid() << std::endl;
+	try
 	{
-		try
-		{
-			listeningSockets.emplace_back(ListeningSocket(servers[i].getPort()));
-			std::cout << "Listening on port " << servers[i].getPort() << std::endl;
-		}
-		catch (const std::exception &e)
-		{
-			std::cerr << "Failed to create socket on port " << servers[i].getPort() << ": " << e.what() << std::endl;
-		}
+		Server server("configFile.conf");
+		server.run();
 	}
-	std::cout << "Checking if the sockets were closed automatically" << std::endl;
-	
-	// while (1)
-	// {
-	// 	sleep(1);
-	// }
+	catch (const std::exception &e)
+	{
+		std::cerr << "Fatal error: " << e.what() << std::endl;
+		return 1;
+	}
+	std::cout << "Server stopped" << std::endl;
+	return 1;
 }
 
 // google-chrome --new-tab ../en.subject.pdf 

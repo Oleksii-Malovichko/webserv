@@ -43,7 +43,7 @@ void ClientSocket::closeFD()
 }
 
 
-void error(const char *err, int fd)
+static void error(const char *err, int fd)
 {
 	if (fd != -1)
 		::close(fd);
@@ -65,6 +65,6 @@ int acceptClient(int serverFD)
 		error("F_GETFL", clientFD);
 	if (fcntl(clientFD, F_SETFL, flags | O_NONBLOCK) == -1)
 		error("F_SETFL", clientFD);
-
+	
 	return clientFD;
 }

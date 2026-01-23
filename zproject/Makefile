@@ -19,7 +19,8 @@ CXXFLAGS = -Wall -Wextra -Werror \
 	-IServerConfig \
 	-ILocationConfig \
 	-IRAII/epoll \
-	-IRAII/sockets
+	-IRAII/sockets \
+	-IServer
 
 all: $(NAME)
 

@@ -4,7 +4,7 @@
 #include "ListeningSocket.hpp"
 #include <array>
 
-#define CLIENT_TIMEOUT_MS 60'000
+#define CLIENT_TIMEOUT_MS 60000
 #define MAX_EVENTS 128
 
 class Epoll
@@ -35,11 +35,12 @@ class Epoll
 		Client *getClientByFD(int fd); // получить указатель на клиента по fd
 	
 		// основной цикл обработки событий
-		void handleEvents(int timeout = -1); // вызов epoll_wait и обработка событий
+		void handleEvents(int defaultTimeoutMs = -1); // вызов epoll_wait и обработка событий
 		void updateClientEvents(Client &client); // изменить событие EPOLLIN/EPOLLOUT в зависимости от состояния
 
 		// Утилиты
 		int getEPFD() const; // получить epfd
 		const std::vector<ListeningSocket> &getListeningSockets() const;
 		const std::unordered_map<int, Client> &getClients() const; // доступ к вектору клиентов
+		std::unordered_map<int, Client> &getClients();
 };
