@@ -1,6 +1,7 @@
-NAME = webserv
+NAME1 = webserv
+NAME2 = client
 
-SRCS = main.cpp RAII/epoll/Epoll.cpp \
+SRCS1 = main.cpp RAII/epoll/Epoll.cpp \
 	LocationConfig/LocationConfig.cpp \
 	ServerConfig/ServerConfig.cpp \
 	RAII/sockets/ClientSocket.cpp \
@@ -9,8 +10,13 @@ SRCS = main.cpp RAII/epoll/Epoll.cpp \
 	Client/Client.cpp \
 	Server/Server.cpp
 
-OBJS = $(SRCS:.cpp=.o)
+SRCS2 = client.c
 
+OBJS1 = $(SRCS1:.cpp=.o)
+OBJS2 = $(SRCS2:.c=.o)
+
+CC = cc
+CFLAGS = -Wall -Wextra -Werror
 CXX = c++ -std=c++11
 CXXFLAGS = -Wall -Wextra -Werror \
 	-I. \
@@ -22,18 +28,24 @@ CXXFLAGS = -Wall -Wextra -Werror \
 	-IRAII/sockets \
 	-IServer
 
-all: $(NAME)
+all: $(NAME1) $(NAME2)
 
-$(NAME): $(OBJS)
-	$(CXX) $(CXXFLAGS) $(OBJS) -o $(NAME)
+$(NAME1): $(OBJS1)
+	$(CXX) $(CXXFLAGS) $(OBJS1) -o $(NAME1)
+
+$(NAME2): $(OBJS2)
+	$(CC) $(CFLAGS) $(OBJS2) -o $(NAME2)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJS)
+	rm -f $(OBJS1) $(OBJS2)
 
 fclean: clean
-	rm -f $(NAME)
+	rm -f $(NAME1) $(NAME2)
 
 re: fclean all 
