@@ -1,6 +1,8 @@
 #include "Server.hpp"
 
-Server::Server(const std::string &configFile) : running(true)
+bool Server::running = true;
+
+Server::Server(const std::string &configFile)
 {
 	// вместо конфиг файла
 	(void)configFile;
@@ -17,8 +19,15 @@ Server::Server(const std::string &configFile) : running(true)
 	}
 }
 
+void Server::sigintHandler(int sig)
+{
+	(void)sig;
+	running = 0;
+}
+
 void Server::run()
 {
+	std::signal(SIGINT, sigintHandler);
 	while (running)
 	{
 		// epoll делает всю работу
