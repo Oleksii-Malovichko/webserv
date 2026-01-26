@@ -1,5 +1,58 @@
 #include "configParser.hpp"
 
+/* 
+Skip whitespace characters in a string
+starting from start_pos 
+*/
+
+size_t skipWhitespace(
+	const std::string& str, size_t start_pos)
+{
+	size_t pos = start_pos;
+	while (pos < str.length() && 
+			(str[pos] == ' ' || str[pos] == '\t' 
+				|| str[pos] == '\n' || str[pos] == '\r'
+				|| str[pos] == '\v' || str[pos] == '\f'))
+	{
+		pos++;
+	}
+	return (pos);
+}
+
+size_t skipWordAndWhitespace(
+	const std::string& str,
+	const std::string& search,
+	size_t start_pos)
+{
+	size_t pos = str.find(search);
+	while (pos != std::string::npos && pos < start_pos)
+	{
+		pos = str.find(search, pos + 1);
+	}
+
+	pos += search.length();
+	pos = skipWhitespace(str, pos);
+	return (pos);
+}
+
+const std::string& getInfo(
+	const std::string& str,
+	size_t start_pos, const char delimiter)
+{
+	size_t end_pos = start_pos;
+	std::string info_result = "";
+
+	while (end_pos < str.length() && 
+		str[end_pos] != delimiter)
+	{
+		end_pos++;
+	}
+
+	info_result = str.substr(start_pos, end_pos - start_pos);
+	return (info_result);
+}
+
+
 // Constructors for httpMethods class
 httpMethods::httpMethods(void)
 {
@@ -165,10 +218,86 @@ serverInfo::~serverInfo(void)
 }
 
 void serverInfo::parseServerBlock(
-	const std::string& serverblock)
+	const std::string& serverblock, size_t start_server_pos)
 {
-	// To be implemented: parsing logic for server block
-	(void)serverblock; // Placeholder to avoid unused parameter warning
+	// Parse port
+	std::size_t port_startpos = start_server_pos;
+	std::size_t port_startpos = 
+		skipWordAndWhitespace(serverblock, "listen", port_startpos);
+	size_t port_endpos = port_startpos;
+	while (port_endpos < serverblock.length() &&
+		isdigit(serverblock[port_endpos]))
+	{
+		port_endpos++;
+	}
+
+	std::string port_str = serverblock.substr(
+		port_startpos, port_endpos - port_startpos);
+	_port = std::stoi(port_str);
+
+	//parse server_name
+	std::string server_n = "server_name";
+	size_t server_n_pos = 
+		skipWordAndWhitespace(serverblock, server_n,
+			port_endpos);
+	_server_name = getInfo(
+		serverblock, server_n_pos, ';');
+
+	// parse root
+	std::string root_str = "root";
+	size_t root_pos = skipWordAndWhitespace(
+		serverblock, root_str, server_n_pos);
+	_s_root = getInfo(
+		serverblock, root_pos, ';');
+		
+	// parse index
+	std::string index_str = "index";
+	size_t index_pos = skipWordAndWhitespace(
+		serverblock, index_str, root_pos);
+	_s_index = getInfo(serverblock, 
+		index_pos, ';');
+	
+	// parse max_body_size
+	std::string max_body_str = "client_max_body_size";
+	size_t max_body_pos = skipWordAndWhitespace(
+		serverblock, max_body_str, index_pos);
+	std::string max_body_size_str = getInfo(
+		serverblock, max_body_pos, ';');
+	_max_body_size = std::stoul(max_body_size_str);
+	
+	// parse locations
+	std::string location_str = "location";
+	std::string substring = "";
+	size_t location_pos = 0;
+	size_t next_location_pos = 0;
+	
+	while ((location_pos = serverblock.find(
+		location_str, location_pos)) != std::string::npos)
+	{
+		serverLocation new_location;
+		location_pos += location_str.length();
+		next_location_pos = serverblock.find(
+			location_str, location_pos);
+		
+		substring = serverblock.substr(
+				location_pos, next_location_pos - location_pos);
+		// Parse location block
+		//new_location.addLocation(substring);
+	}
+
+	// parse error pages
+	std::string error_page_str = "error_page";
+	size_t error_page_pos = 0;
+	while ((error_page_pos = skipWordAndWhitespace(serverblock,
+		error_page_str, error_page_pos)) != std::string::npos)
+	{
+		std::string error_code = getInfo(
+			serverblock, error_page_pos, ' ');
+		int error_code_int = std::stoi(error_code);
+		std::string error_path = getInfo(
+			serverblock, error_page_pos + 1, ';');
+		_error_pages[error_code_int] = error_path;
+	}
 }
 
 
@@ -247,7 +376,7 @@ void configParser::addServer(
 		substring = line.substr(
 				server_pos, next_server_pos - server_pos);
 		
-		new_server.parseServerBlock(substring);
+		new_server.parseServerBlock(substring, server_pos);
 		_servers.push_back(new_server);
 	}
 }

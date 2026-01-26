@@ -70,6 +70,8 @@ class serverInfo
 		std::vector<serverLocation> _locations;
 		int _port;
 		std::string _server_name;
+		std::string _s_root;
+		std::string _s_index;
 		size_t _max_body_size;
 		std::map<int, std::string> _error_pages;
 
@@ -80,6 +82,10 @@ class serverInfo
 		serverInfo& operator=(const serverInfo& other);
 		~serverInfo(void);
 
+		void parseServerBlock(
+			const std::string& serverblock,
+			size_t start_server_pos);
+		void addLocation();
 };
 
 class configParser
@@ -98,5 +104,16 @@ class configParser
 		void addServer(const std::string& line);
 
 };
+
+size_t skipWhitespace(
+	const std::string& str, size_t start_pos);
+
+size_t skipWordAndWhitespace(
+	const std::string& str,
+	const std::string& search, size_t start_pos);
+
+const std::string& getInfo(
+	const std::string& str,
+	size_t start_pos, const char delimiter);
 
 #endif
