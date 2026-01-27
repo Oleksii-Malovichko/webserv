@@ -2,6 +2,7 @@
 # define CONFIGPARSER_HPP
 
 # include <string>
+# include <sstream>
 # include <vector>
 # include <iostream>
 # include <unistd.h>
@@ -33,6 +34,12 @@ class httpMethods
 		httpMethods(const httpMethods& other);
 		httpMethods& operator=(const httpMethods& other);
 		~httpMethods(void);
+
+		// Getters for httpMethods class
+		bool getGet(void) const;
+		bool getPost(void) const;
+		bool getPut(void) const;
+		bool getDelete(void) const;
 };
 
 class serverLocation
@@ -62,6 +69,16 @@ class serverLocation
 		serverLocation& operator=(const serverLocation& other);
 		~serverLocation(void);
 
+		void addLocation(std::string& locationblock);
+
+		// Getters for serverLocation class
+		const std::string& getPath(void) const;
+		const std::string& getRoot(void) const;
+		const std::string& getIndex(void) const;
+		const httpMethods& getMethods(void) const;
+		bool getAutoindex(void) const;
+		bool getUploadOn(void) const;
+		const std::string& getUploadStore(void) const;
 };
 
 class serverInfo
@@ -85,8 +102,16 @@ class serverInfo
 		void parseServerBlock(
 			const std::string& serverblock,
 			size_t start_server_pos);
-		void addLocation();
-};
+
+		// Getters for serverInfo class
+		int getPort(void) const;
+		const std::string& getServerName(void) const;
+		const std::string& getRoot(void) const;
+		const std::string& getIndex(void) const;
+		size_t getMaxBodySize(void) const;
+		const std::map<int, std::string>& getErrorPages(void) const;
+		const std::vector<serverLocation>& getLocations(void) const;
+};	
 
 class configParser
 {
@@ -102,6 +127,7 @@ class configParser
 		int checkInputArguments(int argc, char** argv);
 		int readConfigFile(const std::string& path);
 		void addServer(const std::string& line);
+		void printServersInfo(void) const;
 
 };
 

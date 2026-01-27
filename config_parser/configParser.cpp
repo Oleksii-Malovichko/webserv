@@ -117,6 +117,27 @@ httpMethods::~httpMethods(void)
 
 }
 
+// Getters for httpMethods class
+bool httpMethods::getGet(void) const
+{
+	return (_on_get);
+}
+
+bool httpMethods::getPost(void) const
+{
+	return (_on_post);
+}
+
+bool httpMethods::getPut(void) const
+{
+	return (_on_put);
+}
+
+bool httpMethods::getDelete(void) const
+{
+	return (_on_delete);
+}
+
 
 // Constructors for serverLocation class
 serverLocation::serverLocation(void):
@@ -178,6 +199,147 @@ serverLocation& serverLocation::operator=(const serverLocation& other)
 serverLocation::~serverLocation(void)
 {
 
+}
+
+// Add location block
+void serverLocation::addLocation(
+	std::string& locationblock)
+{
+	// Parse root
+	std::string root_n = "root";
+	size_t root_n_pos = 0;
+	root_n_pos = skipWordAndWhitespace(
+		locationblock, root_n, root_n_pos);
+	if (root_n_pos != std::string::npos)
+	{
+		_root = getInfo(
+			locationblock, root_n_pos, ';');
+	}
+
+	// Parse index
+	std::string index_n = "index";
+	size_t index_n_pos = 0;
+	index_n_pos = skipWordAndWhitespace(
+		locationblock, index_n, root_n_pos);
+	if (index_n_pos != std::string::npos)
+	{
+		_index = getInfo(
+			locationblock, index_n_pos, ';');	
+	}
+
+	// Parse methods
+	std::string methods_n = "methods";
+	size_t methods_n_pos = 0;
+	methods_n_pos = skipWordAndWhitespace(
+		locationblock, methods_n, methods_n_pos);
+	if (methods_n_pos != std::string::npos)
+	{
+		std::set<std::string> set_methods;
+		std::string methods_str = getInfo(
+			locationblock, methods_n_pos, ';');
+		size_t start_pos = 0;
+		while (start_pos < methods_str.length())
+		{
+			size_t end_pos = start_pos;
+			while (end_pos < methods_str.length() &&
+				(methods_str[end_pos] != ' ' &&
+					methods_str[end_pos] != ';'))
+			{
+				end_pos++;
+			}
+			std::string method_substr = methods_str.substr(
+				start_pos, end_pos - start_pos);
+			set_methods.insert(method_substr);
+			start_pos = end_pos + 1;
+		}
+		_methods = httpMethods(set_methods);
+	}
+	
+	// Parse upload
+	std::string upload_n = "upload";
+	size_t upload_n_pos = 0;
+	upload_n_pos = skipWordAndWhitespace(
+		locationblock, upload_n, index_n_pos);
+	if (upload_n_pos != std::string::npos)
+	{
+		std::string upload_str = getInfo(
+			locationblock, upload_n_pos, ';');
+		if (upload_str == "on")
+		{
+			_upload_on = true;
+		}
+		else if (upload_str == "off")
+		{
+			_upload_on = false;
+		}
+	}
+
+	// Parse upload store
+	std::string upload_store_n = "upload_store";
+	size_t upload_store_n_pos = 0;
+	upload_store_n_pos = skipWordAndWhitespace(
+		locationblock, upload_store_n, upload_n_pos);
+	if (upload_store_n_pos != std::string::npos)
+	{
+		_upload_store = getInfo(
+			locationblock, upload_store_n_pos, ';');
+	}
+
+	// Parse autoindex
+	std::string autoindex_n = "autoindex";
+	size_t autoindex_n_pos = 0;
+	autoindex_n_pos = skipWordAndWhitespace(
+		locationblock, autoindex_n, upload_store_n_pos);
+	if (autoindex_n_pos != std::string::npos)
+	{
+		std::string autoindex_str = getInfo(
+			locationblock, autoindex_n_pos, ';');
+		if (autoindex_str == "on")
+		{
+			_autoindex = true;
+		}
+		else if (autoindex_str == "off")
+		{
+			_autoindex = false;
+		}
+	}
+}
+
+// Getters for serverLocation class
+const std::string& serverLocation::getPath(void) const
+{
+	return (_path);
+}
+
+const std::string& serverLocation::getRoot(void) const
+{
+	return (_root);
+}
+
+const std::string& serverLocation::getIndex(void) const
+{
+	return (_index);
+}
+
+const httpMethods& serverLocation::getMethods(void) const
+{
+	return (_methods);
+}
+
+bool serverLocation::getAutoindex(void) const
+{
+	return (_autoindex);
+}
+
+bool serverLocation::getUploadOn(void) const
+{
+	return (_upload_on);
+}
+
+const std::string& serverLocation::
+	getUploadStore(void) const
+{
+	return (_upload_store);
 }
 
 
@@ -281,8 +443,8 @@ void serverInfo::parseServerBlock(
 		
 		substring = serverblock.substr(
 				location_pos, next_location_pos - location_pos);
-		// Parse location block
-		//new_location.addLocation(substring);
+
+		new_location.addLocation(substring);
 	}
 
 	// parse error pages
@@ -298,6 +460,42 @@ void serverInfo::parseServerBlock(
 			serverblock, error_page_pos + 1, ';');
 		_error_pages[error_code_int] = error_path;
 	}
+}
+
+// Getters for serverInfo class
+int serverInfo::getPort(void) const
+{
+	return (_port);
+}
+
+const std::string& serverInfo::getServerName(void) const
+{
+	return (_server_name);
+}
+
+const std::string& serverInfo::getRoot(void) const
+{
+	return (_s_root);
+}
+
+const std::string& serverInfo::getIndex(void) const
+{
+	return (_s_index);
+}
+
+size_t serverInfo::getMaxBodySize(void) const
+{
+	return (_max_body_size);
+}
+
+const std::map<int, std::string>& serverInfo::getErrorPages(void) const
+{
+	return (_error_pages);
+}
+
+const std::vector<serverLocation>& serverInfo::getLocations(void) const
+{
+	return (_locations);
 }
 
 
@@ -429,4 +627,50 @@ int configParser::readConfigFile(
 	}
 	close(config_fd);
 	return (0);
+}
+
+void configParser::printServersInfo(void) const
+{ 
+	std::stringstream ss;
+	
+	for (size_t i = 0; i < _servers.size(); i++)
+	{
+		ss << GREEN <<"Port: " << _servers[i].getPort() << "\n"
+		   << "Server name: " << _servers[i].getServerName() << "\n"
+		   << "Server Root: " << _servers[i].getRoot() << "\n"
+		   << "Server Index: " << _servers[i].getIndex() << "\n"
+		   << "Max body size: " << _servers[i].getMaxBodySize() << "\n";
+		
+		const std::map<int, std::string>& errors = 
+			_servers[i].getErrorPages();
+		for (std::map<int, std::string>::const_iterator it =
+			errors.begin(); it != errors.end(); ++it)
+		{
+			ss	<< "Error Code: " << it->first
+				<< " Error path: " << it->second << "\n";
+		}
+		
+		const std::vector<serverLocation>& locations = 
+			_servers[i].getLocations();
+		for (size_t j = 0; j < locations.size(); j++)
+		{
+			ss << std::boolalpha;
+			ss << CYAN << "\nLocation Path: " 
+			   << locations[j].getPath() << "\n"
+			   << "Location Root: " 
+			   << locations[j].getRoot() << "\n"
+			   << "Location Index: " 
+			   << locations[j].getIndex() << "\n"
+			   << "Location Methods:\n"
+			   << "GET: " << locations[j].getMethods().getGet() << "\n"
+			   << "POST: " << locations[j].getMethods().getPost() << "\n"
+			   << "PUT: " << locations[j].getMethods().getPut() << "\n"
+			   << "DELETE: " << locations[j].getMethods().getDelete() << "\n"
+			   << "Autoindex: " << locations[j].getAutoindex() << "\n"
+			   << "Upload: " << locations[j].getUploadOn() << "\n"
+			   << "Upload Store: "
+			   << locations[j].getUploadStore() << "\n"
+			   << DEFAULT;
+		}
+	}
 }
