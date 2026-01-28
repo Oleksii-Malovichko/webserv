@@ -25,17 +25,40 @@ size_t skipWordAndWhitespace(
 	size_t start_pos)
 {
 	size_t pos = str.find(search);
+	std::cout << YELLOW <<"pos befor while: " << pos
+				<< DEFAULT << std::endl;
+	size_t save_pos = pos;
 	while (pos != std::string::npos && pos < start_pos)
 	{
+		
+		save_pos = pos;
 		pos = str.find(search, pos + 1);
+
+		std::cout << YELLOW <<"pos in while: " << pos
+				<< " save_pos in while: " << save_pos
+				<< DEFAULT << std::endl;
 	}
 
-	pos += search.length();
-	pos = skipWhitespace(str, pos);
-	return (pos);
+	std::cout << "in skipWordAndWhitespace, save_pos: " 
+			  << save_pos 
+			  << " str char: f" 
+			  <<  str[save_pos] << "f" 
+			  << "pos: " << pos
+			  << "\nThe str: " << str 
+			  << "\nThe search: " << search
+			  << std::endl;
+	
+	// pos += (search.length() + 1);
+	save_pos += search.length();
+	save_pos = skipWhitespace(str, save_pos);
+
+	std::cout << "The save_pos " << save_pos
+		<< std::endl;
+
+	return (save_pos);
 }
 
-const std::string& getInfo(
+std::string getInfo(
 	const std::string& str,
 	size_t start_pos, const char delimiter)
 {
@@ -384,7 +407,7 @@ void serverInfo::parseServerBlock(
 {
 	// Parse port
 	std::size_t port_startpos = start_server_pos;
-	std::size_t port_startpos = 
+	port_startpos = 
 		skipWordAndWhitespace(serverblock, "listen", port_startpos);
 	size_t port_endpos = port_startpos;
 	while (port_endpos < serverblock.length() &&
@@ -395,8 +418,30 @@ void serverInfo::parseServerBlock(
 
 	std::string port_str = serverblock.substr(
 		port_startpos, port_endpos - port_startpos);
-	_port = std::stoi(port_str);
+	try
+	{
+		_port = std::stoi(port_str);
+	}
+	catch(const std::exception& e)
+	{
+		std::cout  << CYAN << "Start pos: " 
+				   << port_startpos << " End pos: "
+				   << port_endpos
+				   << YELLOW << serverblock
+				   << DEFAULT << std::endl;
+		
+		std::cerr	<< RED << "Failed to make integer from '" 
+					<< YELLOW << port_str << RED
+					<< "' in parseServerBlock: "
+					<< e.what() << DEFAULT << std::endl;
+	}
 
+	std::cout << CYAN << "The port_str: " << port_str
+				<< "\nThe seerverblock[port_endpos] "
+				<< serverblock[port_endpos]
+				<< DEFAULT << std::endl;
+
+	
 	//parse server_name
 	std::string server_n = "server_name";
 	size_t server_n_pos = 
@@ -405,6 +450,13 @@ void serverInfo::parseServerBlock(
 	_server_name = getInfo(
 		serverblock, server_n_pos, ';');
 
+	std::cout << BLUE << "The server_name: "
+		<< _server_name 
+		<< "\nserver_n_pos: " << server_n_pos
+		<< "\nport_endpos: " << port_endpos
+		<< DEFAULT << std::endl;
+
+	/*
 	// parse root
 	std::string root_str = "root";
 	size_t root_pos = skipWordAndWhitespace(
@@ -460,6 +512,7 @@ void serverInfo::parseServerBlock(
 			serverblock, error_page_pos + 1, ';');
 		_error_pages[error_code_int] = error_path;
 	}
+	*/
 }
 
 // Getters for serverInfo class
@@ -514,7 +567,8 @@ int configParser::checkInputArguments(
 	int argc, char** argv)
 {
 	std::string config_end = "_config";
-
+	std::string default_path = 
+			"../configuration_files/default_config";
 	
 	if (argc == 1)
 	{
@@ -522,7 +576,8 @@ int configParser::checkInputArguments(
 					<< BLUE << "../configuration_files"
 					<< "/default_config" 
 					<<DEFAULT << std::endl;
-		return (1);
+		
+		return(readConfigFile(default_path));
 	}
 	else if (argc == 2)
 	{
@@ -624,6 +679,8 @@ int configParser::readConfigFile(
 		std::cout	<< BLUE << "The " << count_line 
 					<< " line of the config file is:\n" 
 					<< MAGENTA << line << DEFAULT << std::endl;
+	
+		addServer(line);
 	}
 	close(config_fd);
 	return (0);
@@ -673,4 +730,10 @@ void configParser::printServersInfo(void) const
 			   << DEFAULT;
 		}
 	}
+
+	std::cout << GREEN
+			  << "\nTotal number of servers: " 
+			  << _servers.size() << "\n"
+			  << DEFAULT << std::endl;
+	std::cout << ss.str();
 }

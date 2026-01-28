@@ -138,7 +138,7 @@ size_t skipWordAndWhitespace(
 	const std::string& str,
 	const std::string& search, size_t start_pos);
 
-const std::string& getInfo(
+std::string getInfo(
 	const std::string& str,
 	size_t start_pos, const char delimiter);
 
