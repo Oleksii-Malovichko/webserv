@@ -131,6 +131,9 @@ class configParser
 
 };
 
+bool isSearchWord(const std::string& str,
+	size_t pos, size_t word_len);
+
 size_t skipWhitespace(
 	const std::string& str, size_t start_pos);
 

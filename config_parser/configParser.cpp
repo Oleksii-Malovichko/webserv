@@ -1,5 +1,28 @@
 #include "configParser.hpp"
 
+// Check if the shearch word is exact
+bool isSearchWord(const std::string& str,
+	size_t pos, size_t word_len)
+{
+	if (pos > 0 && std::isalnum(static_cast<unsigned char>(
+		str[pos - 1])))
+	{
+		return (false);
+	}
+
+	if (pos + word_len < str.length() 
+			&& std::isalnum(static_cast<unsigned char>
+				(str[pos + word_len])))
+	{
+		return (false);
+	}
+
+	std::cout << YELLOW << "found word:" 
+				<< str.substr(pos, word_len) << DEFAULT << std::endl;
+	
+	return (true);
+}
+
 /* 
 Skip whitespace characters in a string
 starting from start_pos 
@@ -24,38 +47,26 @@ size_t skipWordAndWhitespace(
 	const std::string& search,
 	size_t start_pos)
 {
-	size_t pos = str.find(search);
-	std::cout << YELLOW <<"pos befor while: " << pos
-				<< DEFAULT << std::endl;
-	size_t save_pos = pos;
-	while (pos != std::string::npos && pos < start_pos)
-	{
-		
-		save_pos = pos;
-		pos = str.find(search, pos + 1);
+	size_t pos = start_pos;;
 
-		std::cout << YELLOW <<"pos in while: " << pos
-				<< " save_pos in while: " << save_pos
-				<< DEFAULT << std::endl;
+	while ((pos = str.find(search, pos))
+		!= std::string::npos)
+	{
+		std::cout << CYAN << "the pos in while:"
+					<< pos << DEFAULT << std::endl;
+		if (isSearchWord(str, pos,
+			 search.length()) == true)
+		{
+			pos += search.length();
+			pos = skipWhitespace(str, pos);
+			std::cout << GREEN << "return pos from while:"
+					<< pos << DEFAULT << std::endl;
+			return (pos);
+		}
+		pos += search.length();
 	}
 
-	std::cout << "in skipWordAndWhitespace, save_pos: " 
-			  << save_pos 
-			  << " str char: f" 
-			  <<  str[save_pos] << "f" 
-			  << "pos: " << pos
-			  << std::endl;
-	
-	if (save_pos != std::string::npos)
-	{
-		save_pos += search.length();
-		save_pos = skipWhitespace(str, save_pos);
-	}
-
-	std::cout << "The save_pos " << save_pos
-		<< std::endl;
-
-	return (save_pos);
+	return (pos);
 }
 
 std::string getInfo(
@@ -406,34 +417,43 @@ void serverInfo::parseServerBlock(
 	const std::string& serverblock, size_t start_server_pos)
 {
 	// Parse port
+	std::cout << RED << "The start_server_pos: "
+				<< start_server_pos << DEFAULT << std::endl;
 	std::size_t port_startpos = start_server_pos;
 	port_startpos = 
 		skipWordAndWhitespace(serverblock, "listen", port_startpos);
 	size_t port_endpos = port_startpos;
-	while (port_endpos < serverblock.length() &&
-		isdigit(serverblock[port_endpos]))
+	std::cout << YELLOW << "The port_endpos: "
+				<< port_endpos << DEFAULT << std::endl;
+	if (port_startpos != std::string::npos)
 	{
-		port_endpos++;
-	}
+		
+		while (port_endpos < serverblock.length() &&
+			isdigit(serverblock[port_endpos]))
+		{
+			port_endpos++;
+		}
 
-	std::string port_str = serverblock.substr(
-		port_startpos, port_endpos - port_startpos);
-	try
-	{
-		_port = std::stoi(port_str);
-	}
-	catch(const std::exception& e)
-	{
-		std::cerr	<< RED << "Failed to make integer from '" 
-					<< YELLOW << port_str << RED
-					<< "' in parseServerBlock: "
-					<< e.what() << DEFAULT << std::endl;
-	}
-
-	std::cout << CYAN << "The port_str: " << port_str
+		std::string port_str = serverblock.substr(
+			port_startpos, port_endpos - port_startpos);
+		
+		std::cout << CYAN << "The port_str: " << port_str
 				<< "\nThe seerverblock[port_endpos] "
 				<< serverblock[port_endpos]
 				<< DEFAULT << std::endl;
+		
+		try
+		{
+			_port = std::stoi(port_str);
+		}
+		catch(const std::exception& e)
+		{
+			std::cerr	<< RED << "Failed to make integer from '" 
+						<< YELLOW << port_str << RED
+						<< "' in parseServerBlock: "
+						<< e.what() << DEFAULT << std::endl;
+		}
+	}
 
 	
 	//parse server_name
@@ -441,6 +461,8 @@ void serverInfo::parseServerBlock(
 	size_t server_n_pos = 
 		skipWordAndWhitespace(serverblock, server_n,
 			port_endpos);
+	std::cout << CYAN << "The server_n_pos: "
+				<< server_n_pos << DEFAULT << std::endl;
 	if (server_n_pos != std::string::npos)
 	{
 		_server_name = getInfo(
@@ -520,10 +542,11 @@ void serverInfo::parseServerBlock(
 
 	// parse error pages
 	std::string error_page_str = "error_page";
-	size_t error_page_pos = 0;
-	while ((error_page_pos = skipWordAndWhitespace(serverblock,
-		error_page_str, error_page_pos )) != std::string::npos)
+	size_t error_page_pos = serverblock.find(error_page_str);
+	while (error_page_pos < serverblock.length())
 	{
+		error_page_pos = skipWordAndWhitespace(serverblock,
+			error_page_str, error_page_pos );
 		std::string error_code = getInfo(
 			serverblock, error_page_pos, ' ');
 		int error_code_int = std::stoi(error_code);
@@ -531,23 +554,10 @@ void serverInfo::parseServerBlock(
 			serverblock, error_page_pos + 
 			error_code.length(), ';');
 
-		std::cout << "ERROR CODE: " << error_code_int
-					<< " Error_path: " << error_path << std::endl;
 		_error_pages[error_code_int] = error_path;
 
-		size_t semicolon_pos = serverblock.find(';', error_page_pos);
-		if (semicolon_pos != std::string::npos)
-		{
-			error_page_pos = semicolon_pos + 1;
-		}
-		else
-		{
-			break;
-		}
-
-		std::cout << "The semicolon pos: " << semicolon_pos
-					<< "The error page pos: " << error_page_pos
-					<< std::endl;
+		error_page_pos = serverblock.find(error_page_str, 
+			error_page_pos + 1);
 	}
 }
 
