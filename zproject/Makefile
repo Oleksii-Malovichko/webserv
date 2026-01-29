@@ -8,7 +8,9 @@ SRCS1 = main.cpp RAII/epoll/Epoll.cpp \
 	RAII/sockets/ListeningSocket.cpp \
 	WebServConfig/WebServConfig.cpp \
 	Client/Client.cpp \
-	Server/Server.cpp
+	Server/Server.cpp \
+	ConfigParser/ConfigParser.cpp \
+	ConfigParser/ConfigParserUtils.cpp
 
 SRCS2 = client.c
 
@@ -17,7 +19,7 @@ OBJS2 = $(SRCS2:.c=.o)
 
 CC = cc
 CFLAGS = -Wall -Wextra -Werror
-CXX = c++ -std=c++11
+CXX = c++ -std=c++11 -fsanitize=address
 CXXFLAGS = -Wall -Wextra -Werror \
 	-I. \
 	-IClient \
@@ -26,7 +28,8 @@ CXXFLAGS = -Wall -Wextra -Werror \
 	-ILocationConfig \
 	-IRAII/epoll \
 	-IRAII/sockets \
-	-IServer
+	-IServer \
+	-IConfigParser
 
 all: $(NAME1) $(NAME2)
 

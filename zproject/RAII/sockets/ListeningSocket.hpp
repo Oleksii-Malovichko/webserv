@@ -6,6 +6,7 @@
 class ListeningSocket
 {
 	int fd;
+
 	public:
 		ListeningSocket(int port); // socket + fcntl + bind + listen
 		ListeningSocket(const ListeningSocket&) = delete; // to avoid copying

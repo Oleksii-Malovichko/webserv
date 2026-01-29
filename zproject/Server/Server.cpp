@@ -5,6 +5,7 @@ bool Server::running = true;
 Server::Server(const std::string &configFile)
 {
 	// вместо конфиг файла
+	
 	(void)configFile;
 	ServerConfig s1;
 	s1.setPort(8080);

@@ -11,9 +11,7 @@ class Epoll
 {
 	int epfd;
 	std::array<epoll_event, MAX_EVENTS> events;
-	// когда мне это заполнить? в конструкторе?
 	std::vector<ListeningSocket> listeningSockets;
-	// std::vector<Client> clients;
 	std::unordered_map<int, Client> clients;
 
 	public: // тут explicit НЕ нужен, потому epoll не принимает аргументов

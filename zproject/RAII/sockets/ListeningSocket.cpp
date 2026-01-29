@@ -46,7 +46,7 @@ static void error(const char *err, int fd)
 
 int create_socket(int port)
 {
-	int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+	int server_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (server_fd == -1)
 		error("socket", server_fd);
 

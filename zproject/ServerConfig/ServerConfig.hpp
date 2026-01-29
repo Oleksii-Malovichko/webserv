@@ -22,12 +22,28 @@ class ServerConfig
 
 	// Необязательные параметры с дефолтами
 	std::string index; // default: "index.html"
-	std::string error_page_404; // default: "/errors/404.html"
+	std::unordered_map<int, std::string> error_pages;
 	size_t client_max_body_size; // default: "10 MB"
 	std::vector<LocationConfig> locations; // default: empty
 
 	public:
 		ServerConfig();
+		
 		void setPort(int p);
 		int getPort() const;
+		void setRoot(const std::string &r);
+		const std::string &getRoot() const;
+		void setIndex(const std::string &i);
+		const std::string &getIndex() const;
+		void setErrorPage(int code, const std::string &page);
+		const std::string &getErrorPage(int code) const;
+		void setClientMaxBodySize(size_t bs);
+		size_t getClientMaxBodySize() const;
+
+		void addLocation(const LocationConfig &loc);
+		std::vector<LocationConfig> &getLocations();
+		const std::vector<LocationConfig> &getLocations() const;
+
+		bool isValid() const;
+		~ServerConfig() = default;
 };
