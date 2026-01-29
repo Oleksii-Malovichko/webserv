@@ -44,13 +44,13 @@ size_t skipWordAndWhitespace(
 			  << " str char: f" 
 			  <<  str[save_pos] << "f" 
 			  << "pos: " << pos
-			  << "\nThe str: " << str 
-			  << "\nThe search: " << search
 			  << std::endl;
 	
-	// pos += (search.length() + 1);
-	save_pos += search.length();
-	save_pos = skipWhitespace(str, save_pos);
+	if (save_pos != std::string::npos)
+	{
+		save_pos += search.length();
+		save_pos = skipWhitespace(str, save_pos);
+	}
 
 	std::cout << "The save_pos " << save_pos
 		<< std::endl;
@@ -424,12 +424,6 @@ void serverInfo::parseServerBlock(
 	}
 	catch(const std::exception& e)
 	{
-		std::cout  << CYAN << "Start pos: " 
-				   << port_startpos << " End pos: "
-				   << port_endpos
-				   << YELLOW << serverblock
-				   << DEFAULT << std::endl;
-		
 		std::cerr	<< RED << "Failed to make integer from '" 
 					<< YELLOW << port_str << RED
 					<< "' in parseServerBlock: "
@@ -447,8 +441,11 @@ void serverInfo::parseServerBlock(
 	size_t server_n_pos = 
 		skipWordAndWhitespace(serverblock, server_n,
 			port_endpos);
-	_server_name = getInfo(
-		serverblock, server_n_pos, ';');
+	if (server_n_pos != std::string::npos)
+	{
+		_server_name = getInfo(
+			serverblock, server_n_pos, ';');
+	}
 
 	std::cout << BLUE << "The server_name: "
 		<< _server_name 
@@ -456,29 +453,49 @@ void serverInfo::parseServerBlock(
 		<< "\nport_endpos: " << port_endpos
 		<< DEFAULT << std::endl;
 
-	/*
+	
 	// parse root
 	std::string root_str = "root";
 	size_t root_pos = skipWordAndWhitespace(
 		serverblock, root_str, server_n_pos);
-	_s_root = getInfo(
-		serverblock, root_pos, ';');
-		
+	if (root_pos != std::string::npos)
+	{
+		_s_root = getInfo(
+			serverblock, root_pos, ';');
+
+		std::cout << CYAN << "The _s_root: "
+					<< _s_root << DEFAULT << std::endl;
+	}
+
 	// parse index
 	std::string index_str = "index";
 	size_t index_pos = skipWordAndWhitespace(
 		serverblock, index_str, root_pos);
-	_s_index = getInfo(serverblock, 
-		index_pos, ';');
-	
+	if (index_pos != std::string::npos)
+	{
+		_s_index = getInfo(serverblock, 
+			index_pos, ';');
+
+		std::cout << CYAN << "The _s_index: "
+					<< _s_index << DEFAULT << std::endl;
+	}
+
 	// parse max_body_size
 	std::string max_body_str = "client_max_body_size";
 	size_t max_body_pos = skipWordAndWhitespace(
 		serverblock, max_body_str, index_pos);
-	std::string max_body_size_str = getInfo(
-		serverblock, max_body_pos, ';');
-	_max_body_size = std::stoul(max_body_size_str);
+	if (max_body_pos != std::string::npos)
+	{
+		std::string max_body_size_str = getInfo(
+			serverblock, max_body_pos, ';');
+
+		std::cout << YELLOW << "The max_body_size_str: "
+					<< max_body_size_str
+					<< DEFAULT << std::endl;
+		_max_body_size = std::stoul(max_body_size_str);
+	}
 	
+	/*
 	// parse locations
 	std::string location_str = "location";
 	std::string substring = "";
@@ -499,20 +516,39 @@ void serverInfo::parseServerBlock(
 		new_location.addLocation(substring);
 	}
 
+	*/
+
 	// parse error pages
 	std::string error_page_str = "error_page";
 	size_t error_page_pos = 0;
 	while ((error_page_pos = skipWordAndWhitespace(serverblock,
-		error_page_str, error_page_pos)) != std::string::npos)
+		error_page_str, error_page_pos )) != std::string::npos)
 	{
 		std::string error_code = getInfo(
 			serverblock, error_page_pos, ' ');
 		int error_code_int = std::stoi(error_code);
 		std::string error_path = getInfo(
-			serverblock, error_page_pos + 1, ';');
+			serverblock, error_page_pos + 
+			error_code.length(), ';');
+
+		std::cout << "ERROR CODE: " << error_code_int
+					<< " Error_path: " << error_path << std::endl;
 		_error_pages[error_code_int] = error_path;
+
+		size_t semicolon_pos = serverblock.find(';', error_page_pos);
+		if (semicolon_pos != std::string::npos)
+		{
+			error_page_pos = semicolon_pos + 1;
+		}
+		else
+		{
+			break;
+		}
+
+		std::cout << "The semicolon pos: " << semicolon_pos
+					<< "The error page pos: " << error_page_pos
+					<< std::endl;
 	}
-	*/
 }
 
 // Getters for serverInfo class
