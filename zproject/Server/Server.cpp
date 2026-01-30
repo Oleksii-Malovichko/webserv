@@ -14,7 +14,7 @@ Server::Server(const std::string &configFile)
 	// создаем listening sockets и добавляем в epoll
 	for (size_t i = 0; i < configs.size(); i++)
 	{
-		ListeningSocket sock(configs[i].getPort());
+		ListeningSocket sock(configs[i].getIP(), configs[i].getPort());
 		epoll.addListeningSocket(std::move(sock));
 		std::cout << "Listening on port " << configs[i].getPort() << std::endl;
 	}

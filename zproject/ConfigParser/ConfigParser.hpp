@@ -27,5 +27,5 @@ class ConfigParser
 };
 
 std::string trim(const std::string &s);
-std::vector<std::string> splitString(const std::string &str, char delimiter);
+std::vector<std::string> splitString(const std::string &str);
 std::string removeComment(const std::string &str);

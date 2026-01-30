@@ -2,6 +2,8 @@
 
 ServerConfig::ServerConfig()
 {
+	// this->ip = INADDR_ANY;
+	this->ip = "";
 	this->port = -1; // if no port -> error!
 	this->root = ""; // if no root -> error!
 	this->index = "index.html";
@@ -18,6 +20,16 @@ void ServerConfig::setPort(int p)
 int ServerConfig::getPort() const
 {
 	return this->port;
+}
+
+void ServerConfig::setIP(const std::string &ip)
+{
+	this->ip = ip;
+}
+
+const std::string &ServerConfig::getIP() const
+{
+	return this->ip;
 }
 
 void ServerConfig::setRoot(const std::string &r)

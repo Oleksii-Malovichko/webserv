@@ -14,14 +14,14 @@ std::string trim(const std::string &s)
 	return s.substr(first, last - first);
 }
 
-std::vector<std::string> splitString(const std::string &str, char delimiter)
+std::vector<std::string> splitString(const std::string &str)
 {
 	std::vector<std::string> tokens;
 	std::string token;
 
 	for (std::string::size_type i = 0; i < str.length(); i++)
 	{
-		if (str[i] == delimiter)
+		if (std::isspace(str[i])) // if (str[i] == delimiter)
 		{
 			if (!token.empty())
 			{

@@ -12,14 +12,16 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <arpa/inet.h>
 
 #include "../LocationConfig/LocationConfig.hpp"
 
 class ServerConfig
 {
+	std::string ip;
 	int port; // listen, обязателен
 	std::string root; // root, обязателен (нужен будет когда буду строить ответы: GET, POST, DELETE)
-
+	
 	// Необязательные параметры с дефолтами
 	std::string index; // default: "index.html"
 	std::unordered_map<int, std::string> error_pages;
@@ -28,9 +30,11 @@ class ServerConfig
 
 	public:
 		ServerConfig();
-		
+
 		void setPort(int p);
 		int getPort() const;
+		void setIP(const std::string &ip);
+		const std::string &getIP() const;
 		void setRoot(const std::string &r);
 		const std::string &getRoot() const;
 		void setIndex(const std::string &i);

@@ -8,20 +8,34 @@ const WebServConfig &ConfigParser::getWebServ() const
 void ConfigParser::parseServerLine(const std::string &line, ServerConfig &currentServer)
 {
 	std::vector<std::string> tokens;
-	std::string newLine;
-	if (line.find("listen ") == 0)
+
+	tokens = splitString(line);
+	if (tokens.size() == 1)
 	{
-		newLine = removeComment(line);
-		// std::cout << "parseServerLine listen: tokens.size() before: " << tokens.size() << std::endl;
-		tokens = splitString(newLine, ' ');
-		// std::cout << "tokens.size() after: " << tokens.size() << std::endl;
+		std::cerr << "Invalid " << tokens[0] << " in server directive" << std::endl;
+		exit(1);
+	}
+	if (tokens[0] == "listen")
+	{
 		if (tokens.size() != 2 || tokens[1].back() != ';')
 		{
 			std::cerr << "Invalid listen directive" << std::endl;
 			exit(1);
 		}
-		std::string portStr = tokens[1];
-		portStr.pop_back(); // remove ;
+		std::string listenStr = tokens[1];
+		listenStr.pop_back(); // remove ;
+
+		std::string ip;
+		std::string portStr;
+		size_t colonPos = listenStr.find(":");
+		if (colonPos != std::string::npos) // if ':' exists
+		{
+			ip = listenStr.substr(0, colonPos);
+			portStr = listenStr.substr(colonPos + 1); // the part after ':' is port
+			currentServer.setIP(ip);
+		}
+		else
+			portStr = listenStr;
 		try
 		{
 			int port = std::stoi(portStr);
@@ -33,12 +47,8 @@ void ConfigParser::parseServerLine(const std::string &line, ServerConfig &curren
 			exit(1);
 		}
 	}
-	else if (line.find("root ") == 0)
+	else if (tokens[0] == "root")
 	{
-		newLine = removeComment(line);
-		// std::cout << "parseServerLine root: tokens.size() before: " << tokens.size() << std::endl;
-		tokens = splitString(newLine, ' ');
-		// std::cout << "tokens.size() after: " << tokens.size() << std::endl;
 		if (tokens.size() != 2 || tokens[1].back() != ';')
 		{
 			std::cerr << "Invalid root directive" << std::endl;
@@ -53,12 +63,8 @@ void ConfigParser::parseServerLine(const std::string &line, ServerConfig &curren
 		}
 		currentServer.setRoot(path);
 	}
-	else if (line.find("index ") == 0)
+	else if (tokens[0] == "index")
 	{
-		newLine = removeComment(line);
-		// std::cout << "parseServerLine index: tokens.size() before: " << tokens.size() << std::endl;
-		tokens = splitString(newLine, ' ');
-		// std::cout << "tokens.size() after: " << tokens.size() << std::endl;
 		if (tokens.size() != 2 || tokens[1].back() != ';')
 		{
 			std::cerr << "Invalid index directive" << std::endl;
@@ -73,14 +79,10 @@ void ConfigParser::parseServerLine(const std::string &line, ServerConfig &curren
 		}
 		currentServer.setIndex(path);
 	}
-	else if (line.find("server_name ") == 0)
+	else if (tokens[0] == "server_name")
 		return ; // not supported yet
-	else if (line.find("client_max_body_size ") == 0)
+	else if (tokens[0] == "client_max_body_size")
 	{
-		newLine = removeComment(line);
-		// std::cout << "parseServerLine client_max_body_size: tokens.size() before: " << tokens.size() << std::endl;
-		tokens = splitString(newLine, ' ');
-		// std::cout << "tokens.size() after: " << tokens.size() << std::endl;
 		if (tokens.size() != 2 || tokens[1].back() != ';')
 		{
 			std::cerr << "Invalid client_max_body_size directive" << std::endl;
@@ -99,12 +101,8 @@ void ConfigParser::parseServerLine(const std::string &line, ServerConfig &curren
 			exit(1);
 		}
 	}
-	else if (line.find("error_page ") == 0)
+	else if (tokens[0] == "error_page")
 	{
-		newLine = removeComment(line);
-		// std::cout << "parseServerLine error_page: tokens.size() before: " << tokens.size() << std::endl;
-		tokens = splitString(newLine, ' ');
-		// std::cout << "tokens.size() after: " << tokens.size() << std::endl;
 		if (tokens.size() != 3 || tokens[2].back() != ';')
 		{
 			std::cerr << "Invalid error_page directive" << std::endl;
@@ -126,7 +124,6 @@ void ConfigParser::parseServerLine(const std::string &line, ServerConfig &curren
 			exit(1);
 		}
 		std::string path = tokens[2];
-		// std::cout << "error_page: path: " << path << std::endl;
 		path.pop_back();
 		if (path.empty())
 		{
@@ -145,13 +142,15 @@ void ConfigParser::parseServerLine(const std::string &line, ServerConfig &curren
 void ConfigParser::parseLocationLine(const std::string &line, LocationConfig &currentLocation)
 {
 	std::vector<std::string> tokens;
-	std::string newLine;
-	if (line.find("root ") == 0)
+
+	tokens = splitString(line);
+	if (tokens.size() == 1)
 	{
-		newLine = removeComment(line);
-		// std::cout << "parseLocationLine root: tokens.size() before: " << tokens.size() << std::endl;
-		tokens = splitString(newLine, ' ');
-		// std::cout << "tokens.size() after: " << tokens.size() << std::endl;;
+		std::cerr << "Invalid " << tokens[0] << " in location directive" << std::endl;
+		exit(1);
+	}
+	if (tokens[0] == "root")
+	{
 		if (tokens.size() != 2 || tokens[1].back() != ';')
 		{
 			std::cerr << "Invalid root directive" << std::endl;
@@ -166,12 +165,8 @@ void ConfigParser::parseLocationLine(const std::string &line, LocationConfig &cu
 		}
 		currentLocation.setRoot(path);
 	}
-	else if (line.find("methods ") == 0)
+	else if (tokens[0] == "methods")
 	{
-		newLine = removeComment(line);
-		// std::cout << "parseLocationLine methods: tokens.size() before: " << tokens.size() << std::endl;
-		tokens = splitString(newLine, ' ');
-		// std::cout << "tokens.size() after: " << tokens.size() << std::endl;;
 		if (tokens.empty())
 		{
 			std::cerr << "Invalid methods directive: empty tokens" << std::endl;
@@ -188,12 +183,8 @@ void ConfigParser::parseLocationLine(const std::string &line, LocationConfig &cu
 		}
 		currentLocation.setMethods(tokens);
 	}
-	else if (line.find("index ") == 0)
+	else if (tokens[0] == "index")
 	{
-		newLine = removeComment(line);
-		// std::cout << "parseLocationLine index: tokens.size() before: " << tokens.size() << std::endl;
-		tokens = splitString(newLine, ' ');
-		// std::cout << "tokens.size() after: " << tokens.size() << std::endl;;
 		if (tokens.size() != 2 || tokens[1].back() != ';')
 		{
 			std::cerr << "Invalid index directive" << std::endl;
@@ -208,12 +199,8 @@ void ConfigParser::parseLocationLine(const std::string &line, LocationConfig &cu
 		}
 		currentLocation.setIndex(path);
 	}
-	else if (line.find("upload ") == 0)
+	else if (tokens[0] == "upload")
 	{
-		newLine = removeComment(line);
-		// std::cout << "parseLocationLine upload: tokens.size() before: " << tokens.size() << std::endl;
-		tokens = splitString(newLine, ' ');
-		// std::cout << "tokens.size() after: " << tokens.size() << std::endl;;
 		if (tokens.size() != 2 || tokens[1].back() != ';')
 		{
 			std::cerr << "Invalid upload directive" << std::endl;
@@ -233,12 +220,8 @@ void ConfigParser::parseLocationLine(const std::string &line, LocationConfig &cu
 		}
 		currentLocation.setUpload(upload == "on");
 	}
-	else if (line.find("autoindex ") == 0)
+	else if (tokens[0] == "autoindex")
 	{
-		newLine = removeComment(line);
-		// std::cout << "parseLocationLine autoindex: tokens.size() before: " << tokens.size() << std::endl;
-		tokens = splitString(newLine, ' ');
-		// std::cout << "tokens.size() after: " << tokens.size() << std::endl;;
 		if (tokens.size() != 2 || tokens[1].back() != ';')
 		{
 			std::cerr << "Invalid autoindex directive" << std::endl;
@@ -258,12 +241,8 @@ void ConfigParser::parseLocationLine(const std::string &line, LocationConfig &cu
 		}
 		currentLocation.setAutoIndex(autoindex == "on");
 	}
-	else if (line.find("cgi ") == 0)
+	else if (tokens[0] == "cgi") // not correct
 	{
-		newLine = removeComment(line);
-		// std::cout << "parseLocationLine cgi: tokens.size() before: " << tokens.size() << std::endl;
-		tokens = splitString(newLine, ' ');
-		// std::cout << "tokens.size() after: " << tokens.size() << std::endl;;
 		if (tokens.size() != 3 || tokens[2].back() != ';')
 		{
 			std::cerr << "Invalid cgi directive. Format: cgi <extension> <bin>;" << std::endl;
@@ -274,11 +253,10 @@ void ConfigParser::parseLocationLine(const std::string &line, LocationConfig &cu
 		bin.pop_back(); // ';'
 		if (extenstion.empty() || bin.empty())
 		{
-			std::cerr << "cgi extension or binary path is empty" << std::endl;
+			std::cerr << "Cgi extension or binary path is empty" << std::endl;
 			exit(1);
 		}
-		currentLocation.setCgiExtension(extenstion);
-		currentLocation.setCgiBin(bin);
+		currentLocation.addCgi(extenstion, bin);
 	}
 	else
 	{
@@ -296,6 +274,7 @@ ConfigParser::ConfigParser(const std::string &configFile)
 		exit(1);
 	}
 	std::string line;
+	std::vector<std::string> tokens;
 	std::stack<Level> levelStack;
 	ServerConfig currentServer;
 	LocationConfig currentLocation;
@@ -305,28 +284,64 @@ ConfigParser::ConfigParser(const std::string &configFile)
 		if (line.empty() || line[0] == '#') // clear line
 			continue;
 
-
-		if (line == "server {")
+		line = removeComment(line);
+		tokens = splitString(line);
+		// if (line == "server" || line == "server {") // не очень проверка
+		if (line.find("server") == 0 && (levelStack.empty() || levelStack.top() != SERVER))
 		{
 			currentServer = ServerConfig(); // new server
+			bool braceOnLine = false;
+			if (tokens.size() == 2 && tokens[1] == "{")
+				braceOnLine = true;
+			else if (tokens.size() > 1)
+			{
+				std::cerr << "Invalid server directive: too many tokens" << std::endl;
+				exit(1);
+			}
+			if (!braceOnLine)
+			{
+				std::getline(file, line);
+				line = trim(removeComment(line));
+				if (line != "{")
+				{
+					std::cerr << "Expected '{' after server" << std::endl;
+					exit(1);
+				}
+			}
 			levelStack.push(SERVER);
-			std::cout << "Created new server" << std::endl;
+			std::cout << "\nCREATED NEW SERVER..." << std::endl;
 			continue;
 		}
-		else if (line.find("location ") == 0)
+		else if (line.find("location") == 0 && levelStack.top() == SERVER)
 		{
 			currentLocation = LocationConfig(); // new Location
-			std::string newLine = removeComment(line);
-			std::vector<std::string> tokens = splitString(newLine, ' ');
-			if (tokens.size() == 1)
+			bool braceOnLine = false;
+			if (tokens.size() == 3 && tokens[2] == "{")
+				braceOnLine = true;
+			else if (tokens.size() == 1)
 			{
 				std::cerr << "Invalid location directive" << std::endl;
 				exit(1);
 			}
+			else if (tokens.size() > 2)
+			{
+				std::cerr << "Invalid location directive: too many tokens" << std::endl;
+				exit(1);
+			}
+			if (!braceOnLine)
+			{
+				std::getline(file, line);
+				line = trim(removeComment(line));
+				if (line != "{")
+				{
+					std::cerr << "Expected '{' after location" << std::endl;
+					exit(1);
+				}
+			}
 			std::string path = tokens[1];
 			currentLocation.setPath(path);
 			levelStack.push(LOCATION);
-			std::cout << "\nCreated new location " << path << std::endl;
+			std::cout << "\nCREATED NEW LOCATION " << path << std::endl;
 			continue;
 		}
 		else if (line == "}")
@@ -363,8 +378,21 @@ ConfigParser::ConfigParser(const std::string &configFile)
 			{
 				if (!currentServer.isValid())
 					exit(1);
-				webserv.addServer(currentServer);
-				currentServer = ServerConfig();
+				try
+				{
+					ServerConfig copy = currentServer;
+					webserv.addServer(copy);
+				}
+				catch (std::exception &e)
+				{
+					std::cerr << "Exception during addServer: " << e.what() << std::endl;
+					exit(1);
+				}
+				catch (...)
+				{
+					std::cerr << "Uknown exception during addServer" << std::endl;
+					exit(1);
+				}
 				std::cout << "Added new server" << std::endl;
 			}
 			continue;
@@ -373,13 +401,9 @@ ConfigParser::ConfigParser(const std::string &configFile)
 		{
 			Level current = levelStack.top();
 			if (current == SERVER)
-			{
 				parseServerLine(line, currentServer);
-			}
 			else if (current == LOCATION)
-			{
 				parseLocationLine(line, currentLocation);
-			}
 		}
 	}
 	if (!levelStack.empty())

@@ -6,8 +6,6 @@ LocationConfig::LocationConfig()
 	this->methods = {"GET", "POST", "DELETE"};
 	this->upload = false;
 	this->upload_dir = "";
-	this->cgi_extension = "";
-	this->cgi_bin = "";
 	this->auto_index = false;
 	this->index = "index.html";
 }
@@ -47,14 +45,9 @@ void LocationConfig::setIndex(const std::string &file)
 	this->index = file;
 }
 
-void LocationConfig::setCgiExtension(const std::string &ext)
+void LocationConfig::addCgi(const std::string &ext, const std::string &bin)
 {
-	this->cgi_extension = ext;
-}
-
-void LocationConfig::setCgiBin(const std::string &bin)
-{
-	this->cgi_bin = bin;
+	cgi[ext] = bin;
 }
 
 
@@ -93,16 +86,10 @@ const std::string &LocationConfig::getIndex() const
 	return this->index;
 }
 
-const std::string &LocationConfig::getCgiExtension() const
+const std::unordered_map<std::string, std::string> &LocationConfig::getCgi() const
 {
-	return this->cgi_extension;
+	return this->cgi;
 }
-
-const std::string &LocationConfig::getCgiBin() const
-{
-	return this->cgi_bin;
-}
-
 
 bool LocationConfig::isValid() const
 {
@@ -115,6 +102,15 @@ bool LocationConfig::isValid() const
 	{
 		std::cerr << "Invalid location path" << std::endl;
 		return false;
+	}
+	// check CGI: keys and values must not be empty
+	for (std::unordered_map<std::string, std::string>::const_iterator it = cgi.begin(); it != cgi.end(); ++it)
+	{
+		if (it->first.empty() || it->second.empty())
+		{
+			std::cerr << "Invalid CGI configuration: extension or binary is empty" << std::endl;
+			return false;
+		}
 	}
 	return true;
 }
