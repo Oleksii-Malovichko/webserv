@@ -44,7 +44,7 @@ int create_socket()
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(8080);
 	addr.sin_addr.s_addr = INADDR_ANY;
-	if (bind(server_fd, (struct sockaddr*)&addr, sizeof(addr)) == -1)
+	if (bind(server_fd, (struct sockaddr *)&addr, sizeof(addr)) == -1)
 	{
 		perror("bind");
 		close(server_fd);
@@ -68,7 +68,7 @@ void handle_client(int client_fd, int epfd)
 	if (bytes < 0)
 	{
 		if (errno == EWOULDBLOCK || errno == EAGAIN || errno == EINTR)
-			return ;
+			return;
 		perror("read");
 	}
 	else if (bytes == 0)
@@ -76,7 +76,7 @@ void handle_client(int client_fd, int epfd)
 	else
 	{
 		printf("Client(%d): %.*s\n", client_fd, (int)bytes, buffer);
-		return ;
+		return;
 	}
 	if (epoll_ctl(epfd, EPOLL_CTL_DEL, client_fd, NULL))
 		perror("epoll_ctl DEL");
@@ -112,7 +112,7 @@ int accept_client(int server_fd, int epfd)
 	return 1;
 }
 
-#define MAX_EVENTS 16
+#define MAX_EVENTS 16 // почему 16?
 
 int main()
 {
@@ -134,11 +134,12 @@ int main()
 		close(server_fd);
 		exit(1);
 	}
+
 	struct epoll_event events[MAX_EVENTS]; // будующий массив, где мы будем хранить к-во измененных дескрипторов за раз
 
 	while (1)
 	{
-		int n = epoll_wait(epfd, events, MAX_EVENTS, -1);
+		int n = epoll_wait(epfd, events, MAX_EVENTS, -1); // заснуть, и ждать событий (пока какой-нибудь fd не изменит свое состояние)
 		if (n == -1)
 		{
 			if (errno == EINTR)

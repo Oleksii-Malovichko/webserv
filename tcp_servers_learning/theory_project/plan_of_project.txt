@@ -35,3 +35,24 @@ pipe
 env
 non-blocking
 EOF-handling
+
+
+[ epoll loop ]
+      ↓
+[ Client state machine ]
+      ↓
+[ HTTP parse ]
+      ↓
+[ Routing / Files / CGI ]
+      ↓
+[ HTTP response ]
+      ↓
+[ write() ]
+
+
+как чеклист:
+✔ epoll + Client + timeout
+✔ read/write без HTTP
+✔ HTTP parsing
+✔ static files
+✔ CGI

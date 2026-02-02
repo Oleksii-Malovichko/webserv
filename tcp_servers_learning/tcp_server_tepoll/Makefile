@@ -2,7 +2,7 @@
 NAME2 = client
 NAME3 = corrct_server
 
-CC = cc 
+CC = cc
 C_FLAGS = -Wall -Wextra -Werror
 
 # SRCS1 = ft_printf/funcs.c ft_printf/funcs2.c ft_printf/ft_printf.c ft_printf/process_string.c ft_printf/process_string2.c
