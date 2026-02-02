@@ -1,5 +1,8 @@
 NAME1 = webserv
-NAME2 = client
+NAME2 = client_app
+
+# NAME1 = bin/webserv
+# NAME2 = bin/client_app
 
 SRCS1 = main.cpp RAII/epoll/Epoll.cpp \
 	LocationConfig/LocationConfig.cpp \
@@ -14,8 +17,10 @@ SRCS1 = main.cpp RAII/epoll/Epoll.cpp \
 
 SRCS2 = client.c
 
-OBJS1 = $(SRCS1:.cpp=.o)
-OBJS2 = $(SRCS2:.c=.o)
+OBJ_DIR = obj
+
+OBJS1 = $(SRCS1:%.cpp=$(OBJ_DIR)/%.o)
+OBJS2 = $(SRCS2:%.c=$(OBJ_DIR)/%.o)
 
 CC = cc
 CFLAGS = -Wall -Wextra -Werror
@@ -34,21 +39,25 @@ CXXFLAGS = -Wall -Wextra -Werror \
 all: $(NAME1) $(NAME2)
 
 $(NAME1): $(OBJS1)
+#	mkdir -p bin
 	$(CXX) $(CXXFLAGS) $(OBJS1) -o $(NAME1)
 
 $(NAME2): $(OBJS2)
 	$(CC) $(CFLAGS) $(OBJS2) -o $(NAME2)
 
-%.o: %.c
+$(OBJ_DIR)/%.o: %.c
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-%.o: %.cpp
+$(OBJ_DIR)/%.o: %.cpp
+	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJS1) $(OBJS2)
+	rm -rf $(OBJ_DIR)
 
 fclean: clean
 	rm -f $(NAME1) $(NAME2)
+#   rm -rf bin
 
 re: fclean all 
