@@ -1,22 +1,13 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   CgiHandler.cpp                                     :+:      :+:    :+:   */
+/*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: pauladrettas <pauladrettas@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/02/04 17:04:59 by pauladretta       #+#    #+#             */
-/*   Updated: 2026/02/04 22:02:02 by pauladretta      ###   ########.fr       */
+/*   Created: 2026/02/04 17:10:03 by pauladretta       #+#    #+#             */
+/*   Updated: 2026/02/04 22:01:30 by pauladretta      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-
-// function is from main code base empty (entry point of CGI) already
-// (fill at end when cgi part done -> this ft is the start point for CGI)
-// calls my CGI executor, result of that will be sent back to client
-void Server::handleCGI(Client &client)
-{
-    // CGIRequest req = buildFromClient(client);
-    // CGIResult res = cgi.execute(req);
-    // sendHttpResponse(client, res);
-}
+// for debugging purposes: test main
