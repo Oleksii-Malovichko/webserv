@@ -119,11 +119,11 @@ void Server::handleClient(Client &client)
 {
 	std::string buf = client.getReadBuffer();
 	HttpRequest &req = client.getRequest();
-	req.contentLength = 0;
 	std::string headerPart;
 	size_t pos = buf.find("\r\n\r\n");
 	if (pos != std::string::npos)
 	{
+		req.contentLength = 0;
 		headerPart = buf.substr(0, pos);
 		parseHttpHeaders(headerPart, req);
 		size_t bodyStart = pos + 4; // after '\r\n\r\n'
@@ -138,7 +138,7 @@ void Server::handleClient(Client &client)
 			"\r\n"
 			"Hello, world!";
 
-			std::cout << "WHOLE READBUFFER:"<< std::endl;
+			std::cout << "\nWHOLE READBUFFER:"<< std::endl;
 			std::cout << buf << std::endl;
 
 			client.appendToWriteBuffer(back_msg);
@@ -159,6 +159,7 @@ void Server::handleClient(Client &client)
 		std::cout << "Value: " << it->second << std::endl;
 	}
 	std::cout << "Content-length: " << req.contentLength << std::endl;
+	std::cout << "Body:\n" << req.body << std::endl;
 }
 
 // void Server::handleClient(Client &client)
