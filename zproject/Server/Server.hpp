@@ -3,12 +3,15 @@
 #include "Epoll.hpp"
 #include "ServerConfig.hpp"
 #include "WebServConfig.hpp"
+#include "ConfigParser.hpp"
 #include <csignal>
+#include <algorithm>
+#include <cctype>
 
 class Server
 {
+	// std::vector<ServerConfig> configs; // configuration from file (удалить)
 	Epoll epoll;
-	std::vector<ServerConfig> configs; // configuration from file (удалить)
 	WebServConfig webserv;
 	static bool running; // simmilar to a global var, but incapsulated in a class (i did this like that, cause i wanna use it for SIGINT also)
 
@@ -18,7 +21,11 @@ class Server
 	private:
 		static void sigintHandler(int sig); // обработка сигнала SIGINT
 		void handleClient(Client &client); // парсинг запроса и формирование ответа
+		void handleParseRequest(Client &client);
 		void handleCGI(Client &client); // cgi
 		void shutdownServer();
-		// bool parseConfigfile(const std::string &configFile);
 };
+	
+// void handleClientEcho(Client &client); // простой echo-ответ
+std::vector<std::string> split(const std::string &s, const std::string &delimiter);
+std::string trim(const std::string &s);
