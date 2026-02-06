@@ -14,6 +14,9 @@
 # define CYAN "\033[1;36m"
 # define DEFAULT "\033[0m"
 
+# include "CgiHandler.hpp"
+//class CgiHandler;
+
 class Exceptions: public std::exception
 {
 	private:
@@ -36,6 +39,18 @@ class forkError: public Exceptions
 {
 	public:
 		forkError(void);
+};
+
+class dup2Error: public Exceptions
+{
+	public:
+		dup2Error(const std::string& err_message);
+};
+
+class execveError: public Exceptions
+{
+	public:
+		execveError(const CgiHandler& cgi_hand);
 };
 
 #endif

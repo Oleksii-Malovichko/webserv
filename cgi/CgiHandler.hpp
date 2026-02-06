@@ -3,6 +3,7 @@
 
 # include <chrono>
 # include <unistd.h>
+# include <iostream>
 # include <string>
 
 # include "CgiExceptions.hpp"
@@ -35,6 +36,9 @@ class CgiHandler
 			std::string& key, std::string& value);
 		
 		int runExecve(void) const;
+		void printArgs(std::ostream& out) const;
+		void printEnvp(std::ostream& out) const;
+		const char* getCgiPath(void) const;
 		
 };
 

@@ -74,8 +74,15 @@ int CgiHandler::runExecve(void) const
 	
 	if (_execution_child == 0)
 	{
+		if (dup2(this->_infd[0], STDIN_FILENO))
+			throw dup2Error("Failed to dup2 _infd[0]");
+
+		if (dup2(this->_outfd[1], STDOUT_FILENO))
+			throw dup2Error("Failed to dup2 _infd[0]");
+		
 		execve(this->cgi_path, 
 			this->_args, this->_envp);
+		throw execveError(*this);
 	}
 	else
 	{
@@ -86,5 +93,38 @@ int CgiHandler::runExecve(void) const
 			response += std::string(buffer);
 		}
 	}
+}
+
+void CgiHandler::printArgs(std::ostream& out) const
+{
+	int i = 0;
+	
+	out	<< "The number of arguments: " 
+				<< this->_args_num << "\n";
+	while (this->_args[i] != NULL)
+	{
+		out	<< "The args[" << i << "]: "
+					<< this->_args[i] << std::endl;
+		i++;
+	}		
+}
+
+void CgiHandler::printEnvp(std::ostream& out) const
+{
+	int i = 0;
+	
+	out	<< "The number of environment elements: " 
+				<< this->_envp_num << "\n";
+	while (this->_envp[i] != NULL)
+	{
+		out	<< "The envp[" << i << "]: "
+			<< this->_envp[i] << std::endl;
+		i++;
+	}	
+}
+
+const char* CgiHandler::getCgiPath(void) const
+{
+	return (this->cgi_path);
 }
 
