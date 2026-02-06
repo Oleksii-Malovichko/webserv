@@ -42,8 +42,8 @@ int CgiHandler::addArgsElement(std::string& value)
 	this->_args = new_args;
 }
 
-int CgiHandler::addEnvpElement(std::string& key,
-	std::string& value)
+int CgiHandler::addEnvpElement(const std::string& key,
+	const std::string& value)
 {
 	std::string add_str = key + "=" + value;
 	this->_envp_num++;
@@ -93,6 +93,22 @@ int CgiHandler::runExecve(void) const
 			response += std::string(buffer);
 		}
 	}
+}
+
+void CgiHandler::setEnvp(void)
+{
+	this->addEnvpElement("REQUEST_METHOD", "GET");
+	this->addEnvpElement("SCRIPT_NAME", "/cgi-bin/test.py");
+	this->addEnvpElement("PATH_INFO", "");
+	this->addEnvpElement("QUERY_STRING", "name=Tom&age=25");
+	this->addEnvpElement("CONTENT_LENGTH", "");
+	this->addEnvpElement("CONTENT_TYPE", "");
+	this->addEnvpElement("SERVER_PROTOCOL", "HTTP/1.1");
+
+	this->addEnvpElement("GATEWAY_INTERFACE", "CGI/1.1");
+	this->addEnvpElement("SERVER_SOFTWARE", "webserv/1.0");
+	this->addEnvpElement("HTTP_HOST", "localhost");
+	this->addEnvpElement("HTTP_USER_AGENT", "curl/7.88");
 }
 
 void CgiHandler::printArgs(std::ostream& out) const
