@@ -111,6 +111,19 @@ void CgiHandler::setEnvp(void)
 	this->addEnvpElement("HTTP_USER_AGENT", "curl/7.88");
 }
 
+void CgiHandler::setArgsAndCgiPath(void)
+{
+	//later the following strings need to change the 
+	// info which came from the request
+	this->cgi_path = "/usr/bin/python3";
+
+	std::string arg0 = this->cgi_path;
+	std::string arg1 = "./www/cgi-bin/hello.py";
+	
+	this->addArgsElement(arg0);
+	this->addArgsElement(arg1);
+}
+
 void CgiHandler::printArgs(std::ostream& out) const
 {
 	int i = 0;
