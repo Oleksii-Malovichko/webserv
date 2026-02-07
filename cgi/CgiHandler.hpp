@@ -6,7 +6,7 @@
 /*   By: pauladrettas <pauladrettas@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 17:07:24 by pauladretta       #+#    #+#             */
-/*   Updated: 2026/02/04 22:01:01 by pauladretta      ###   ########.fr       */
+/*   Updated: 2026/02/05 17:58:12 by pauladretta      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,14 @@ class CgiHandler
         // pid value
         // pipe fds
         // time
+        // exit code (use later)
         // ...
+        
+
+    public:
+        CgiHandler();
+        ~CgiHandler();
+        bool execute();
         
 };
 
