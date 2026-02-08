@@ -46,7 +46,12 @@ dup2Error::dup2Error(const std::string& err_message)
 	setMessage(ss.str());
 }
 
-execveError::execveError(const CgiHandler& cgi_hand)
+/*
+This function need to close the pipefd-s and the exit the child process
+Here it need use _exit because simple exit runs the 
+class destructors and flushes stdio
+*/
+execveError::execveError(CgiHandler& cgi_hand)
 {
 	std::stringstream ss;
 
@@ -59,4 +64,18 @@ execveError::execveError(const CgiHandler& cgi_hand)
 	ss << "The errno message: " << strerror(errno);
 
 	setMessage(ss.str());
+
+	cgi_hand.closePipeFd(0);
+	_exit(1);
+}
+
+readError::readError(CgiHandler& cgi_hand)
+{
+	std::stringstream ss;
+
+	ss << "Failed to read CGI STDOUT"
+		<< strerror(errno);
+
+	setMessage(ss.str());
+	cgi_hand.closePipeFd(0);
 }

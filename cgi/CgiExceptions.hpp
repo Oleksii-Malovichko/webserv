@@ -5,6 +5,7 @@
 # include <string>
 # include <cstring>
 # include <sstream>
+# include <stdlib.h>
 
 # define RED "\033[1;31m"
 # define GREEN "\033[1;32m"
@@ -50,7 +51,13 @@ class dup2Error: public Exceptions
 class execveError: public Exceptions
 {
 	public:
-		execveError(const CgiHandler& cgi_hand);
+		execveError(CgiHandler& cgi_hand);
+};
+
+class readError: public Exceptions
+{
+	public:
+		readError(CgiHandler& cgi_hand);
 };
 
 #endif

@@ -35,10 +35,11 @@ class CgiHandler
 		int addEnvpElement(
 			const std::string& key, const std::string& value);
 		
-		int runExecve(void) const;
+		int runExecve(void);
 		void setEnvp(void); // later the request class will be the argument
 		void printArgs(std::ostream& out) const;
 		void printEnvp(std::ostream& out) const;
+		void closePipeFd(int opt);
 		const char* getCgiPath(void) const;
 		
 };

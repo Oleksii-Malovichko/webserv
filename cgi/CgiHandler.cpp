@@ -62,7 +62,7 @@ int CgiHandler::addEnvpElement(const std::string& key,
 	this->_envp = new_envp;
 }	
 
-int CgiHandler::runExecve(void) const
+int CgiHandler::runExecve(void)
 {
 	//the request budy string given to test,
 	// later need to change from the http value
@@ -79,6 +79,8 @@ int CgiHandler::runExecve(void) const
 
 		if (dup2(this->_outfd[1], STDOUT_FILENO))
 			throw dup2Error("Failed to dup2 _infd[0]");
+
+		this->closePipeFd(0);
 		
 		execve(this->cgi_path, 
 			this->_args, this->_envp);
@@ -86,12 +88,26 @@ int CgiHandler::runExecve(void) const
 	}
 	else
 	{
+		this->closePipeFd(1);
+
 		write(this->_infd[1], request_body.c_str(), request_body.length());
-		readbyte = read(this->_outfd[0], buffer, CGI_BUFFER_SIZE);
-		if (readbyte > 0)
+		close(this->_infd[1]);
+
+		//This part need to continue -> write a nonblocking version
+		while (readbyte > 0)
 		{
-			response += std::string(buffer);
+			readbyte = read(this->_outfd[0], buffer, CGI_BUFFER_SIZE);
+			if (readbyte < 0)
+			{
+				throw readError(*this);
+			}
+			if (readbyte > 0)
+			{
+				response += std::string(buffer);
+			}
 		}
+
+		close(this->_outfd[0]);
 	}
 }
 
@@ -137,6 +153,21 @@ void CgiHandler::printEnvp(std::ostream& out) const
 			<< this->_envp[i] << std::endl;
 		i++;
 	}	
+}
+
+void CgiHandler::closePipeFd(int opt)
+{
+	if (opt == 1 || opt == 0)
+	{
+		close(this->_infd[0]);
+		close(this->_outfd[1]);
+	}
+
+	if (opt == 2 || opt == 0)
+	{
+		close(this->_infd[1]);
+		close(this->_outfd[0]);
+	}
 }
 
 const char* CgiHandler::getCgiPath(void) const
