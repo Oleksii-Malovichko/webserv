@@ -37,6 +37,7 @@ class CgiHandler
 		
 		int runExecve(void);
 		void setEnvp(void); // later the request class will be the argument
+		void setArgsAndCgiPath(void);
 		void printArgs(std::ostream& out) const;
 		void printEnvp(std::ostream& out) const;
 		void closePipeFd(int opt);
