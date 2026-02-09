@@ -6,7 +6,7 @@
 /*   By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 17:04:59 by pauladretta       #+#    #+#             */
-/*   Updated: 2026/02/09 07:13:37 by pdrettas         ###   ########.fr       */
+/*   Updated: 2026/02/09 09:48:12 by pdrettas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,18 +17,16 @@
 // calls my CGI executor, result of that will be sent back to client
 // void Server::handleCGI(Client &client)
 // {
-//     // CGIRequest req = buildFromClient(client);
-//     // CGIResult res = cgi.execute(req);
-//     // sendHttpResponse(client, res);
+        // execute ft will be called here
 // }
 
-// constructor
-CgiHandler::CgiHandler()
-{
-    // initialize variables here
-}
+// personalized constructor
+CgiHandler::CgiHandler(std::string& requestBody, char **envp, std::string filePath, char **argv)
+    : _requestBody(requestBody), _envp(envp), _filePath(filePath), _argv(argv)
+{}
 
 // destructor
+// TODO: cleanup
 CgiHandler::~CgiHandler()
 {}
 
@@ -44,20 +42,35 @@ void CgiHandler::closePipes(PipeCloseCall action)
         close(this->_cgi_to_srv[0]);
         close(this->_cgi_to_srv[1]);
     }
+    if (action == CLOSE_SRV_TO_CGI_RD)
+    {
+        close(_srv_to_cgi[0]);
+    }
+    if (action == CLOSE_CGI_TO_SRV_WR)
+    {
+        close(_cgi_to_srv[1]);
+    }
 }
 
 // execution function (will be called in handleCGI ft)
 /*
 - redirect stdin only for POST requests, not necessary for GET requests
-- 2 pipes
 
-NEXT STEPS:
-1. finish redirection in child, and waitpid
-2. create example of envp (also see function below below)
-3. test w testscript.py when calling execute ft in main
-4. **DONE: write ft for closing fds
+NEXT STEPS TODO:
+- **DONE 2: finish redirection in child, and waitpid
+- create testing main (envp, body)
+- **DONE 2: add variables to personalized constructor coming from server, needed for input/execution
+- test w testscript.py when calling execute ft in main
+- **DONE 1: write ft for closing fds
 
-5. Translate CGI output -> HTTP response
+- Translate CGI output -> HTTP response
+
+- refactor execute ft by putting parts into helper fts
+- add error stuff
+- (?) check waitpid status / exit code
+- (?) reorder closing fds for child based on parent-only & child-only logic
+
+- recheck file descriptors if closing is timed properly 
 */
 bool CgiHandler::execute()
 {
@@ -96,36 +109,38 @@ bool CgiHandler::execute()
         // execve CGI (TODO: envp -> create example of envp to use here)
         exit(1);
     }
-    else 
+    // parent
+    else
     {
-        // parent
             // close fds
+            this->closePipes(CLOSE_SRV_TO_CGI_RD); // parent does not read CGI stdin
+            this->closePipes(CLOSE_CGI_TO_SRV_WR); // parent does not write CGI stdout
+            
+            // write() POST request body (form data, json, etc) (srv to cgi[1]): writing the body to the pipe
+                // TODO: maybe add this above the child (for better reading order)
+                // close write end once done so CGI knows no more data coming
+                // for GET request body is empty
+            
+
+
+            
+            
+            // read() CGI stdout  (cgi to srv[0])
+
+
+            
+
+            
+            
             // waitpid
-            // ...
-            // write request body (post only)
-            // read cgi output)
+            waitpid(this->_pid, NULL, 0); // no zombies // TODO: check exit status?
+
             // translate cgi output as http response
+            
+            
+
+            
     }
 
     return true;
 }       
-
-
-
-
-// T ft
-// void CgiHandler::setEnvp(void)
-// {
-// 	this->addEnvpElement("REQUEST_METHOD", "GET");
-// 	this->addEnvpElement("SCRIPT_NAME", "/cgi-bin/test.py");
-// 	this->addEnvpElement("PATH_INFO", "");
-// 	this->addEnvpElement("QUERY_STRING", "name=Tom&age=25");
-// 	this->addEnvpElement("CONTENT_LENGTH", "");
-// 	this->addEnvpElement("CONTENT_TYPE", "");
-// 	this->addEnvpElement("SERVER_PROTOCOL", "HTTP/1.1");
-
-// 	this->addEnvpElement("GATEWAY_INTERFACE", "CGI/1.1");
-// 	this->addEnvpElement("SERVER_SOFTWARE", "webserv/1.0");
-// 	this->addEnvpElement("HTTP_HOST", "localhost");
-// 	this->addEnvpElement("HTTP_USER_AGENT", "curl/7.88");
-// }
