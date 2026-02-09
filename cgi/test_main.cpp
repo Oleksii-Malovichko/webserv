@@ -6,7 +6,7 @@
 /*   By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 17:10:03 by pauladretta       #+#    #+#             */
-/*   Updated: 2026/02/09 09:52:02 by pdrettas         ###   ########.fr       */
+/*   Updated: 2026/02/09 10:18:39 by pdrettas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 // main is only for testing/debugging purposes
 // when compiling: 1. make, 2. ./cgi cgi_scripts/test_file.py (or any other test file)
-int main(char **argv, int argc)
+int main(int argc, char **argv)
 {
     // STEP: create testing envp
         char* envp[] = {
@@ -26,10 +26,10 @@ int main(char **argv, int argc)
 
     // STEP: create testing POST body
     std::string postBody = "name=Paula&age=26";
+    std::string getBody = "";
     
     // STEP: create CGI handler
-    char* argv[] = { (char*)"testscript.py", nullptr };
-    CgiHandler cgi(postBody, envp, "cgi_scripts/testscript.py", argv); // call this one in server ft
+    CgiHandler cgi(postBody, envp, "cgi_scripts/test_file.py", argv); // call this one in server ft
 
     // STEP: execute cgi
     if (!cgi.execute())

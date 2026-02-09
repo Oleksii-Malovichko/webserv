@@ -6,7 +6,7 @@
 /*   By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 17:04:59 by pauladretta       #+#    #+#             */
-/*   Updated: 2026/02/09 09:48:12 by pdrettas         ###   ########.fr       */
+/*   Updated: 2026/02/09 12:11:57 by pdrettas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@
 // }
 
 // personalized constructor
-CgiHandler::CgiHandler(std::string& requestBody, char **envp, std::string filePath, char **argv)
+CgiHandler::CgiHandler(const std::string& requestBody, char **envp, const std::string& filePath, char **argv)
     : _requestBody(requestBody), _envp(envp), _filePath(filePath), _argv(argv)
 {}
 
@@ -42,11 +42,11 @@ void CgiHandler::closePipes(PipeCloseCall action)
         close(this->_cgi_to_srv[0]);
         close(this->_cgi_to_srv[1]);
     }
-    if (action == CLOSE_SRV_TO_CGI_RD)
+    if (action == CLOSE_READ_SRV_TO_CGI)
     {
         close(_srv_to_cgi[0]);
     }
-    if (action == CLOSE_CGI_TO_SRV_WR)
+    if (action == CLOSE_WRITE_CGI_TO_SRV)
     {
         close(_cgi_to_srv[1]);
     }
@@ -54,16 +54,22 @@ void CgiHandler::closePipes(PipeCloseCall action)
 
 // execution function (will be called in handleCGI ft)
 /*
-- redirect stdin only for POST requests, not necessary for GET requests
+Pipe 1: for server to write the request body to CGI
+Pipe 2: for server to read output from CGI
 
 NEXT STEPS TODO:
-- **DONE 2: finish redirection in child, and waitpid
-- create testing main (envp, body)
-- **DONE 2: add variables to personalized constructor coming from server, needed for input/execution
-- test w testscript.py when calling execute ft in main
 - **DONE 1: write ft for closing fds
+- **DONE 2: finish redirection in child, and waitpid
+- **DONE 2: create testing main (envp, body)
+- **DONE 2: add variables to personalized constructor coming from server, needed for input/execution
 
-- Translate CGI output -> HTTP response
+- **DONE 3: add execve part
+- **DONE 3: add write part
+- **DONE 3: add read part
+
+- test w testscript.py when calling execute ft in main
+
+- translate CGI output -> HTTP response
 
 - refactor execute ft by putting parts into helper fts
 - add error stuff
@@ -71,6 +77,7 @@ NEXT STEPS TODO:
 - (?) reorder closing fds for child based on parent-only & child-only logic
 
 - recheck file descriptors if closing is timed properly 
+- recheck error handling (messages, etc) (possibly instead of exit)
 */
 bool CgiHandler::execute()
 {
@@ -106,40 +113,54 @@ bool CgiHandler::execute()
         }
         this->closePipes(CLOSE_CGI_TO_SRV);
         
-        // execve CGI (TODO: envp -> create example of envp to use here)
+        // execve CGI
+        execve(this->_filePath.c_str(), this->_argv, this->_envp);
+        std::cout << "cgi execution error" << std::endl; // TODO: delete after testing
         exit(1);
     }
-    // parent
+    // parent ("server")
     else
     {
-            // close fds
-            this->closePipes(CLOSE_SRV_TO_CGI_RD); // parent does not read CGI stdin
-            this->closePipes(CLOSE_CGI_TO_SRV_WR); // parent does not write CGI stdout
-            
-            // write() POST request body (form data, json, etc) (srv to cgi[1]): writing the body to the pipe
-                // TODO: maybe add this above the child (for better reading order)
-                // close write end once done so CGI knows no more data coming
-                // for GET request body is empty
+        // close fds
+        this->closePipes(CLOSE_READ_SRV_TO_CGI); // parent does not read CGI stdin
+        this->closePipes(CLOSE_WRITE_CGI_TO_SRV); // parent does not write CGI stdout
+        
+        // write POST(full) & GET(empty) request body to the first pipe shared w CGI (server -> CGI)
+            // TODO: maybe add this above the child (for better reading order)
+            // for GET request body is empty, so only write() if body not empty
+        if (!this->_requestBody.empty())
+        {
+            if (write(this->_srv_to_cgi[1], this->_requestBody.c_str(), this->_requestBody.size()) == -1) // fd to pipe, pointer to data/bytes, number of bytes to write
+                return false;
+        }
+        close(this->_srv_to_cgi[1]); // signals end of input to CGI to avoid waiting/blocking, TODO: replace w closepipe ft later
+        
+        
+        // read the CGI output (from the child process that executed the file script) from the second pipe (cgi to srv[0]) (CGI -> server)
+        int bytesRead;
+        char buffer[4096];
+        std::string cgiOutput;
+        while (bytesRead > 0)
+        {
+            bytesRead = read(this->_cgi_to_srv[0], buffer, sizeof(buffer));
+            cgiOutput.append(buffer, bytesRead);
+        }
+        if (bytesRead == -1) // error check for read ft
+            return false;
+        
+        close (this->_cgi_to_srv[0]); // close bc done using, TODO: replace w closepipe ft later
+
+        std::cout << "CGI OUTPUT: " << std::endl << cgiOutput << std::endl;
+        
+        
+        // waitpid
+        waitpid(this->_pid, NULL, 0); // no zombies // TODO: check exit status?
+
+        
+        // translate cgi output as http response
+        
             
 
-
-            
-            
-            // read() CGI stdout  (cgi to srv[0])
-
-
-            
-
-            
-            
-            // waitpid
-            waitpid(this->_pid, NULL, 0); // no zombies // TODO: check exit status?
-
-            // translate cgi output as http response
-            
-            
-
-            
     }
 
     return true;

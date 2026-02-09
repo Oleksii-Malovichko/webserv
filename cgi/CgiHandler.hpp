@@ -6,7 +6,7 @@
 /*   By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 17:07:24 by pauladretta       #+#    #+#             */
-/*   Updated: 2026/02/09 09:47:49 by pdrettas         ###   ########.fr       */
+/*   Updated: 2026/02/09 10:42:27 by pdrettas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,8 +25,8 @@ enum PipeCloseCall
     CLOSE_ALL,
     CLOSE_SRV_TO_CGI, // closes both ends of pipe
     CLOSE_CGI_TO_SRV, // closes both ends of pipe
-    CLOSE_SRV_TO_CGI_RD, // for parent logic
-    CLOSE_CGI_TO_SRV_WR // for parent logic
+    CLOSE_READ_SRV_TO_CGI, // for parent logic
+    CLOSE_WRITE_CGI_TO_SRV // for parent logic
 };
 
 /*
@@ -50,7 +50,7 @@ class CgiHandler
         int _cgi_to_srv[2]; // cgi writes (output from script) in input [0], server uses output [1]
 
     public:
-        CgiHandler(std::string& requestBody, char ** envp, std::string filePath, char **argv);
+        CgiHandler(const std::string& requestBody, char **envp, const std::string& filePath, char **argv);
         ~CgiHandler();
         bool execute();
         void closePipes(PipeCloseCall action);
