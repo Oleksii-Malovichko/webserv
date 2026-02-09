@@ -6,7 +6,7 @@
 /*   By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 17:10:03 by pauladretta       #+#    #+#             */
-/*   Updated: 2026/02/09 10:18:39 by pdrettas         ###   ########.fr       */
+/*   Updated: 2026/02/09 12:43:41 by pdrettas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,9 +37,6 @@ int main(int argc, char **argv)
         std::cerr << "CGI execution failed!" << std::endl;
         return 1;
     }
-
-    // STEP: see output of cgi
-    // std::cout << cgi.getOutput() << std::endl;
 
     return 0;
 }
