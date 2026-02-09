@@ -6,7 +6,7 @@
 /*   By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 17:07:24 by pauladretta       #+#    #+#             */
-/*   Updated: 2026/02/07 21:53:34 by pdrettas         ###   ########.fr       */
+/*   Updated: 2026/02/09 07:11:25 by pdrettas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,13 @@
 #include <iostream>
 #include <vector>
 #include <unistd.h>
+
+enum PipeCloseCall
+{
+    CLOSE_ALL,
+    CLOSE_SRV_TO_CGI,
+    CLOSE_CGI_TO_SRV,
+};
 
 /*
 - envp: getting this variable from http parser 
@@ -31,14 +38,15 @@ class CgiHandler
         // exit code (use later)
         // ...
         pid_t _pid; // value child parent
-        int _in_cgi[2]; // server writes input [0], and cgi uses output [1]
-        int _out_cgi[2]; // cgi writes (output from script) in input [0], server uses output [1]
+        int _srv_to_cgi[2]; // server writes input [0], and cgi uses output [1]
+        int _cgi_to_srv[2]; // cgi writes (output from script) in input [0], server uses output [1]
         
 
     public:
         CgiHandler();
         ~CgiHandler();
         bool execute();
+        void closePipes(PipeCloseCall action);
         
 };
 
