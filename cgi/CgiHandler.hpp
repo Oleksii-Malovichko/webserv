@@ -3,6 +3,7 @@
 
 # include <chrono>
 # include <unistd.h>
+# include <fcntl.h>
 # include <iostream>
 # include <string>
 
@@ -41,6 +42,7 @@ class CgiHandler
 		void printArgs(std::ostream& out) const;
 		void printEnvp(std::ostream& out) const;
 		void closePipeFd(int opt);
+		void setNonBlockPipe(void);
 		const char* getCgiPath(void) const;
 		
 };

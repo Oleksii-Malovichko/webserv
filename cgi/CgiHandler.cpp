@@ -89,11 +89,13 @@ int CgiHandler::runExecve(void)
 	else
 	{
 		this->closePipeFd(1);
+		this->setNonBlockPipe();
 
 		write(this->_infd[1], request_body.c_str(), request_body.length());
 		close(this->_infd[1]);
 
 		//This part need to continue -> write a nonblocking version
+		/*
 		while (readbyte > 0)
 		{
 			readbyte = read(this->_outfd[0], buffer, CGI_BUFFER_SIZE);
@@ -104,6 +106,33 @@ int CgiHandler::runExecve(void)
 			if (readbyte > 0)
 			{
 				response += std::string(buffer);
+			}
+		}
+		*/
+
+		while (true)
+		{
+			readbyte = read(this->_outfd[0], buffer, CGI_BUFFER_SIZE);
+			if (readbyte > 0)
+			{
+				response += std::string(buffer);
+			}
+			else if (readbyte == 0)
+			{
+				close(this->_outfd[0]);
+				break ;
+			}
+			else
+			{
+				if (errno == EAGAIN || errno == EWOULDBLOCK)
+				{
+					break ;
+				}
+				else
+				{
+					close(this->_outfd[0]);
+					break ;
+				}
 			}
 		}
 
@@ -181,6 +210,12 @@ void CgiHandler::closePipeFd(int opt)
 		close(this->_infd[1]);
 		close(this->_outfd[0]);
 	}
+}
+
+void CgiHandler::setNonBlockPipe(void)
+{
+	fcntl(this->_outfd[0], F_SETFL, O_NONBLOCK);
+	fcntl(this->_infd[1], F_SETFL, O_NONBLOCK);
 }
 
 const char* CgiHandler::getCgiPath(void) const
