@@ -4,6 +4,8 @@ CgiHandler::CgiHandler(void)
 {
 	this->_args_num = 0;
 	this->_envp_num = 0;
+	this->_envp = NULL;
+	this->_args = NULL;
 	
 	if (pipe(this->_infd) == -1)
 		throw pipeError("Failed to create input pipe");
@@ -21,16 +23,40 @@ CgiHandler::CgiHandler(void)
 
 CgiHandler::~CgiHandler(void)
 {
-	
+	this->freeArgs();
+	this->freeEnvp();
 }
 
-int CgiHandler::addArgsElement(std::string& value)
+void CgiHandler::freeEnvp(void)
+{
+	for (int i = 0; this->_envp && this->_envp[i]; i++)
+	{
+		free(this->_envp[i]);
+	}
+	free(this->_envp);
+	this->_envp = NULL;
+	this->_envp_num = 0;
+}
+
+void CgiHandler::freeArgs(void)
+{
+	for (int i = 0; this->_args && this->_args[i]; i++)
+	{
+		free(this->_args[i]);
+	}
+	free(this->_args);
+	this->_args = NULL;
+	this->_args_num = 0;
+}
+
+void CgiHandler::addArgsElement(std::string& value)
 {
 	this->_args_num++;
 	int i = 0;
 
-	char **new_args = new char*[this->_args_num + 1];
-	while (i < this->_args_num - 1)
+	char **new_args = (char**)malloc((this->_args_num + 1) * sizeof(char*));
+
+	while (this->_args_num > 1 && i < this->_args_num - 1)
 	{
 		new_args[i] = strdup(this->_args[i]);
 		i++;
@@ -38,19 +64,20 @@ int CgiHandler::addArgsElement(std::string& value)
 	
 	new_args[i] = strdup(value.c_str());
 	new_args[this->_args_num] = NULL;
-	delete[] this->_args;
+	this->freeArgs();
 	this->_args = new_args;
 }
 
-int CgiHandler::addEnvpElement(const std::string& key,
+void CgiHandler::addEnvpElement(const std::string& key,
 	const std::string& value)
 {
 	std::string add_str = key + "=" + value;
 	this->_envp_num++;
 	int i = 0;
 
-	char **new_envp = new char*[this->_envp_num + 1];
-	while (i < this->_envp_num - 1)
+	char **new_envp = (char **)malloc((this->_envp_num + 1) * sizeof(char*));
+
+	while (this->_envp_num > 1 && i < this->_envp_num - 1)
 	{
 		new_envp[i] = strdup(this->_envp[i]);
 		i++;
@@ -58,11 +85,11 @@ int CgiHandler::addEnvpElement(const std::string& key,
 
 	new_envp[i] = strdup(add_str.c_str());
 	new_envp[this->_envp_num] = NULL;
-	delete[] this->_envp;
+	this->freeEnvp();
 	this->_envp = new_envp;
 }	
 
-int CgiHandler::runExecve(void)
+std::string CgiHandler::runExecve(void)
 {
 	//the request budy string given to test,
 	// later need to change from the http value
@@ -74,10 +101,10 @@ int CgiHandler::runExecve(void)
 	
 	if (_execution_child == 0)
 	{
-		if (dup2(this->_infd[0], STDIN_FILENO))
+		if (dup2(this->_infd[0], STDIN_FILENO) == -1)
 			throw dup2Error("Failed to dup2 _infd[0]");
 
-		if (dup2(this->_outfd[1], STDOUT_FILENO))
+		if (dup2(this->_outfd[1], STDOUT_FILENO) == -1)
 			throw dup2Error("Failed to dup2 _infd[0]");
 
 		this->closePipeFd(0);
@@ -138,6 +165,7 @@ int CgiHandler::runExecve(void)
 
 		close(this->_outfd[0]);
 	}
+	return (response);
 }
 
 void CgiHandler::setEnvp(void)
@@ -156,11 +184,11 @@ void CgiHandler::setEnvp(void)
 	this->addEnvpElement("HTTP_USER_AGENT", "curl/7.88");
 }
 
-void CgiHandler::setArgsAndCgiPath(void)
+void CgiHandler::setArgsAndCgiPath(char* in_cgi_path)
 {
 	//later the following strings need to change the 
 	// info which came from the request
-	this->cgi_path = "/usr/bin/python3";
+	this->cgi_path = in_cgi_path;
 
 	std::string arg0 = this->cgi_path;
 	std::string arg1 = "./www/cgi-bin/hello.py";

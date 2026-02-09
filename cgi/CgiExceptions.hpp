@@ -15,8 +15,8 @@
 # define CYAN "\033[1;36m"
 # define DEFAULT "\033[0m"
 
-# include "CgiHandler.hpp"
-//class CgiHandler;
+// # include "CgiHandler.hpp"
+class CgiHandler;
 
 class Exceptions: public std::exception
 {

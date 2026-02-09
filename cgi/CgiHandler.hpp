@@ -31,14 +31,16 @@ class CgiHandler
 
 		~CgiHandler(void);
 
-		int addArgsElement(
+		void addArgsElement(
 			std::string& value);
-		int addEnvpElement(
+		void addEnvpElement(
 			const std::string& key, const std::string& value);
 		
-		int runExecve(void);
+		std::string runExecve(void);
 		void setEnvp(void); // later the request class will be the argument
-		void setArgsAndCgiPath(void);
+		void setArgsAndCgiPath(char* in_cgi_path);
+		void freeEnvp(void);
+		void freeArgs(void);
 		void printArgs(std::ostream& out) const;
 		void printEnvp(std::ostream& out) const;
 		void closePipeFd(int opt);

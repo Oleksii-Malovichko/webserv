@@ -1,4 +1,5 @@
 #include "CgiExceptions.hpp"
+#include "CgiHandler.hpp"
 
 //Error classes
 void Exceptions::setMessage(
