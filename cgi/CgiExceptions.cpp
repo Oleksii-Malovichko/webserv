@@ -87,7 +87,7 @@ fileAccessError::fileAccessError(const std::string& file_path)
 
 	ss << "Can't access the executable file: "
 		<< file_path
-		<< "Error code: " << strerror(errno);
+		<< " Error code: " << strerror(errno);
 
 	setMessage(ss.str());
 }

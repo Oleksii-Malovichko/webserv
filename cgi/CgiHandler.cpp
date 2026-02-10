@@ -13,9 +13,9 @@ CgiHandler::CgiHandler(void)
 	if (pipe(this->_outfd) == -1)
 		throw pipeError("Failed to create output pipe");
 	
-	this->_execution_start_time = 
-		std::chrono::steady_clock::now();
 }
+
+CgiHandler* CgiHandler::_instance = nullptr;
 
 CgiHandler::~CgiHandler(void)
 {
@@ -52,8 +52,6 @@ void CgiHandler::addArgsElement(std::string& value)
 
 	char **new_args = (char**)malloc((this->_args_num + 1) * sizeof(char*));
 
-	std::cout << BLUE << "addArgsElement args_num: "
-				<< this->_args_num << DEFAULT << std::endl;
 	while (this->_args_num > 1 && i < this->_args_num -1)
 	{
 		new_args[i] = strdup(this->_args[i]);
@@ -64,7 +62,6 @@ void CgiHandler::addArgsElement(std::string& value)
 	new_args[this->_args_num] = NULL;
 	this->freeArgs();
 	this->_args = new_args;
-	printArgs(std::cout);
 }
 
 void CgiHandler::addEnvpElement(const std::string& key,
@@ -127,7 +124,7 @@ std::string CgiHandler::runExecve(void)
 		close(this->_infd[1]);
 
 		//This part need to continue -> write a nonblocking version
-	
+		/*
 		while (readbyte > 0)
 		{
 			readbyte = read(this->_outfd[0], buffer, CGI_BUFFER_SIZE);
@@ -144,18 +141,16 @@ std::string CgiHandler::runExecve(void)
 
 
 		waitpid(this->_execution_child, NULL, 0);
-
+		*/
 	
 		/*
 		Non-blocking version
+		*/
 		while (true)
 		{
-			std::cout << YELLOW << "in the while circle" << DEFAULT << std::endl;
 			readbyte = read(this->_outfd[0], buffer, CGI_BUFFER_SIZE);
 			if (readbyte > 0)
 			{
-				std::cout << YELLOW << "The buffer: " << std::string(buffer)
-							<< DEFAULT << std::endl;
 				response.append(buffer, readbyte);
 			}
 			else if (readbyte == 0)
@@ -178,15 +173,31 @@ std::string CgiHandler::runExecve(void)
 		}
 
 		close(this->_outfd[0]);
+
+		CgiHandler::_instance = this;
+		signal(SIGALRM, cgi_timout_handler);
+		alarm(CGI_MAX_TIME);
+
 		int status;
-		waitpid(this->_execution_child, &status, WNOHANG);
+		// waitpid(this->_execution_child, &status, WNOHANG);
+		waitpid(this->_execution_child, &status, 0);
 
 		if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
 			throw execveError(*this);
-		*/	
+
+		alarm(0);
 	}
 
 	return (response);
+}
+
+void CgiHandler::cgi_timout_handler(int) noexcept
+{
+	if (_instance)
+	{
+		_instance->closePipeFd(0);
+		kill(_instance->_execution_child, SIGKILL);
+	}
 }
 
 void CgiHandler::setEnvp(void)

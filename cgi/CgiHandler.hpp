@@ -3,6 +3,7 @@
 
 # include <chrono>
 # include <unistd.h>
+# include <signal.h>
 # include <fcntl.h>
 # include <sys/types.h>
 # include <sys/wait.h>
@@ -12,6 +13,7 @@
 # include "CgiExceptions.hpp"
 
 # define CGI_BUFFER_SIZE 1000
+# define CGI_MAX_TIME 5
 
 class CgiHandler
 {
@@ -24,9 +26,8 @@ class CgiHandler
 		int _envp_num;
 		char** _args;
 		char** _envp;
-		std::chrono::steady_clock::time_point 
-			_execution_start_time;
-		
+
+		static CgiHandler* _instance;
 
 	public:
 		CgiHandler(void);
@@ -37,6 +38,8 @@ class CgiHandler
 			std::string& value);
 		void addEnvpElement(
 			const std::string& key, const std::string& value);
+		
+		static void cgi_timout_handler(int sig) noexcept;
 		
 		std::string runExecve(void);
 		void setEnvp(void); // later the request class will be the argument

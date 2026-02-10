@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 		cgi_obj.setEnvp();
 		cgi_http_response = cgi_obj.runExecve();
 
-		std::cout	<< GREEN << "The HTTP response: "
+		std::cout	<< GREEN << "The HTTP response:\n"
 					<< CYAN << cgi_http_response
 					<< DEFAULT << std::endl;
 	}
