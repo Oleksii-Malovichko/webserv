@@ -109,6 +109,11 @@ std::chrono::steady_clock::time_point Client::getLastActivity() const
 	return this->lastActivity;
 }
 
+HttpRequest &Client::getRequest()
+{
+	return this->request;
+}
+
 void Client::close()
 {
 	socket.closeFD();

@@ -16,7 +16,7 @@ typedef struct t_data
 	pthread_t p2;
 } s_data;
 
-int connect_server()
+int connect_server(const char *ip, int port)
 {
 	int server_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (server_fd == -1)
@@ -28,9 +28,9 @@ int connect_server()
 	struct sockaddr_in addr;
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
-	addr.sin_port = htons(8080);
+	addr.sin_port = htons(port);
 
-	if (inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr) <= 0)
+	if (inet_pton(AF_INET, ip, &addr.sin_addr) <= 0)
 	{
 		perror("inet_pton");
 		close(server_fd);
@@ -96,12 +96,22 @@ void *write_data(void *arg)
 	return NULL;
 }
 
-int main()
+int main(int argc, char **argv)
 {
 	int rc;
 	s_data data;
-	data.server_fd = connect_server();
-
+	if (argc == 3)
+	{
+		char *ip = argv[1];
+		int port = atoi(argv[2]);
+		data.server_fd = connect_server(ip, port);
+	}
+	else
+	{
+		char *ip = "127.0.0.1";
+		int port = 8080;
+		data.server_fd = connect_server(ip, port);
+	}
 	rc = pthread_create(&data.p1, NULL, read_data, &data);
 	if (rc != 0)
 	{

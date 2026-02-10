@@ -6,19 +6,16 @@
 #include <fcntl.h>
 #include "ClientSocket.hpp"
 
-
-/* 
-= delete - копирование запрещено
-noexcept - означает что ф-я не выбрасывает исключение
-Client(Client &&other) noexcept; - позволяет перенсти ресурсы из одного объекта в другой
-Client& operator=(Client &&other) noexcept; - то же самое, но при присваивании уже существующего объекта
-После move старый объект должен остаться в безопасном "пустом" состоянии
-
-короче, вся эта дрочь нужна, чтобы нельзя было скопировать конструкторы, так как fd у каждого должен быть уникальный, а если есть больше одного объекта
-с одинаковым fd, то у нас будет double-close
-
-
-*/
+struct HttpRequest
+{
+	std::string method;
+	std::string path;
+	std::string version;
+	std::unordered_map<std::string, std::string> headers;
+	std::string body;
+	bool headersParsed = false;
+	size_t contentLength = 0; // если есть тело
+};
 
 class Client
 {
@@ -29,12 +26,21 @@ class Client
 			WRITING,
 			CLOSED
 		};
+	// public:
+	// 	enum struct State
+	// 	{
+	// 		READING_HEADERS,
+	// 		READING_BODY,
+	// 		PROCESSING,
+	// 		WRITING_RESPONCE
+	// 	};
 	private:
 		ClientSocket socket;
 		std::string readBuffer;
 		std::string writeBuffer;
 		State state;
 		std::chrono::steady_clock::time_point lastActivity;
+		HttpRequest request;
 
 	public:
 		// контсруктор принимает уже созданный сокет (explicit нужен чтобы не было неявных преоброзований)
@@ -52,6 +58,7 @@ class Client
 		void appendToWriteBuffer(const std::string &data); // добавить данные для отправки
 		void updateLastActivity(); // обновление времени активности
 		std::chrono::steady_clock::time_point getLastActivity() const;
+		HttpRequest &getRequest();
 
 		// эти ф-ии нужны для epoll!
 		void close(); // закрытие соединения

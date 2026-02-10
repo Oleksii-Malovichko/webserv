@@ -111,7 +111,7 @@ bool Epoll::handleClient(int fd, uint32_t ev)
 		}
 		else
 			client->updateLastActivity();
-		std::cout << "Client(" << client->getFD() << "): " << client->getReadBuffer() << std::endl;
+		// std::cout << "Client(" << client->getFD() << "): " << client->getReadBuffer() << std::endl;
 	}
 	if (ev & EPOLLOUT)
 	{
@@ -119,6 +119,11 @@ bool Epoll::handleClient(int fd, uint32_t ev)
 		{
 			client->writeToSocket();
 			client->updateLastActivity();
+		}
+		if (!client->hasPendingWrite()) // если мы уже все отправили клиенту - закрываем его
+		{
+			removeClient(fd);
+			return false;
 		}
 	}
 	updateClientEvents(*client); // синхронизируем EPOLLIN/EPOLLOUT с текущим состоянием
@@ -245,7 +250,15 @@ void Epoll::addClient(Client &&client)
 		throw std::runtime_error(std::string("epoll_ctl ADD(client): ") + strerror(errno));
 	
 	clients.emplace(clientFD, std::move(client));
-	std::cout << "Added client(" << clientFD << ")" << std::endl;
+
+	// DEBUG
+	struct sockaddr_in addr;
+	socklen_t len = sizeof(addr);
+	getpeername(clientFD, (struct sockaddr*)&addr, &len);
+	char ip[INET_ADDRSTRLEN];
+	inet_ntop(AF_INET, &addr.sin_addr, ip, sizeof(ip));
+	int port = ntohs(addr.sin_port);
+	std::cout << "Added client(" << clientFD << ") "  << ip << ":" << port << std::endl;
 }
 
 void Epoll::removeClient(int clientFD)

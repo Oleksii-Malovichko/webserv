@@ -309,7 +309,7 @@ ConfigParser::ConfigParser(const std::string &configFile)
 				}
 			}
 			levelStack.push(SERVER);
-			std::cout << "\nCREATED NEW SERVER..." << std::endl;
+			// std::cout << "\nCREATED NEW SERVER..." << std::endl;
 			continue;
 		}
 		else if (line.find("location") == 0 && levelStack.top() == SERVER)
@@ -341,7 +341,7 @@ ConfigParser::ConfigParser(const std::string &configFile)
 			std::string path = tokens[1];
 			currentLocation.setPath(path);
 			levelStack.push(LOCATION);
-			std::cout << "\nCREATED NEW LOCATION " << path << std::endl;
+			// std::cout << "\nCREATED NEW LOCATION " << path << std::endl;
 			continue;
 		}
 		else if (line == "}")
@@ -372,7 +372,7 @@ ConfigParser::ConfigParser(const std::string &configFile)
 					std::cerr << "Unknown exception during addLocation" << std::endl;
 					exit(1);
 				}
-				std::cout << "Added new location" << std::endl;
+				// std::cout << "Added new location" << std::endl;
 			}
 			else if (level == SERVER)
 			{
@@ -393,7 +393,7 @@ ConfigParser::ConfigParser(const std::string &configFile)
 					std::cerr << "Uknown exception during addServer" << std::endl;
 					exit(1);
 				}
-				std::cout << "Added new server" << std::endl;
+				// std::cout << "Added new server" << std::endl;
 			}
 			continue;
 		}
