@@ -6,7 +6,7 @@
 /*   By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 17:07:24 by pauladretta       #+#    #+#             */
-/*   Updated: 2026/02/09 13:50:58 by pdrettas         ###   ########.fr       */
+/*   Updated: 2026/02/10 20:46:40 by pdrettas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,8 +42,7 @@ class CgiHandler
         std::string _requestBody; // from server: input/request (given to srv_to_cgi pipe[1]) (POST request, GET request (empty body)
         std::string _filePath; // file that will be executed in cgi
         char **_argv; // filled w script name for execve (bc requires argv array)
-        // time
-        // exit code (use later)
+        int _exitCode;
         pid_t _pid; // value child parent
         int _srv_to_cgi[2]; // server writes input [0], and cgi uses output [1]
         int _cgi_to_srv[2]; // cgi writes (output from script) in input [0], server uses output [1]
@@ -52,12 +51,14 @@ class CgiHandler
     public:
         CgiHandler(const std::string& requestBody, char **envp, const std::string& filePath, char **argv);
         ~CgiHandler();
+        bool validateExecveArgs(char **argv, char **envp);
         bool createPipes();
         void closePipeFds(PipeCloseCall action);
         bool redirectIO();
         bool writeRequestBodyToPipe();
         bool readCgiOutputFromPipe();
         bool execute();
+        void waitAndGetExitCode();
     };
 
 #endif

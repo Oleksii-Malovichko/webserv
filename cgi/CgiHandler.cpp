@@ -6,7 +6,7 @@
 /*   By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 17:04:59 by pauladretta       #+#    #+#             */
-/*   Updated: 2026/02/09 13:51:16 by pdrettas         ###   ########.fr       */
+/*   Updated: 2026/02/10 20:51:18 by pdrettas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@
 // void Server::handleCGI(Client &client)
 // {
         // TODO: change input of constructor w those of Client
-        // CgiHandler cgi(postBody, envp, "cgi_scripts/test_file.py", argv);
+        // CgiHandler cgi(postBody, envp, argv[1], argv);
         // if (!cgi.execute())
         // {
         //     std::cerr << "CGI execution failed!" << std::endl;
@@ -36,6 +36,21 @@ CgiHandler::CgiHandler(const std::string& requestBody, char **envp, const std::s
 // destructor // TODO: cleanup
 CgiHandler::~CgiHandler()
 {}
+
+// check if input from server is valid (ex. file accessible) before moving on to executing (argv, envp)
+bool CgiHandler::validateExecveArgs(char **argv, char **envp)
+{
+    if (!envp || !argv || !argv[0])
+        return false;
+    
+    if (access(argv[0], X_OK) != 0) // for executables
+        return false;
+
+    if (access(argv[1], F_OK) != 0) // for scripts
+        return false;
+
+    return true;
+}
 
 /*
 Pipe 1: for server to write the request body to CGI
@@ -109,7 +124,7 @@ bool CgiHandler::readCgiOutputFromPipe()
 {
     int bytesRead;
     char buffer[4096];
-    // std::string cgiOutput; // TODO: add this to class IF doing http response in a seperate function (called in server ft: handle CGI)
+    
     while (bytesRead > 0)
     {
         bytesRead = read(this->_cgi_to_srv[0], buffer, sizeof(buffer));
@@ -118,17 +133,32 @@ bool CgiHandler::readCgiOutputFromPipe()
     if (bytesRead == -1) // error check for read ft
         return false;
     close (this->_cgi_to_srv[0]); // close bc done using, TODO: replace w closepipe ft later
+    
+    std::cout << "CGI OUTPUT: " << std::endl << this->_cgiOutput << std::endl; // TODO: delete after testing
     return true;
+}
+
+// ft: waits for child to finish and captures the exit code 
+void CgiHandler::waitAndGetExitCode()
+{
+    int status;
+    
+    waitpid(this->_pid, &status, 0);
+    if (WIFEXITED(status))
+        this->_exitCode = WEXITSTATUS(status);
+    std::cout << "Exit Code: " << this->_exitCode << std::endl; // TODO: delete after testing
 }
 
 /*
 MAIN execution function (will be called in handleCGI ft)
 NEXT STEPS TODO:
-- translate CGI output -> HTTP response
-- (?) check waitpid status / exit code
+1. **DONE check if file / argv is accessible (w access ft) before execute ft
+2. translate CGI output -> HTTP response
+3. **DONE waitpid and check exit code/status as well (idk: change from 0 to WOHANG)
+4. add more testing scripts (python, golang, c/c++ if wanted)
+
 - rearrange/rename closing fds w function based on parent-only & child-only logic
 - recheck error handling (messages, etc) (possibly instead of exit)
-- testing: add more various script files (cgi_scripts)
 */
 bool CgiHandler::execute()
 {
@@ -156,13 +186,13 @@ bool CgiHandler::execute()
         
         if (!this->writeRequestBodyToPipe())
             return false;
-
+            
         if (!this->readCgiOutputFromPipe())
             return false;
 
-        waitpid(this->_pid, NULL, 0); // no zombies // TODO: check exit status?
-        std::cout << "CGI OUTPUT: " << std::endl << this->_cgiOutput << std::endl; // TODO: delete after testing
+        this->waitAndGetExitCode();
     }
+
     return true;
 }       
 

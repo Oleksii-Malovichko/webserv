@@ -6,7 +6,7 @@
 /*   By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 17:10:03 by pauladretta       #+#    #+#             */
-/*   Updated: 2026/02/09 12:43:41 by pdrettas         ###   ########.fr       */
+/*   Updated: 2026/02/10 20:33:37 by pdrettas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,8 +14,10 @@
 
 // main is only for testing/debugging purposes
 // when compiling: 1. make, 2. ./cgi cgi_scripts/test_file.py (or any other test file)
-int main(int argc, char **argv)
+int main()
 {
+    // ---------------------------------------------------------------------
+    // This part is for testing before connecting to server
     // STEP: create testing envp
         char* envp[] = {
         (char*)"REQUEST_METHOD=POST",
@@ -29,14 +31,33 @@ int main(int argc, char **argv)
     std::string getBody = "";
     
     // STEP: create CGI handler
-    CgiHandler cgi(postBody, envp, "cgi_scripts/test_file.py", argv); // call this one in server ft
+    char *argv[] = {
+        (char*)"/usr/bin/python3",
+        (char*)"cgi_scripts/test_file.py",
+        nullptr
+    };
+    
+    
+    // -------------------------------------------------------------------
+    // TODO: everything below will be put into the Server::handleCGI(Client &client) function
 
-    // STEP: execute cgi
+    // create instance (input given from server)
+    CgiHandler cgi(postBody, envp, argv[1], argv);
+    
+    // FT: safety check
+    if (!cgi.validateExecveArgs(argv, envp))
+        return 1;
+
+    // FT: execute cgi
     if (!cgi.execute())
     {
         std::cerr << "CGI execution failed!" << std::endl;
         return 1;
     }
 
+    // FT: translate cgi output as http response
+
+
+    
     return 0;
 }
