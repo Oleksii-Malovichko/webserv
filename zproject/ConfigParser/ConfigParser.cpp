@@ -142,6 +142,8 @@ void ConfigParser::parseServerLine(const std::string &line, ServerConfig &curren
 void ConfigParser::parseLocationLine(const std::string &line, LocationConfig &currentLocation)
 {
 	std::vector<std::string> tokens;
+	std::string extenstion = "";
+	std::string bin = "";
 
 	tokens = splitString(line);
 	if (tokens.size() == 1)
@@ -241,6 +243,38 @@ void ConfigParser::parseLocationLine(const std::string &line, LocationConfig &cu
 		}
 		currentLocation.setAutoIndex(autoindex == "on");
 	}
+		else if (tokens[0] == "cgi_pass")
+	{
+		if (tokens.size() != 2 || tokens[1].back() != ';')
+		{
+			std::cerr << "Invalid cgi_pass directive. Format: cgi_pass <bin>;" << std::endl;
+			exit(1);
+		}
+		bin = tokens[1];
+		bin.pop_back();
+		if (bin.empty())
+		{
+			std::cerr << "Cgi binary path is empty" << std::endl;
+			exit(1);
+		}
+	}
+	else if (tokens[0] == "cgi_extension")
+	{
+		if (tokens.size() != 2 || tokens[1].back() != ';')
+		{
+			std::cerr	<< "Invalid cgi_extenstion directive. "
+						<<	" Format: cgi_extension <extension>;" 
+						<< std::endl;
+			exit(1);
+		}
+		extenstion = tokens[1];
+		extenstion.pop_back();
+		if (extenstion.empty())
+		{
+			std::cerr << "Cgi extension is empty" << std::endl;
+			exit(1);
+		}
+	}
 	else if (tokens[0] == "cgi") // not correct
 	{
 		if (tokens.size() != 3 || tokens[2].back() != ';')
@@ -248,8 +282,8 @@ void ConfigParser::parseLocationLine(const std::string &line, LocationConfig &cu
 			std::cerr << "Invalid cgi directive. Format: cgi <extension> <bin>;" << std::endl;
 			exit(1);
 		}
-		std::string extenstion = tokens[1];
-		std::string bin = tokens[2];
+		extenstion = tokens[1];
+		bin = tokens[2];
 		bin.pop_back(); // ';'
 		if (extenstion.empty() || bin.empty())
 		{
