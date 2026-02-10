@@ -12,10 +12,6 @@ CgiHandler::CgiHandler(void)
 
 	if (pipe(this->_outfd) == -1)
 		throw pipeError("Failed to create output pipe");
-
-	this->_execution_child = fork();
-	if (this->_execution_child == -1 )
-		throw forkError();
 	
 	this->_execution_start_time = 
 		std::chrono::steady_clock::now();
@@ -24,7 +20,9 @@ CgiHandler::CgiHandler(void)
 CgiHandler::~CgiHandler(void)
 {
 	this->freeArgs();
+	this->_args_num = 0;
 	this->freeEnvp();
+	this->_envp_num = 0;
 }
 
 void CgiHandler::freeEnvp(void)
@@ -35,7 +33,6 @@ void CgiHandler::freeEnvp(void)
 	}
 	free(this->_envp);
 	this->_envp = NULL;
-	this->_envp_num = 0;
 }
 
 void CgiHandler::freeArgs(void)
@@ -46,7 +43,6 @@ void CgiHandler::freeArgs(void)
 	}
 	free(this->_args);
 	this->_args = NULL;
-	this->_args_num = 0;
 }
 
 void CgiHandler::addArgsElement(std::string& value)
@@ -56,7 +52,9 @@ void CgiHandler::addArgsElement(std::string& value)
 
 	char **new_args = (char**)malloc((this->_args_num + 1) * sizeof(char*));
 
-	while (this->_args_num > 1 && i < this->_args_num - 1)
+	std::cout << BLUE << "addArgsElement args_num: "
+				<< this->_args_num << DEFAULT << std::endl;
+	while (this->_args_num > 1 && i < this->_args_num -1)
 	{
 		new_args[i] = strdup(this->_args[i]);
 		i++;
@@ -66,6 +64,7 @@ void CgiHandler::addArgsElement(std::string& value)
 	new_args[this->_args_num] = NULL;
 	this->freeArgs();
 	this->_args = new_args;
+	printArgs(std::cout);
 }
 
 void CgiHandler::addEnvpElement(const std::string& key,
@@ -98,6 +97,10 @@ std::string CgiHandler::runExecve(void)
 	char buffer[CGI_BUFFER_SIZE + 1];
 	std::string response;
 	int readbyte = 1;
+
+	this->_execution_child = fork();
+	if (this->_execution_child == -1 )
+		throw forkError();
 	
 	if (_execution_child == 0)
 	{
@@ -108,23 +111,12 @@ std::string CgiHandler::runExecve(void)
 			throw dup2Error("Failed to dup2 _infd[0]");
 
 		this->closePipeFd(0);
-
-		std::cerr << "execve started" << std::endl;
-		
-		for (int i = 0; this->_args[i]; i++)
-		{
-			std::cerr << YELLOW << "argv[" << i 
-						<< "] = [" << this->_args[i] << "]" 
-						<< DEFAULT << std::endl;
-		}
-
 		
 		execve("/usr/bin/python3", 
 			this->_args, this->_envp);
-		// throw execveError(*this);
-		std::cerr << "execve failed" << std::endl;
-		perror("Failed to execute execve");
-		exit(1);
+		throw execveError(*this);
+		// perror("Failed to execute execve");
+		// exit(1);
 	}
 	else
 	{
@@ -193,9 +185,6 @@ std::string CgiHandler::runExecve(void)
 			throw execveError(*this);
 		*/	
 	}
-
-	std::cout	<< CYAN << "the response in runExecve: " << response
-				<< DEFAULT << std::endl;
 
 	return (response);
 }
