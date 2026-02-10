@@ -27,8 +27,6 @@ class CgiHandler
 		char** _args;
 		char** _envp;
 
-		static CgiHandler* _instance;
-
 	public:
 		CgiHandler(void);
 

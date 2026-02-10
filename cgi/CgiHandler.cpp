@@ -15,8 +15,6 @@ CgiHandler::CgiHandler(void)
 	
 }
 
-CgiHandler* CgiHandler::_instance = nullptr;
-
 CgiHandler::~CgiHandler(void)
 {
 	this->freeArgs();
@@ -174,30 +172,15 @@ std::string CgiHandler::runExecve(void)
 
 		close(this->_outfd[0]);
 
-		CgiHandler::_instance = this;
-		signal(SIGALRM, cgi_timout_handler);
-		alarm(CGI_MAX_TIME);
 
 		int status;
-		// waitpid(this->_execution_child, &status, WNOHANG);
-		waitpid(this->_execution_child, &status, 0);
+		waitpid(this->_execution_child, &status, WNOHANG);
 
 		if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
 			throw execveError(*this);
-
-		alarm(0);
 	}
 
 	return (response);
-}
-
-void CgiHandler::cgi_timout_handler(int) noexcept
-{
-	if (_instance)
-	{
-		_instance->closePipeFd(0);
-		kill(_instance->_execution_child, SIGKILL);
-	}
 }
 
 void CgiHandler::setEnvp(void)
