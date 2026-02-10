@@ -60,4 +60,10 @@ class readError: public Exceptions
 		readError(CgiHandler& cgi_hand);
 };
 
+class fileAccessError: public Exceptions
+{
+	public:
+		fileAccessError(const std::string& file_path);
+};
+
 #endif

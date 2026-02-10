@@ -74,9 +74,20 @@ readError::readError(CgiHandler& cgi_hand)
 {
 	std::stringstream ss;
 
-	ss << "Failed to read CGI STDOUT"
+	ss << "Failed to read CGI STDOUT: "
 		<< strerror(errno);
 
 	setMessage(ss.str());
 	cgi_hand.closePipeFd(0);
+}
+
+fileAccessError::fileAccessError(const std::string& file_path)
+{
+	std::stringstream ss;
+
+	ss << "Can't access the executable file: "
+		<< file_path
+		<< "Error code: " << strerror(errno);
+
+	setMessage(ss.str());
 }

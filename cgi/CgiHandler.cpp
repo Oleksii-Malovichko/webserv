@@ -93,7 +93,7 @@ std::string CgiHandler::runExecve(void)
 {
 	//the request budy string given to test,
 	// later need to change from the http value
-	std::string request_body = "test body for execve";
+	std::string request_body = "test message for execve";
 	
 	char buffer[CGI_BUFFER_SIZE + 1];
 	std::string response;
@@ -108,21 +108,34 @@ std::string CgiHandler::runExecve(void)
 			throw dup2Error("Failed to dup2 _infd[0]");
 
 		this->closePipeFd(0);
+
+		std::cerr << "execve started" << std::endl;
 		
-		execve(this->cgi_path, 
+		for (int i = 0; this->_args[i]; i++)
+		{
+			std::cerr << YELLOW << "argv[" << i 
+						<< "] = [" << this->_args[i] << "]" 
+						<< DEFAULT << std::endl;
+		}
+
+		
+		execve("/usr/bin/python3", 
 			this->_args, this->_envp);
-		throw execveError(*this);
+		// throw execveError(*this);
+		std::cerr << "execve failed" << std::endl;
+		perror("Failed to execute execve");
+		exit(1);
 	}
 	else
 	{
 		this->closePipeFd(1);
-		this->setNonBlockPipe();
+		// this->setNonBlockPipe();
 
 		write(this->_infd[1], request_body.c_str(), request_body.length());
 		close(this->_infd[1]);
 
 		//This part need to continue -> write a nonblocking version
-		/*
+	
 		while (readbyte > 0)
 		{
 			readbyte = read(this->_outfd[0], buffer, CGI_BUFFER_SIZE);
@@ -132,17 +145,26 @@ std::string CgiHandler::runExecve(void)
 			}
 			if (readbyte > 0)
 			{
-				response += std::string(buffer);
+				response.append(buffer, readbyte);
 			}
 		}
-		*/
+		
 
+
+		waitpid(this->_execution_child, NULL, 0);
+
+	
+		/*
+		Non-blocking version
 		while (true)
 		{
+			std::cout << YELLOW << "in the while circle" << DEFAULT << std::endl;
 			readbyte = read(this->_outfd[0], buffer, CGI_BUFFER_SIZE);
 			if (readbyte > 0)
 			{
-				response += std::string(buffer);
+				std::cout << YELLOW << "The buffer: " << std::string(buffer)
+							<< DEFAULT << std::endl;
+				response.append(buffer, readbyte);
 			}
 			else if (readbyte == 0)
 			{
@@ -158,13 +180,23 @@ std::string CgiHandler::runExecve(void)
 				else
 				{
 					close(this->_outfd[0]);
-					break ;
+					throw readError(*this);
 				}
 			}
 		}
 
 		close(this->_outfd[0]);
+		int status;
+		waitpid(this->_execution_child, &status, WNOHANG);
+
+		if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
+			throw execveError(*this);
+		*/	
 	}
+
+	std::cout	<< CYAN << "the response in runExecve: " << response
+				<< DEFAULT << std::endl;
+
 	return (response);
 }
 
@@ -189,9 +221,15 @@ void CgiHandler::setArgsAndCgiPath(char* in_cgi_path)
 	//later the following strings need to change the 
 	// info which came from the request
 	this->cgi_path = in_cgi_path;
+	std::string cgi_interpreter = "/usr/bin/python3";
 
-	std::string arg0 = this->cgi_path;
-	std::string arg1 = "./www/cgi-bin/hello.py";
+	if (access(this->cgi_path, X_OK) == -1)
+	{
+		throw fileAccessError(this->cgi_path);
+	}
+
+	std::string arg0 = cgi_interpreter;
+	std::string arg1 = this->cgi_path;
 	
 	this->addArgsElement(arg0);
 	this->addArgsElement(arg1);
