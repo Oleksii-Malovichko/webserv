@@ -1,0 +1,16 @@
+curl -X GET "https://example.com/api/resource"
+
+curl -X GET "https://example.com/api/resource?param1=value1&param2=value2"
+
+curl -X POST "https://example.com/api/resource" \
+     -H "Content-Type: application/json" \
+     -d '{"key1": "value1", "key2": "value2"}'
+
+curl -X DELETE "http://localhost:8080/submit-form" \
+     -H "Content-Type: application/json" \
+     -d '{"confirm": true}'
+
+curl -X POST http://localhost:8080/submit-form \
+     -H "Content-Type: application/x-www-form-urlencoded" \
+     -d "name=John+Doe&age=30&city=NY"
+Hello, world!  
