@@ -35,11 +35,11 @@ void Server::run()
 		epoll.handleEvents(1000); // дефолтное значение таймаута, пока нет клиентов
 		
 		// Сервер решает, что делать с данными
-		const auto &clients = epoll.getClients();
+		auto &clients = epoll.getClients();
 
 		for (auto it = clients.begin(); it != clients.end(); it++)
 		{
-			Client &client = const_cast<Client&>(it->second);
+			Client &client = it->second;
 			if (client.getState() != Client::State::READING)
 				continue;
 			if (!client.getReadBuffer().empty())
@@ -119,7 +119,10 @@ void Server::handleClient(Client &client)
 {
 	std::string buf = client.getReadBuffer();
 	HttpRequest &req = client.getRequest();
+	HttpResponce resp;
 	std::string headerPart;
+
+
 	size_t pos = buf.find("\r\n\r\n");
 	if (pos != std::string::npos)
 	{
@@ -130,36 +133,81 @@ void Server::handleClient(Client &client)
 		if (buf.size() - bodyStart >= req.contentLength)
 		{
 			req.body = buf.substr(bodyStart, req.contentLength); // only body
-			const std::string &back_msg =
-			"HTTP/1.1 200 OK\r\n"
-			"Content-Length: 13\r\n"
-			"Content-Type: text/plain\r\n"
-			"Connection: close\r\n"
-			"\r\n"
-			"Hello, world!";
-
-			std::cout << "\nWHOLE READBUFFER:"<< std::endl;
-			std::cout << buf << std::endl;
-
-			client.appendToWriteBuffer(back_msg);
+			if (req.method == "GET")
+			{
+				resp.setStatus(200, "OK");
+				resp.setBody("<html><body><h1>Welcome!</h1></body></html>");
+				resp.setHeader("Content-Type", "text/html");
+			}
+			else if (req.method == "POST")
+			{
+				resp.setStatus(200, "OK");
+				resp.setBody("<html><body><h1>Form Submitted!</h1></body></html>");
+				resp.setHeader("Content-Type", "text/html");
+			}
+			else if (req.method == "DELETE")
+			{
+				resp.setStatus(200, "OK");
+				resp.setBody("<html><body><h1>Element Removed!</h1></body></html>");
+				resp.setHeader("Content-Type", "text/html");
+			}
+			else // error
+			{
+				resp.setStatus(404, "Not Found");
+				resp.setBody("<html><body><h1>Page Not Found</h1></body></html>");
+				resp.setHeader("Content-Type", "text/html");
+			}
+			std::string responceMessage = resp.serialize(req);
+			client.appendToWriteBuffer(responceMessage);
 			client.clearReadBuffer();
 			client.setState(Client::State::WRITING);
 			epoll.updateClientEvents(client);
+
+			// HttpResponce resp;
+			// const std::string &back_msg =
+			// "HTTP/1.1 200 OK\r\n"
+			// "Content-Length: 13\r\n"
+			// "Content-Type: text/plain\r\n"
+			// "Connection: close\r\n"
+			// "\r\n"
+			// "Hello, world!";
+			// std::cout << "\nWHOLE READBUFFER:"<< std::endl;
+			// std::cout << buf << std::endl;
+			// client.appendToWriteBuffer(back_msg);
 		}
 		else
 			return ;
 	}
-	std::cout << "HttpRequest DEBUG:" << std::endl;
-	std::cout << "Method: " << req.method << std::endl;
-	std::cout << "Path: " << req.path << std::endl;
-	std::cout << "Version: " << req.version << std::endl;
-	for (auto it = req.headers.begin(); it != req.headers.end(); it++)
-	{
-		std::cout << "Key: " << it->first << std::endl;
-		std::cout << "Value: " << it->second << std::endl;
-	}
-	std::cout << "Content-length: " << req.contentLength << std::endl;
-	std::cout << "Body:\n" << req.body << std::endl;
+	// std::cout << "\n\nHttpRequest DEBUG:" << std::endl;
+	// std::cout << "Method: " << req.method << std::endl;
+	// std::cout << "Path: " << req.path << std::endl;
+	// std::cout << "Version: " << req.version << std::endl;
+	// for (auto it = req.headers.begin(); it != req.headers.end(); it++)
+	// {
+	// 	std::cout << "Key: " << it->first << std::endl;
+	// 	std::cout << "Value: " << it->second << std::endl;
+	// }
+	// std::cout << "Content-length: " << req.contentLength << std::endl;
+	// std::cout << "Body: " << req.body << std::endl;
+}
+
+void Server::handleParseRequest(Client &client)
+{
+	(void)client;
+}
+
+void Server::shutdownServer()
+{
+	std::cout << "Shutting down server..." << std::endl;
+
+	auto &clients = epoll.getClients();
+	for (auto &pair : clients)
+		pair.second.close();
+}
+
+void Server::handleCGI(Client &client)
+{
+	(void)client;
 }
 
 // void Server::handleClient(Client &client)
@@ -219,24 +267,6 @@ void Server::handleClient(Client &client)
 // 	}
 // }
 
-void Server::handleParseRequest(Client &client)
-{
-	(void)client;
-}
-
-void Server::shutdownServer()
-{
-	std::cout << "Shutting down server..." << std::endl;
-
-	auto &clients = epoll.getClients();
-	for (auto &pair : clients)
-		pair.second.close();
-}
-
-void Server::handleCGI(Client &client)
-{
-	(void)client;
-}
 
 
 

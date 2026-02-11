@@ -4,6 +4,7 @@
 #include "ServerConfig.hpp"
 #include "WebServConfig.hpp"
 #include "ConfigParser.hpp"
+#include "HttpResponce.hpp"
 #include <csignal>
 #include <algorithm>
 #include <cctype>
