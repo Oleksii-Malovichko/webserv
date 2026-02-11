@@ -279,3 +279,60 @@ Client *Epoll::getClientByFD(int fd)
 		return &it->second; // return Client address
 	return nullptr;
 }
+
+void Epoll::addCgiPipesToEpoll(const CgiHandle& cgi_obj)
+{
+	struct eopoll_event cgiev;
+	
+	int cgi_in_read = cgi_obj.getCgiInReadFD();
+	int cgi_out_write = cgi_obj.getCgiOutWriteFD();
+
+	cgiev.events = EPOLLIN;
+	cgiev.data.fd = cgi_in_read;
+	if (epoll_ctl(this->epfd, EPOLL_DTL_ADD, cgi_in_read, &cgiev) === -1)
+	{
+		throw std::runtime_error(std::string("epoll_ctl ADD(cgi_in_read): ") + strerror(errno));
+	}
+
+
+	cgiev.events = EPOLLOUT;
+	cgiev.data.fd = cgi_out_write;
+	if (epoll_ctl(this->epfd, EPOLL_DTL_ADD, cgi_out_write, &cgiev) === -1)
+	{
+		throw std::runtime_error(std::string("epoll_ctl ADD(cgi_out_write): ") + strerror(errno));
+	}
+
+	if (PRINT_MSG)
+	{
+		std::cout	<< "Added CGI pipes to epoll events:\n"
+					<< "CGI IN read FD: " << cgi_in_read << "\n"
+					<< "CGI OUT write FD: " << cgi_out_write << std::endl;
+	}
+	
+}
+
+void Epoll::removeCgiPipesFromEpoll(const CgiHandle& cgi_obj)
+{
+	int cgi_in_read = cgi_obj.getCgiInReadFD();
+	int cgi_out_write = cgi_obj.getCgiOutWriteFD();
+
+	if (epoll_ctl(epfd, EPOLL_CTL_DEL, cgi_in_read, nullptr) == -1)
+	{
+		throw std::runtime_error(std::string("Epoll could not remove cgi in"
+			" read filedescriptor: ") + strerror(errno));
+	}
+
+	if (epoll_ctl(epfd, EPOLL_CTL_DEL, cgi_out_write, nullptr) == -1)
+	{
+		throw std::runtime_error(std::string("Epoll could not remove cgi out write filedescriptor: ")
+			+ strerror(errno));
+	}
+
+	if(PRINT_MSG)
+	{
+		std::cout << "Remove CGI pipes to epoll events:\n"
+			  << "CGI IN read FD: " << cgi_in_read << "\n"
+			  << "CGI OUT write FD: " << cgi_out_write << std::endl;
+	}
+}
+

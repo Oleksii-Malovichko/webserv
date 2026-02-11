@@ -6,6 +6,7 @@
 
 #define CLIENT_TIMEOUT_MS 60000 // клиент может жить в течении 60 секунд
 #define MAX_EVENTS 128
+#define PRINT_MSG 1
 
 class Epoll
 {
@@ -39,7 +40,11 @@ class Epoll
 		const std::vector<ListeningSocket> &getListeningSockets() const; // access to listeningSockets
 		const std::unordered_map<int, Client> &getClients() const; // access to clients (reading)
 		std::unordered_map<int, Client> &getClients(); // access to clients (writing/changing)
-		
+
+		//Add CGI pipes to epoll events
+		void addCgiPipesToEpoll(const CgiHandle& cgi_obj);
+		void removeCgiPipesFromEpoll(const CgiHandle& cgi_obj);
+
 	private: // help functions
 		int getMinTimeout(int defaultTimeoutMs);
 		std::vector<int> getRemoveVector();
