@@ -205,9 +205,37 @@ void Server::shutdownServer()
 		pair.second.close();
 }
 
-void Server::handleCGI(Client &client)
+std::string Server::handleCGI(Client &client)
 {
 	(void)client;
+	std::string cgi_http_response = "";
+
+	try
+	{
+		CgiHandler cgi_obj;
+		cgi_obj.setArgsAndCgiPath(argv[1]);
+		cgi_obj.setEnvp(client);
+		cgi_http_response = cgi_obj.runExecve();
+
+		if (PRINT_MSG)
+		{
+			std::cout	<< GREEN << "The HTTP response:\n"
+						<< CYAN << cgi_http_response
+						<< DEFAULT << std::endl;
+		}
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr	<< RED 
+					<< "The following error occured " 
+					<< e.what() << '\n';
+	}
+	catch(...)
+	{
+		std::cerr << YELLOW << "Some error"; 
+	}
+
+	return (cgi_http_response);
 }
 
 // void Server::handleClient(Client &client)

@@ -8,6 +8,8 @@
 #define MAX_EVENTS 128
 #define PRINT_MSG 1
 
+class CgiHandler;
+
 class Epoll
 {
 	int epfd;
@@ -42,8 +44,8 @@ class Epoll
 		std::unordered_map<int, Client> &getClients(); // access to clients (writing/changing)
 
 		//Add CGI pipes to epoll events
-		void addCgiPipesToEpoll(const CgiHandle& cgi_obj);
-		void removeCgiPipesFromEpoll(const CgiHandle& cgi_obj);
+		void addCgiPipesToEpoll(const CgiHandler& cgi_obj);
+		void removeCgiPipesFromEpoll(const CgiHandler& cgi_obj);
 
 	private: // help functions
 		int getMinTimeout(int defaultTimeoutMs);

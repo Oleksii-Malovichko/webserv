@@ -23,7 +23,7 @@ class Server
 		static void sigintHandler(int sig); // обработка сигнала SIGINT
 		void handleClient(Client &client); // парсинг запроса и формирование ответа
 		void handleParseRequest(Client &client);
-		void handleCGI(Client &client); // cgi
+		std::string  handleCGI(Client &client); // cgi
 		void shutdownServer();
 };
 	

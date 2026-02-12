@@ -1,4 +1,5 @@
 #include "Epoll.hpp"
+#include "../../cgi/CgiHandler.hpp"
 
 Epoll::Epoll()
 {
@@ -280,16 +281,16 @@ Client *Epoll::getClientByFD(int fd)
 	return nullptr;
 }
 
-void Epoll::addCgiPipesToEpoll(const CgiHandle& cgi_obj)
+void Epoll::addCgiPipesToEpoll(const CgiHandler& cgi_obj)
 {
-	struct eopoll_event cgiev;
+	struct epoll_event cgiev;
 	
 	int cgi_in_read = cgi_obj.getCgiInReadFD();
 	int cgi_out_write = cgi_obj.getCgiOutWriteFD();
 
 	cgiev.events = EPOLLIN;
 	cgiev.data.fd = cgi_in_read;
-	if (epoll_ctl(this->epfd, EPOLL_DTL_ADD, cgi_in_read, &cgiev) === -1)
+	if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, cgi_in_read, &cgiev) == -1)
 	{
 		throw std::runtime_error(std::string("epoll_ctl ADD(cgi_in_read): ") + strerror(errno));
 	}
@@ -297,7 +298,7 @@ void Epoll::addCgiPipesToEpoll(const CgiHandle& cgi_obj)
 
 	cgiev.events = EPOLLOUT;
 	cgiev.data.fd = cgi_out_write;
-	if (epoll_ctl(this->epfd, EPOLL_DTL_ADD, cgi_out_write, &cgiev) === -1)
+	if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, cgi_out_write, &cgiev) == -1)
 	{
 		throw std::runtime_error(std::string("epoll_ctl ADD(cgi_out_write): ") + strerror(errno));
 	}
@@ -311,7 +312,7 @@ void Epoll::addCgiPipesToEpoll(const CgiHandle& cgi_obj)
 	
 }
 
-void Epoll::removeCgiPipesFromEpoll(const CgiHandle& cgi_obj)
+void Epoll::removeCgiPipesFromEpoll(const CgiHandler& cgi_obj)
 {
 	int cgi_in_read = cgi_obj.getCgiInReadFD();
 	int cgi_out_write = cgi_obj.getCgiOutWriteFD();
