@@ -4,6 +4,8 @@ NAME2 = client_app
 # NAME1 = bin/webserv
 # NAME2 = bin/client_app
 
+OBJS_DIR = objs
+
 SRCS1 = main.cpp RAII/epoll/Epoll.cpp \
 	LocationConfig/LocationConfig.cpp \
 	ServerConfig/ServerConfig.cpp \
@@ -13,7 +15,8 @@ SRCS1 = main.cpp RAII/epoll/Epoll.cpp \
 	Client/Client.cpp \
 	Server/Server.cpp \
 	ConfigParser/ConfigParser.cpp \
-	ConfigParser/ConfigParserUtils.cpp
+	ConfigParser/ConfigParserUtils.cpp \
+	HttpResponce/HttpResponce.cpp
 
 SRCS2 = client.c
 
@@ -34,7 +37,8 @@ CXXFLAGS = -Wall -Wextra -Werror \
 	-IRAII/epoll \
 	-IRAII/sockets \
 	-IServer \
-	-IConfigParser
+	-IConfigParser \
+	-IHttpResponce
 
 all: $(NAME1) $(NAME2)
 

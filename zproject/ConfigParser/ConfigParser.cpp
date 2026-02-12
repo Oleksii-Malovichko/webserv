@@ -39,6 +39,11 @@ void ConfigParser::parseServerLine(const std::string &line, ServerConfig &curren
 		try
 		{
 			int port = std::stoi(portStr);
+			if (port < 0 || port > 65535)
+			{
+				std::cerr << "Invalid port value (too large or too less)" << std::endl;
+				exit(1);
+			}
 			currentServer.setPort(port);
 		}
 		catch (...)
@@ -447,3 +452,6 @@ ConfigParser::ConfigParser(const std::string &configFile)
 	}
 	file.close();
 }
+
+/* 
+ */
