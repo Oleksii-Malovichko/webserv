@@ -6,7 +6,7 @@
 /*   By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 17:10:03 by pauladretta       #+#    #+#             */
-/*   Updated: 2026/02/10 20:33:37 by pdrettas         ###   ########.fr       */
+/*   Updated: 2026/02/10 21:15:27 by pdrettas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,10 +30,15 @@ int main()
     std::string postBody = "name=Paula&age=26";
     std::string getBody = "";
     
-    // STEP: create CGI handler
+    // STEP: create argv
     char *argv[] = {
         (char*)"/usr/bin/python3",
-        (char*)"cgi_scripts/test_file.py",
+        // (char*)"cgi_scripts/error_crash.py",
+        // (char*)"cgi_scripts/error_infinite_loop.py",
+        // (char*)"cgi_scripts/test_basic.py",
+        // (char*)"cgi_scripts/test_env.py",
+        // (char*)"cgi_scripts/test_large_output.py",
+        (char*)"cgi_scripts/test_memory_heavy.py",
         nullptr
     };
     

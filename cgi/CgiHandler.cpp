@@ -6,7 +6,7 @@
 /*   By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 17:04:59 by pauladretta       #+#    #+#             */
-/*   Updated: 2026/02/10 20:51:18 by pdrettas         ###   ########.fr       */
+/*   Updated: 2026/02/12 14:24:26 by pdrettas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,7 +46,7 @@ bool CgiHandler::validateExecveArgs(char **argv, char **envp)
     if (access(argv[0], X_OK) != 0) // for executables
         return false;
 
-    if (access(argv[1], F_OK) != 0) // for scripts
+    if (access(argv[1], X_OK) != 0) // for scripts // from F to X
         return false;
 
     return true;
@@ -146,16 +146,16 @@ void CgiHandler::waitAndGetExitCode()
     waitpid(this->_pid, &status, 0);
     if (WIFEXITED(status))
         this->_exitCode = WEXITSTATUS(status);
+        
     std::cout << "Exit Code: " << this->_exitCode << std::endl; // TODO: delete after testing
 }
 
 /*
 MAIN execution function (will be called in handleCGI ft)
 NEXT STEPS TODO:
-1. **DONE check if file / argv is accessible (w access ft) before execute ft
-2. translate CGI output -> HTTP response
+1. translate CGI output -> HTTP response
+2. add more testing scripts (python, golang, c/c++ if wanted)
 3. **DONE waitpid and check exit code/status as well (idk: change from 0 to WOHANG)
-4. add more testing scripts (python, golang, c/c++ if wanted)
 
 - rearrange/rename closing fds w function based on parent-only & child-only logic
 - recheck error handling (messages, etc) (possibly instead of exit)
