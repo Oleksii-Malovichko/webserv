@@ -10,6 +10,7 @@ struct HttpRequest
 {
 	std::string method;
 	std::string path;
+	std::string query_string;
 	std::string version;
 	std::unordered_map<std::string, std::string> headers;
 	std::string body;

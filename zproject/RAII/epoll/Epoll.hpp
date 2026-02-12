@@ -4,11 +4,13 @@
 #include "ListeningSocket.hpp"
 #include <array>
 
+#include "../../cgi/CgiHandler.hpp"
+
 #define CLIENT_TIMEOUT_MS 60000 // клиент может жить в течении 60 секунд
 #define MAX_EVENTS 128
 #define PRINT_MSG 1
 
-class CgiHandler;
+// class CgiHandler;
 
 class Epoll
 {

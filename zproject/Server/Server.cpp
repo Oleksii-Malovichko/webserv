@@ -67,10 +67,21 @@ std::vector<std::string> split(const std::string &s, const std::string &delimite
 void parseRequestLine(std::string requestLine, HttpRequest &req)
 {
 	std::vector<std::string> tokens = split(requestLine, " ");
+	std::vector<std::string> tokens_path = split(tokens[1], "?");
+
 	if (tokens.size() != 3)
 		return ;
 	req.method = tokens[0];
-	req.path = tokens[1];
+	if (tokens_path.size() == 2)
+	{
+		req.path = tokens_path[0];
+		req.query_string = tokens_path[1];
+	}
+	else
+	{
+		req.path = tokens[1];
+		req.query_string = "";
+	}
 	req.version = tokens[2];
 }
 
@@ -178,17 +189,18 @@ void Server::handleClient(Client &client)
 		else
 			return ;
 	}
-	// std::cout << "\n\nHttpRequest DEBUG:" << std::endl;
-	// std::cout << "Method: " << req.method << std::endl;
-	// std::cout << "Path: " << req.path << std::endl;
-	// std::cout << "Version: " << req.version << std::endl;
-	// for (auto it = req.headers.begin(); it != req.headers.end(); it++)
-	// {
-	// 	std::cout << "Key: " << it->first << std::endl;
-	// 	std::cout << "Value: " << it->second << std::endl;
-	// }
-	// std::cout << "Content-length: " << req.contentLength << std::endl;
-	// std::cout << "Body: " << req.body << std::endl;
+	std::cout << "\n\nHttpRequest DEBUG:" << std::endl;
+	std::cout << "Method: " << req.method << std::endl;
+	std::cout << "Path: " << req.path << std::endl;
+	std::cout << "Query string: " << req.query_string << std::endl;
+	std::cout << "Version: " << req.version << std::endl;
+	for (auto it = req.headers.begin(); it != req.headers.end(); it++)
+	{
+		std::cout << "Key: " << it->first << std::endl;
+		std::cout << "Value: " << it->second << std::endl;
+	}
+	std::cout << "Content-length: " << req.contentLength << std::endl;
+	std::cout << "Body: " << req.body << std::endl;
 }
 
 void Server::handleParseRequest(Client &client)
@@ -207,15 +219,18 @@ void Server::shutdownServer()
 
 std::string Server::handleCGI(Client &client)
 {
-	(void)client;
 	std::string cgi_http_response = "";
+	char *cgi_path = const_cast<char*>(client.getRequest().path.c_str());
 
 	try
 	{
 		CgiHandler cgi_obj;
-		cgi_obj.setArgsAndCgiPath(argv[1]);
+		cgi_obj.setArgsAndCgiPath(cgi_path);
 		cgi_obj.setEnvp(client);
+		cgi_obj.setNonBlockPipe();
+		this->epoll.addCgiPipesToEpoll(cgi_obj);
 		cgi_http_response = cgi_obj.runExecve();
+		this->epoll.removeCgiPipesFromEpoll(cgi_obj);
 
 		if (PRINT_MSG)
 		{
