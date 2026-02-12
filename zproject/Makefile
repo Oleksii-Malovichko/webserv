@@ -24,7 +24,8 @@ OBJS2 = $(addprefix $(OBJS_DIR)/, $(SRCS2:.c=.o))
 
 CC = cc
 CFLAGS = -Wall -Wextra -Werror
-CXX = c++ -std=c++11 -fsanitize=address
+CXX = c++ -std=c++11
+# -fsanitize=address
 CXXFLAGS = -Wall -Wextra -Werror \
 	-I. \
 	-IClient \

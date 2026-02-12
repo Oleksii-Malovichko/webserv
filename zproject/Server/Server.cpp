@@ -130,8 +130,11 @@ void Server::handleClient(Client &client)
 		headerPart = buf.substr(0, pos);
 		parseHttpHeaders(headerPart, req);
 		size_t bodyStart = pos + 4; // after '\r\n\r\n'
-		if (buf.size() - bodyStart >= req.contentLength)
+		if (buf.size() - bodyStart >= req.contentLength && req.headersParsed)
 		{
+			std::cout << "\nWHOLE READBUFFER:"<< std::endl;
+			std::cout << buf << std::endl;
+
 			req.body = buf.substr(bodyStart, req.contentLength); // only body
 			if (req.method == "GET")
 			{
@@ -178,17 +181,17 @@ void Server::handleClient(Client &client)
 		else
 			return ;
 	}
-	// std::cout << "\n\nHttpRequest DEBUG:" << std::endl;
-	// std::cout << "Method: " << req.method << std::endl;
-	// std::cout << "Path: " << req.path << std::endl;
-	// std::cout << "Version: " << req.version << std::endl;
-	// for (auto it = req.headers.begin(); it != req.headers.end(); it++)
-	// {
-	// 	std::cout << "Key: " << it->first << std::endl;
-	// 	std::cout << "Value: " << it->second << std::endl;
-	// }
-	// std::cout << "Content-length: " << req.contentLength << std::endl;
-	// std::cout << "Body: " << req.body << std::endl;
+	std::cout << "\n\nHttpRequest DEBUG:" << std::endl;
+	std::cout << "Method: " << req.method << std::endl;
+	std::cout << "Path: " << req.path << std::endl;
+	std::cout << "Version: " << req.version << std::endl;
+	for (auto it = req.headers.begin(); it != req.headers.end(); it++)
+	{
+		std::cout << "Key: " << it->first << std::endl;
+		std::cout << "Value: " << it->second << std::endl;
+	}
+	std::cout << "Content-length: " << req.contentLength << std::endl;
+	std::cout << "Body: " << req.body << std::endl;
 }
 
 void Server::handleParseRequest(Client &client)

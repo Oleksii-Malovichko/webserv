@@ -1,4 +1,4 @@
-curl -X GET "https://example.com/api/resource"
+curl -X GET "https://0.0.0.0:8080/api/resource"
 
 curl -X GET "https://example.com/api/resource?param1=value1&param2=value2"
 
