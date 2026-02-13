@@ -237,18 +237,18 @@ ServerConfig Server::selectServer(const HttpRequest& req)
 	auto it_header = req.headers.find("Host");
 	if (it_header == req.headers.end())
 	{
-		return (server[0]);
+		return (servers[0]);
 	}
 
 	for (auto it = servers.begin(); it != servers.end(); ++it)
 	{
-		if (it->getPort == it_header->second)
+		if (std::to_string(it->getPort()) == it_header->second)
 		{
 			return (*it);
 		}
 	}
 	
-	return (server[0]);
+	return (servers[0]);
 }
 
 LocationConfig Server::selectLocation(
@@ -258,18 +258,18 @@ LocationConfig Server::selectLocation(
 	std::vector<LocationConfig> searchlocations = 
 		current_server.getLocations();
 	LocationConfig found_location;
-	int found_length = 0;
+	size_t found_length = 0;
 
 	for (auto it = searchlocations.begin();
 		it != searchlocations.end(); ++it)
 	{
 		std::string loc_path = it->getPath();
-		size_t loc_len  = loc_path.length
+		size_t loc_len  = loc_path.length();
 		if (request_path.compare(0, 
-			loc_len, loc_path) && loc_len > found_length)
+			loc_len, loc_path) == 0 && loc_len > found_length) 
 		{
 			found_location = *it;
-			found_length = loc_len
+			found_length = loc_len;
 		}
 	}
 
@@ -283,7 +283,7 @@ LocationConfig Server::selectLocation(
 	return (found_location);
 }
 
-static bool Server::isAllowedMethod(const HttpRequest& req, 
+bool Server::isAllowedMethod(const HttpRequest& req, 
 			const LocationConfig& loc)
 {
 	std::vector<std::string> loc_methods = loc.getMethods();
@@ -299,17 +299,17 @@ static bool Server::isAllowedMethod(const HttpRequest& req,
 	return (false);
 }
 
-static bool Server::isCgiExtensionOK(const HttpRequest& req, 
+bool Server::isCgiExtensionOK(const HttpRequest& req, 
 			const LocationConfig& loc)
 {
-	std::vector<std::string> split_path = split(req.path, ".")
+	std::vector<std::string> split_path = split(req.path, ".");
 	if (split_path.size() < 2)
 	{
 		return (false);
 	}
 
 	std::string extract_req_extension = split_path[1];
-	extract_req_extension.insert(0, ".")
+	extract_req_extension.insert(0, ".");
 
 	if(PRINT_MSG)
 	{
