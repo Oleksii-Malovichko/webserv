@@ -133,6 +133,20 @@ void Server::handleClient(Client &client)
 	HttpResponce resp;
 	std::string headerPart;
 
+	ServerConfig current_server = selectServer(req);
+	LocationConfig loc = selectLocation(req.path, current_server);
+	if (isAllowedMethod(req, loc) == false)
+	{
+		//405 Not allowed method
+		return ;
+	}
+
+	if (isCgiExtensionOK(req, loc) == true)
+	{
+		this->handleCGI(client);
+		// only that case if the CGI response consist the header too
+		return ;
+	}
 
 	size_t pos = buf.find("\r\n\r\n");
 	if (pos != std::string::npos)
@@ -217,6 +231,26 @@ void Server::shutdownServer()
 		pair.second.close();
 }
 
+ServerConfig Server::selectServer(const HttpRequest& req)
+{
+	std::vector<ServerConfig> servers = webserv.getServers();
+	auto it_header = req.headers.find("Host");
+	if (it_header == req.headers.end())
+	{
+		return (server[0]);
+	}
+
+	for (auto it = servers.begin(); it != servers.end(); ++it)
+	{
+		if (it->getPort == it_header->second)
+		{
+			return (*it);
+		}
+	}
+	
+	return (server[0]);
+}
+
 LocationConfig Server::selectLocation(
 			const std::string& request_path, 
 			const ServerConfig& current_server)
@@ -265,7 +299,7 @@ static bool Server::isAllowedMethod(const HttpRequest& req,
 	return (false);
 }
 
-static bool isCgiExtensionOK(const HttpRequest& req, 
+static bool Server::isCgiExtensionOK(const HttpRequest& req, 
 			const LocationConfig& loc)
 {
 	std::vector<std::string> split_path = split(req.path, ".")
@@ -284,6 +318,11 @@ static bool isCgiExtensionOK(const HttpRequest& req,
 	}
 
 	const std::unordered_map<std::string, std::string> cgis = loc.getCgi();
+	if (cgis.size() == 0)
+	{
+		return (false);
+	}
+
 	auto it = cgis.find(extract_req_extension);
 	if (it != cgis.end())
 	{

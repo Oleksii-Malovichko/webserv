@@ -24,8 +24,9 @@ class Server
 		static void sigintHandler(int sig); // обработка сигнала SIGINT
 		void handleClient(Client &client); // парсинг запроса и формирование ответа
 		void handleParseRequest(Client &client);
+		ServerConfig selectServer(const HttpRequest& req);
 		LocationConfig selectLocation(
-			const std::string& request_path
+			const std::string& request_path,
 			const ServerConfig& current_server);
 		static bool isAllowedMethod(const HttpRequest& req, 
 			const LocationConfig& loc);
