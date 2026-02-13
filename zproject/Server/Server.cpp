@@ -217,6 +217,82 @@ void Server::shutdownServer()
 		pair.second.close();
 }
 
+LocationConfig Server::selectLocation(
+			const std::string& request_path, 
+			const ServerConfig& current_server)
+{
+	std::vector<LocationConfig> searchlocations = 
+		current_server.getLocations();
+	LocationConfig found_location;
+	int found_length = 0;
+
+	for (auto it = searchlocations.begin();
+		it != searchlocations.end(); ++it)
+	{
+		std::string loc_path = it->getPath();
+		size_t loc_len  = loc_path.length
+		if (request_path.compare(0, 
+			loc_len, loc_path) && loc_len > found_length)
+		{
+			found_location = *it;
+			found_length = loc_len
+		}
+	}
+
+	if (PRINT_MSG)
+	{
+		std::cout	<< GREEN << "The following location block founded:"
+					<< found_location.getPath()
+					<< DEFAULT << std::endl;
+	}
+
+	return (found_location);
+}
+
+static bool Server::isAllowedMethod(const HttpRequest& req, 
+			const LocationConfig& loc)
+{
+	std::vector<std::string> loc_methods = loc.getMethods();
+
+	auto it = std::find(loc_methods.begin(),
+		loc_methods.end(), req.method);
+	
+	if (it != loc_methods.end())
+	{
+		return (true);
+	}
+
+	return (false);
+}
+
+static bool isCgiExtensionOK(const HttpRequest& req, 
+			const LocationConfig& loc)
+{
+	std::vector<std::string> split_path = split(req.path, ".")
+	if (split_path.size() < 2)
+	{
+		return (false);
+	}
+
+	std::string extract_req_extension = split_path[1];
+	extract_req_extension.insert(0, ".")
+
+	if(PRINT_MSG)
+	{
+		std::cout	<< "The request extension: "
+					<< extract_req_extension << std::endl;
+	}
+
+	const std::unordered_map<std::string, std::string> cgis = loc.getCgi();
+	auto it = cgis.find(extract_req_extension);
+	if (it != cgis.end())
+	{
+		return (true);
+	}
+	
+	return (false);
+}
+
 std::string Server::handleCGI(Client &client)
 {
 	std::string cgi_http_response = "";

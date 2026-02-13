@@ -19,10 +19,18 @@ class Server
 	public:
 		Server(const std::string &configFile); // разбор файла и настройка слушащих сокетов
 		void run(); // основной цикл событий
+
 	private:
 		static void sigintHandler(int sig); // обработка сигнала SIGINT
 		void handleClient(Client &client); // парсинг запроса и формирование ответа
 		void handleParseRequest(Client &client);
+		LocationConfig selectLocation(
+			const std::string& request_path
+			const ServerConfig& current_server);
+		static bool isAllowedMethod(const HttpRequest& req, 
+			const LocationConfig& loc);
+		static bool isCgiExtensionOK(const HttpRequest& req, 
+			const LocationConfig& loc);
 		std::string  handleCGI(Client &client); // cgi
 		void shutdownServer();
 };
