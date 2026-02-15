@@ -6,7 +6,7 @@
 /*   By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 17:10:03 by pauladretta       #+#    #+#             */
-/*   Updated: 2026/02/10 21:15:27 by pdrettas         ###   ########.fr       */
+/*   Updated: 2026/02/15 23:54:22 by pdrettas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,11 +34,13 @@ int main()
     char *argv[] = {
         (char*)"/usr/bin/python3",
         // (char*)"cgi_scripts/error_crash.py",
-        // (char*)"cgi_scripts/error_infinite_loop.py",
+        (char*)"cgi_scripts/error_infinite_loop.py",
         // (char*)"cgi_scripts/test_basic.py",
         // (char*)"cgi_scripts/test_env.py",
         // (char*)"cgi_scripts/test_large_output.py",
-        (char*)"cgi_scripts/test_memory_heavy.py",
+        // (char*)"cgi_scripts/test_memory_heavy.py",
+        // (char*)"cgi_scripts/test_get.py",
+        // (char*)"cgi_scripts/test_post.py",
         nullptr
     };
     
@@ -47,7 +49,7 @@ int main()
     // TODO: everything below will be put into the Server::handleCGI(Client &client) function
 
     // create instance (input given from server)
-    CgiHandler cgi(postBody, envp, argv[1], argv);
+    CgiHandler cgi(postBody, envp, argv[0], argv);
     
     // FT: safety check
     if (!cgi.validateExecveArgs(argv, envp))

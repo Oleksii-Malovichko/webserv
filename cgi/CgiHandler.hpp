@@ -6,7 +6,7 @@
 /*   By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 17:07:24 by pauladretta       #+#    #+#             */
-/*   Updated: 2026/02/10 20:46:40 by pdrettas         ###   ########.fr       */
+/*   Updated: 2026/02/15 23:48:28 by pdrettas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <string.h>
+#include <cstring>
+#include <cerrno>
 
 enum PipeCloseCall
 {
@@ -40,7 +42,7 @@ class CgiHandler
     private:
         char** _envp; // from server
         std::string _requestBody; // from server: input/request (given to srv_to_cgi pipe[1]) (POST request, GET request (empty body)
-        std::string _filePath; // file that will be executed in cgi
+        std::string _interpreterPath; // file that will be executed in cgi
         char **_argv; // filled w script name for execve (bc requires argv array)
         int _exitCode;
         pid_t _pid; // value child parent
@@ -59,6 +61,7 @@ class CgiHandler
         bool readCgiOutputFromPipe();
         bool execute();
         void waitAndGetExitCode();
+        std::string buildHttpResponseFromCgi();
     };
 
 #endif
