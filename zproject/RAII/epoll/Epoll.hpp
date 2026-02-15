@@ -3,6 +3,7 @@
 #include "Client.hpp"
 #include "ListeningSocket.hpp"
 #include <array>
+#include <map>
 
 #include "../../cgi/CgiHandler.hpp"
 
@@ -21,7 +22,7 @@ struct EventData
 		CGI_PIPE
 	};
 
-	Type type
+	Type type;
 	int fd;
 	void* owner;
 };
@@ -61,7 +62,8 @@ class Epoll
 		std::unordered_map<int, Client> &getClients(); // access to clients (writing/changing)
 
 		//Add CGI pipes to epoll events
-		void addCgiPipesToEpoll(const CgiHandler& cgi_obj);
+		void addCgiPipesToEpoll(const CgiHandler& cgi_obj,
+			Client& client_obj);
 		void removeCgiPipesFromEpoll(const CgiHandler& cgi_obj);
 
 	private: // help functions

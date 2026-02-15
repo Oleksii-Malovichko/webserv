@@ -189,15 +189,15 @@ void Epoll::handleEvents(int defaultTimeoutMs)
 
 		switch (data->type)
 		{
-			case EventData::LISTEN_SOCKET:
+			case EventData::Type::LISTEN_SOCKET:
 				acceptClient(data->fd);
 				break ;
 
-			case EventData::CLIENT_SOCKET:
+			case EventData::Type::CLIENT_SOCKET:
 				handleClient(data->fd, ev);
 				break ;
 
-			case EventData::CGI_PIPE:
+			case EventData::Type::CGI_PIPE:
 				handleCgi(data->fd, ev); // this is still not correct function call
 				break ;
 			
@@ -297,7 +297,7 @@ void Epoll::addClient(Client &&client)
 	Client* stored_client = &result.first->second;
 	
 	EventData* data = new EventData;
-	data->type = EventData::CLIENT_SOCKET;
+	data->type = EventData::Type::CLIENT_SOCKET;
 	data->fd = clientFD;
 	data->owner = stored_client;
 	
@@ -327,7 +327,7 @@ void Epoll::removeClient(int clientFD)
 	{
 		epoll_ctl(epfd, EPOLL_CTL_DEL, clientFD, nullptr);
 
-		auto it_event = fdEventMap.find(clientFD)
+		auto it_event = fdEventMap.find(clientFD);
 		if (it_event != fdEventMap.end())
 		{
 			delete it_event->second;
@@ -347,7 +347,7 @@ Client *Epoll::getClientByFD(int fd)
 	return nullptr;
 }
 
-void Epoll::addCgiPipesToEpoll(const CgiHandler& cgi_obj, const Client& client_obj)
+void Epoll::addCgiPipesToEpoll(const CgiHandler& cgi_obj, Client& client_obj)
 {
 	struct epoll_event cgiev;
 	
@@ -357,7 +357,7 @@ void Epoll::addCgiPipesToEpoll(const CgiHandler& cgi_obj, const Client& client_o
 	Client* stored_client = &client_obj;
 	
 	EventData* data_in = new EventData;
-	data_in->type = EventData::CGI_PIPE;
+	data_in->type = EventData::Type::CGI_PIPE;
 	data_in->fd = cgi_out_read;
 	data_in->owner = stored_client;
 
@@ -365,13 +365,14 @@ void Epoll::addCgiPipesToEpoll(const CgiHandler& cgi_obj, const Client& client_o
 	cgiev.data.ptr = data_in;
 	if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, cgi_out_read, &cgiev) == -1)
 	{
-		throw std::runtime_error(std::string("epoll_ctl ADD(cgi_out_read): ") + strerror(errno));
+		throw std::runtime_error(std::string(
+			"epoll_ctl ADD(cgi_out_read): ") + strerror(errno));
 	}
 
 	fdEventMap[cgi_out_read] = data_in;
 
 	EventData* data_out = new EventData;
-	data_out->type = EventData::CGI_PIPE;
+	data_out->type = EventData::Type::CGI_PIPE;
 	data_out->fd = cgi_in_write;
 	data_out->owner = stored_client;
 
@@ -379,7 +380,8 @@ void Epoll::addCgiPipesToEpoll(const CgiHandler& cgi_obj, const Client& client_o
 	cgiev.data.ptr = data_out;
 	if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, cgi_in_write, &cgiev) == -1)
 	{
-		throw std::runtime_error(std::string("epoll_ctl ADD(cgi_in_write): ") + strerror(errno));
+		throw std::runtime_error(std::string(
+			"epoll_ctl ADD(cgi_in_write): ") + strerror(errno));
 	}
 
 	fdEventMap[cgi_in_write] = data_out;
@@ -395,26 +397,41 @@ void Epoll::addCgiPipesToEpoll(const CgiHandler& cgi_obj, const Client& client_o
 
 void Epoll::removeCgiPipesFromEpoll(const CgiHandler& cgi_obj)
 {
-	int cgi_in_read = cgi_obj.getCgiInReadFD();
-	int cgi_out_write = cgi_obj.getCgiOutWriteFD();
+	int cgi_in_write = cgi_obj.getCgiInWriteFD();
+	int cgi_out_read = cgi_obj.getCgiOutReadFD();
 
-	if (epoll_ctl(epfd, EPOLL_CTL_DEL, cgi_in_read, nullptr) == -1)
+	if (epoll_ctl(epfd, EPOLL_CTL_DEL, cgi_in_write, nullptr) == -1)
 	{
 		throw std::runtime_error(std::string("Epoll could not remove cgi in"
 			" read filedescriptor: ") + strerror(errno));
 	}
 
-	if (epoll_ctl(epfd, EPOLL_CTL_DEL, cgi_out_write, nullptr) == -1)
+	auto it_event_in = fdEventMap.find(cgi_in_write);
+	if (it_event_in != fdEventMap.end())
+	{
+		delete it_event_in->second;
+		fdEventMap.erase(it_event_in);
+	}
+
+
+	if (epoll_ctl(epfd, EPOLL_CTL_DEL, cgi_out_read, nullptr) == -1)
 	{
 		throw std::runtime_error(std::string("Epoll could not remove cgi out write filedescriptor: ")
 			+ strerror(errno));
 	}
 
+	auto it_event_out = fdEventMap.find(cgi_out_read);
+	if (it_event_out != fdEventMap.end())
+	{
+		delete it_event_out->second;
+		fdEventMap.erase(it_event_out);
+	}
+
 	if(PRINT_MSG)
 	{
 		std::cout << "Remove CGI pipes to epoll events:\n"
-			  << "CGI IN read FD: " << cgi_in_read << "\n"
-			  << "CGI OUT write FD: " << cgi_out_write << std::endl;
+			  << "CGI IN write FD: " << cgi_in_write << "\n"
+			  << "CGI OUT read FD: " << cgi_out_read << std::endl;
 	}
 }
 
