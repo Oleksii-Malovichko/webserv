@@ -1,0 +1,20 @@
+Правильный план развития
+Этап 1 (сейчас)
+HttpResponse класс
+GET static files
+404/403
+index
+autoindex
+
+Этап 2
+Method restrictions
+DELETE
+max_body_size
+
+Этап 3
+CGI (самый сложный кусок)
+
+Этап 4
+Chunked
+keep-alive
+правильный connection lifecycle
