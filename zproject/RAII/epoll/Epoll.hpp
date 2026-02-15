@@ -12,12 +12,27 @@
 
 // class CgiHandler;
 
+struct EventData
+{
+	enum struct Type
+	{
+		LISTEN_SOCKET,
+		CLIENT_SOCKET,
+		CGI_PIPE
+	};
+
+	Type type
+	int fd;
+	void* owner;
+};
+
 class Epoll
 {
 	int epfd;
 	std::array<epoll_event, MAX_EVENTS> events;
 	std::vector<ListeningSocket> listeningSockets;
 	std::unordered_map<int, Client> clients;
+	std::map<int, EventData*> fdEventMap;
 
 	public: // тут explicit НЕ нужен, потому epoll не принимает аргументов
 		Epoll();

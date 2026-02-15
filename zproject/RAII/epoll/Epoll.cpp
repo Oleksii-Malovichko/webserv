@@ -132,6 +132,10 @@ bool Epoll::handleClient(int fd, uint32_t ev)
 }
 
 // сердце управления epoll
+/*
+	This handleEvents function made before CGI fds added to the fds list
+	During the test it worked properly 
+
 void Epoll::handleEvents(int defaultTimeoutMs) // epoll.handleEvents(CLIENT_TIMEOUT_MS); то есть, каждые 60 секунд проверять проверять активность клиентов
 {
 	int timeout = getMinTimeout(defaultTimeoutMs);
@@ -161,6 +165,48 @@ void Epoll::handleEvents(int defaultTimeoutMs) // epoll.handleEvents(CLIENT_TIME
 		}
 	}
 	// получить веткор для удаления клиентов (по истечению таймаутов)
+	removeClientVec();
+}
+*/
+
+void Epoll::handleEvents(int defaultTimeoutMs)
+{
+	int timeout = getMinTimeout(defaultTimeoutMs);
+
+	int n = epoll_wait(epfd, events.data(), events.size(), timeout);
+	if (n == -1)
+	{
+		if (errno == EINTR)
+			return ;
+		throw std::runtime_error(std::string("epoll_wait: ") + strerror(errno));
+	}
+
+	for (int i = 0; i < n; i++)
+	{
+		EventData* data = static_cast<EventData*>(
+			events[i].data.ptr);
+		uint32_t ev = events[i].events;
+
+		switch (data->type)
+		{
+			case EventData::LISTEN_SOCKET:
+				acceptClient(data->fd);
+				break ;
+
+			case EventData::CLIENT_SOCKET:
+				handleClient(data->fd, ev);
+				break ;
+
+			case EventData::CGI_PIPE:
+				handleCgi(data->fd, ev); // this is still not correct function call
+				break ;
+			
+			default:
+				std::cerr	<< RED << "The data type not in"
+							<< " the possible list" << DEFAULT << std::endl;
+				break;
+		}
+	}
 	removeClientVec();
 }
 
@@ -243,14 +289,26 @@ void Epoll::addClient(Client &&client)
 	int clientFD = client.getFD();
 	if (clientFD == -1)
 		throw std::logic_error("addClient: invalid fd");
+
+	auto result = clients.emplace(clientFD, std::move(client));
+	if (!result.second)
+		throw std::runtime_error("Client already exists");
+
+	Client* stored_client = &result.first->second;
+	
+	EventData* data = new EventData;
+	data->type = EventData::CLIENT_SOCKET;
+	data->fd = clientFD;
+	data->owner = stored_client;
 	
 	struct epoll_event cev;
 	cev.events = EPOLLIN;
-	cev.data.fd = clientFD;
+
+	cev.data.ptr = data;
 	if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, clientFD, &cev) == -1)
 		throw std::runtime_error(std::string("epoll_ctl ADD(client): ") + strerror(errno));
-	
-	clients.emplace(clientFD, std::move(client));
+
+	fdEventMap[clientFD] = data;
 
 	// DEBUG
 	struct sockaddr_in addr;
@@ -268,6 +326,14 @@ void Epoll::removeClient(int clientFD)
 	if (it != clients.end())
 	{
 		epoll_ctl(epfd, EPOLL_CTL_DEL, clientFD, nullptr);
+
+		auto it_event = fdEventMap.find(clientFD)
+		if (it_event != fdEventMap.end())
+		{
+			delete it_event->second;
+			fdEventMap.erase(it_event);
+		}
+
 		it->second.close(); // так как мы переместили client уже в этот класс, то и закрываем его здесь
 		clients.erase(it); // удалить из map
 	}
@@ -281,33 +347,48 @@ Client *Epoll::getClientByFD(int fd)
 	return nullptr;
 }
 
-void Epoll::addCgiPipesToEpoll(const CgiHandler& cgi_obj)
+void Epoll::addCgiPipesToEpoll(const CgiHandler& cgi_obj, const Client& client_obj)
 {
 	struct epoll_event cgiev;
 	
-	int cgi_in_read = cgi_obj.getCgiInReadFD();
-	int cgi_out_write = cgi_obj.getCgiOutWriteFD();
+	int cgi_out_read = cgi_obj.getCgiOutReadFD();
+	int cgi_in_write = cgi_obj.getCgiInWriteFD();
+
+	Client* stored_client = &client_obj;
+	
+	EventData* data_in = new EventData;
+	data_in->type = EventData::CGI_PIPE;
+	data_in->fd = cgi_out_read;
+	data_in->owner = stored_client;
 
 	cgiev.events = EPOLLIN;
-	cgiev.data.fd = cgi_in_read;
-	if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, cgi_in_read, &cgiev) == -1)
+	cgiev.data.ptr = data_in;
+	if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, cgi_out_read, &cgiev) == -1)
 	{
-		throw std::runtime_error(std::string("epoll_ctl ADD(cgi_in_read): ") + strerror(errno));
+		throw std::runtime_error(std::string("epoll_ctl ADD(cgi_out_read): ") + strerror(errno));
 	}
 
+	fdEventMap[cgi_out_read] = data_in;
+
+	EventData* data_out = new EventData;
+	data_out->type = EventData::CGI_PIPE;
+	data_out->fd = cgi_in_write;
+	data_out->owner = stored_client;
 
 	cgiev.events = EPOLLOUT;
-	cgiev.data.fd = cgi_out_write;
-	if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, cgi_out_write, &cgiev) == -1)
+	cgiev.data.ptr = data_out;
+	if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, cgi_in_write, &cgiev) == -1)
 	{
-		throw std::runtime_error(std::string("epoll_ctl ADD(cgi_out_write): ") + strerror(errno));
+		throw std::runtime_error(std::string("epoll_ctl ADD(cgi_in_write): ") + strerror(errno));
 	}
+
+	fdEventMap[cgi_in_write] = data_out;
 
 	if (PRINT_MSG)
 	{
 		std::cout	<< "Added CGI pipes to epoll events:\n"
-					<< "CGI IN read FD: " << cgi_in_read << "\n"
-					<< "CGI OUT write FD: " << cgi_out_write << std::endl;
+					<< "CGI IN write FD: " << cgi_in_write << "\n"
+					<< "CGI OUT read FD: " << cgi_out_read<< std::endl;
 	}
 	
 }

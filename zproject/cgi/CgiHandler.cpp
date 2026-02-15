@@ -273,13 +273,13 @@ const char* CgiHandler::getCgiPath(void) const
 	return (this->cgi_path);
 }
 
-int CgiHandler::getCgiInReadFD(void) const
+int CgiHandler::getCgiInWriteFD(void) const
 {
-	return (this->_infd[0]);
+	return (this->_infd[1]);
 }
 
-int CgiHandler::getCgiOutWriteFD(void) const
+int CgiHandler::getCgiOutReadFD(void) const
 {
-	return (this->_outfd[1]);
+	return (this->_outfd[0]);
 }
 

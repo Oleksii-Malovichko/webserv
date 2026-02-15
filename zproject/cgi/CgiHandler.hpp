@@ -49,8 +49,8 @@ class CgiHandler
 		void closePipeFd(int opt);
 		void setNonBlockPipe(void);
 		const char* getCgiPath(void) const;
-		int getCgiInReadFD(void) const;
-		int getCgiOutWriteFD(void) const;
+		int getCgiIWriteFD(void) const;
+		int getCgiOutReadFD(void) const;
 		
 };
 
