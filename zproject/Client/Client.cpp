@@ -6,6 +6,7 @@ Client::Client(ClientSocket &&sock) : socket(std::move(sock))
 {
 	this->state = State::READING;
 	this->lastActivity = std::chrono::steady_clock::now();
+this->_cgi_obj = nullptr;
 }
 
 Client::Client(Client &&other) noexcept : socket(std::move(other.socket)) // переносим сокет
@@ -143,4 +144,9 @@ const std::string &Client::getReadBuffer() const
 void Client::clearReadBuffer()
 {
 	this->readBuffer.clear();
+}
+
+CgiHandler* Client::getCgiPtr(void)
+{
+	return (this->_cgi_obj);
 }

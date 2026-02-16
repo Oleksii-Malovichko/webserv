@@ -19,7 +19,8 @@ struct EventData
 	{
 		LISTEN_SOCKET,
 		CLIENT_SOCKET,
-		CGI_PIPE
+		CGI_STDIN,
+		CGI_STDOUT
 	};
 
 	Type type;
@@ -74,3 +75,4 @@ class Epoll
 		void removeClient(int clientFD); // удалить клиента и deregister из epoll
 		Client *getClientByFD(int fd); // получить указатель на клиента по fd
 };
+

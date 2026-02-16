@@ -91,3 +91,14 @@ fileAccessError::fileAccessError(const std::string& file_path)
 
 	setMessage(ss.str());
 }
+
+writeError::writeError(CgiHandler& cgi_hand)
+{
+	std::stringstream ss;
+
+	ss << "Failed to write CGI STDIN: "
+		<< strerror(errno);
+
+	setMessage(ss.str());
+	cgi_hand.closePipeFd(0);
+}

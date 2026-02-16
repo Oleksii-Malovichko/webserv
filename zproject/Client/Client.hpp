@@ -6,6 +6,8 @@
 #include <fcntl.h>
 #include "ClientSocket.hpp"
 
+class CgiHandler;
+
 struct HttpRequest
 {
 	std::string method;
@@ -42,6 +44,7 @@ class Client
 		State state;
 		std::chrono::steady_clock::time_point lastActivity;
 		HttpRequest request;
+		CgiHandler *_cgi_obj;
 
 	public:
 		// контсруктор принимает уже созданный сокет (explicit нужен чтобы не было неявных преоброзований)
@@ -68,4 +71,6 @@ class Client
 		void setState(State newState);
 		const std::string &getReadBuffer() const;
 		void clearReadBuffer();
+
+		CgiHandler* getCgiPtr(void);
 };

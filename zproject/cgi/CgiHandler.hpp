@@ -28,6 +28,7 @@ class CgiHandler
 		int _envp_num;
 		char** _args;
 		char** _envp;
+		size_t _sent_bytes;
 
 	public:
 		CgiHandler(void);
@@ -39,7 +40,9 @@ class CgiHandler
 		void addEnvpElement(
 			const std::string& key, const std::string& value);
 		
-		std::string runExecve(void);
+		void runExecve(void);
+		std::string readFromCgi(void);
+		void writeToCgi(void);
 		void setEnvp(Client& client_obj); // later the request class will be the argument
 		void setArgsAndCgiPath(char* in_cgi_path);
 		void freeEnvp(void);

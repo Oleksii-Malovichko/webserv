@@ -131,6 +131,51 @@ bool Epoll::handleClient(int fd, uint32_t ev)
 	return true;
 }
 
+bool handleCGIevent(EventData* data, uint32_t ev)
+{
+	Client*  client = static_cast<Client*>(data->owner);
+	if (!client)
+	{
+		std::cerr	<< RED << "client doesn't exist"
+					<< " in handleCGIevent" << DEFAULT << std::endl;
+		return(false);
+	}
+
+	CgiHandler* cgi_ptr = client->getCgiPtr();
+	if (!cgi_ptr)
+	{
+		std::cerr	<< RED << "cgi_ptr doesn't exist"
+					<< " in handleCGIevent" << DEFAULT << std::endl;
+		return (false)
+	}
+
+	if (ev & (EPOLLER | EPOLLHUP))
+	{
+		//terminate cgi
+		removeClient(client->getFD());
+		return (false)
+	}
+
+	if (data->type == EventData:Type::CGI_STDOUT)
+	{
+		if (ev & EPOLLOUT)
+			//cgi write
+	}
+
+	if (data->type == EventData:Type::CGI_STDIN)
+	{
+		if (ev & EPOLLIN)
+			//cgi read
+	}
+
+	/*TODO separate the cgi states
+	if (cgi->isFinished())
+		client->finalizeCgiResponse()
+	*/
+
+	return (true);
+}
+
 // сердце управления epoll
 /*
 	This handleEvents function made before CGI fds added to the fds list
@@ -197,8 +242,12 @@ void Epoll::handleEvents(int defaultTimeoutMs)
 				handleClient(data->fd, ev);
 				break ;
 
-			case EventData::Type::CGI_PIPE:
-				handleCgi(data->fd, ev); // this is still not correct function call
+			case EventData::Type::CGI_STDIN:
+				handleCgiEvent(data->fd, ev); // this is still not correct function call
+				break ;
+
+			case EventData::Type::CGI_STDOUT:
+				handleCgiEvent(data->fd, ev); // this is still not correct function call
 				break ;
 			
 			default:
@@ -357,7 +406,7 @@ void Epoll::addCgiPipesToEpoll(const CgiHandler& cgi_obj, Client& client_obj)
 	Client* stored_client = &client_obj;
 	
 	EventData* data_in = new EventData;
-	data_in->type = EventData::Type::CGI_PIPE;
+	data_in->type = EventData::Type::CGI_STDOUT;
 	data_in->fd = cgi_out_read;
 	data_in->owner = stored_client;
 
@@ -372,7 +421,7 @@ void Epoll::addCgiPipesToEpoll(const CgiHandler& cgi_obj, Client& client_obj)
 	fdEventMap[cgi_out_read] = data_in;
 
 	EventData* data_out = new EventData;
-	data_out->type = EventData::Type::CGI_PIPE;
+	data_out->type = EventData::Type::CGI_STDIN;
 	data_out->fd = cgi_in_write;
 	data_out->owner = stored_client;
 

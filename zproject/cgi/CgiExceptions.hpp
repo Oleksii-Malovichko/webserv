@@ -66,4 +66,10 @@ class fileAccessError: public Exceptions
 		fileAccessError(const std::string& file_path);
 };
 
+class writeError: public Exceptions
+{
+	public:
+		writeError(CgiHandler& cgi_hand);
+};
+
 #endif

@@ -7,6 +7,7 @@ CgiHandler::CgiHandler(void)
 	this->_envp_num = 0;
 	this->_envp = NULL;
 	this->_args = NULL;
+	this->_sent_bytes = 0;
 	
 	if (pipe(this->_infd) == -1)
 		throw pipeError("Failed to create input pipe");
@@ -22,6 +23,7 @@ CgiHandler::~CgiHandler(void)
 	this->_args_num = 0;
 	this->freeEnvp();
 	this->_envp_num = 0;
+	this->_sent_bytes = 0;
 }
 
 void CgiHandler::freeEnvp(void)
@@ -84,7 +86,7 @@ void CgiHandler::addEnvpElement(const std::string& key,
 	this->_envp = new_envp;
 }	
 
-std::string CgiHandler::runExecve(void)
+void CgiHandler::runExecve(void)
 {
 	//the request budy string given to test,
 	// later need to change from the http value
@@ -181,7 +183,79 @@ std::string CgiHandler::runExecve(void)
 			throw execveError(*this);
 	}
 
+	
+}
+
+std::string CgiHandler::readFromCgi(void)
+{
+	char buffer[CGI_BUFFER_SIZE + 1];
+	std::string response;
+	int readbyte = 0;
+	
+	while (true)
+	{
+		readbyte = read(this->_outfd[0], buffer, CGI_BUFFER_SIZE);
+		if (readbyte > 0)
+		{
+			response.append(buffer, readbyte);
+		}
+		else if (readbyte == 0)
+		{
+			//removefdfrom Epoll!!!
+			close(this->_outfd[0]);
+			//marking CGIoutput finished???
+			break ;
+		}
+		else
+		{
+			if (errno == EAGAIN || errno == EWOULDBLOCK)
+			{
+				break ;
+			}
+			else
+			{
+				throw readError(*this);
+			}
+		}
+	}
+
 	return (response);
+}
+
+void CgiHandler::writeToCgi(void);
+{
+	ssize_t bytes = write(this->_infd[1], 
+		request_body.c_str() + this->_sent_bytes,
+		request_body.length() - this->_sent_bytes);
+
+	if (bytes > 0)
+	{
+		this->_sent_bytes += bytes;
+
+		if (this->_sent_bytes == request_body.length())
+		{
+			//remove filedescriptorfrom epoll
+			close(this->_infd[1]);
+			//markWriteFinished
+		}
+	}
+	else if (bytes == -1 && errno == EAGAIN)
+	{
+		return ;
+	}
+	else
+	{
+		throw writeError();
+	}
+}
+
+void CgiHandler::finishChildProcess(void)
+{
+	int status;
+	waitpid(this->_execution_child, &status, WNOHANG);
+
+	if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
+		throw execveError(*this);
 }
 
 void CgiHandler::setEnvp(Client& client_obj)
@@ -189,7 +263,7 @@ void CgiHandler::setEnvp(Client& client_obj)
 	this->addEnvpElement("REQUEST_METHOD", client_obj.getRequest().method);
 	this->addEnvpElement("SCRIPT_NAME", client_obj.getRequest().path);
 	this->addEnvpElement("PATH_INFO", "");
-	this->addEnvpElement("QUERY_STRING", "name=Tom&age=25");
+	this->addEnvpElement("QUERY_STRING", client_obj.getRequest().query_string);
 	this->addEnvpElement("CONTENT_LENGTH", std::to_string(client_obj.getRequest().contentLength));
 	this->addEnvpElement("CONTENT_TYPE", "");
 	this->addEnvpElement("SERVER_PROTOCOL", client_obj.getRequest().version);
