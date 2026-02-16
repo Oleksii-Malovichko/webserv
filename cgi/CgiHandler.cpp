@@ -6,7 +6,7 @@
 /*   By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 17:04:59 by pauladretta       #+#    #+#             */
-/*   Updated: 2026/02/15 23:51:50 by pdrettas         ###   ########.fr       */
+/*   Updated: 2026/02/16 01:09:53 by pdrettas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -137,6 +137,7 @@ bool CgiHandler::writeRequestBodyToPipe()
 }
 
 // ft: read the CGI output (from the child process that executed the file script) from the second pipe (cgi to srv[0]) (CGI -> server)
+// added: pipe needs to be non-blocking bc an infinite loop will keep read() forever and pipe wont be closed
 bool CgiHandler::readCgiOutputFromPipe()
 {
     int bytesRead = 1;
@@ -155,15 +156,34 @@ bool CgiHandler::readCgiOutputFromPipe()
     return true;
 }
 
-// ft: waits for child to finish and captures the exit code 
+// ft: waits for child to finish or kill child if stuck too long (ex. infinite loop) and captures the exit code 
+// added: add non-blocking (ex. infinite loop script) by doing a timeout
 void CgiHandler::waitAndGetExitCode()
 {
-    int status;
+    int status = 0;
+    time_t start = time(NULL); // ex. start 4:10:00 pm 
     
-    waitpid(this->_pid, &status, 0);
-    if (WIFEXITED(status))
-        this->_exitCode = WEXITSTATUS(status);
-        
+    while (1) // loop needed to continously recheck the ongoing time that has passed until x seconds reached to kill
+    {
+        pid_t result = waitpid(this->_pid, &status, WNOHANG); // checks if child exited (WNOHANG: checks without blocking)
+        if (result > 0) // if child exited
+        {
+            if (WIFEXITED(status)) // exited normally
+                this->_exitCode = WEXITSTATUS(status);
+            else if (WIFSIGNALED(status)) // killed by signal 
+                this->_exitCode = 1;
+            break;
+        }
+        if (difftime(time(NULL), start) >= 5) // compares btw beginning time and now how much has passed
+        {
+            kill(this->_pid, SIGKILL); // kill process
+            waitpid(this->_pid, &status, 0); // cleanup, no zombies
+            this->_exitCode = 124;
+            std::cerr << "CGI Error: timeout reached." << std::endl;
+            break;
+        }
+        usleep(100000); // sleep 100ms to avoid busy waiting / burning CPU
+    }
     std::cout << "Exit Code: " << this->_exitCode << std::endl; // TODO: delete after testing
 }
 
@@ -208,12 +228,12 @@ bool CgiHandler::execute()
         if (!this->writeRequestBodyToPipe())
             return false;
             
+        this->waitAndGetExitCode();
+            
         if (!this->readCgiOutputFromPipe())
             return false;
 
-        this->waitAndGetExitCode();
     }
-
     return true;
 }       
 

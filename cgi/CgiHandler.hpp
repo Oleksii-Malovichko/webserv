@@ -6,7 +6,7 @@
 /*   By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 17:07:24 by pauladretta       #+#    #+#             */
-/*   Updated: 2026/02/15 23:48:28 by pdrettas         ###   ########.fr       */
+/*   Updated: 2026/02/16 00:40:35 by pdrettas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@
 #include <string.h>
 #include <cstring>
 #include <cerrno>
+#include <time.h>
 
 enum PipeCloseCall
 {
