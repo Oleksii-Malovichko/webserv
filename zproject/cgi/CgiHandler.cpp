@@ -252,10 +252,23 @@ void CgiHandler::writeToCgi(void);
 void CgiHandler::finishChildProcess(void)
 {
 	int status;
-	waitpid(this->_execution_child, &status, WNOHANG);
+	pid_t res = waitpid(this->_execution_child, &status, WNOHANG);
 
-	if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
+	if (res == 0)
+		return
+	else if (res == -1)
+	{
 		throw execveError(*this);
+	}
+	else
+	{
+		if (WIFEXITED(status))
+		{
+			if (WEXITSTATUS(status) != 0 || WIFSIGNALED(status))
+				throw execveError(*this);
+		}
+	}
+	//markChildFinished
 }
 
 void CgiHandler::setEnvp(Client& client_obj)

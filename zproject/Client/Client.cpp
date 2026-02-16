@@ -6,7 +6,7 @@ Client::Client(ClientSocket &&sock) : socket(std::move(sock))
 {
 	this->state = State::READING;
 	this->lastActivity = std::chrono::steady_clock::now();
-this->_cgi_obj = nullptr;
+	this->_cgi_obj = nullptr;
 }
 
 Client::Client(Client &&other) noexcept : socket(std::move(other.socket)) // переносим сокет

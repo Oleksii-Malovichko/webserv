@@ -159,13 +159,13 @@ bool handleCGIevent(EventData* data, uint32_t ev)
 	if (data->type == EventData:Type::CGI_STDOUT)
 	{
 		if (ev & EPOLLOUT)
-			//cgi write
+			cgi_ptr->writeToCgi();
 	}
 
 	if (data->type == EventData:Type::CGI_STDIN)
 	{
 		if (ev & EPOLLIN)
-			//cgi read
+			cgi_ptr->readFromCgi();
 	}
 
 	/*TODO separate the cgi states
