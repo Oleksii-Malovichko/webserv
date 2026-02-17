@@ -3,6 +3,7 @@
 #include "Client.hpp"
 #include "ListeningSocket.hpp"
 #include <array>
+#include <deque>
 #include <map>
 
 #include "../../cgi/CgiHandler.hpp"
@@ -32,7 +33,8 @@ class Epoll
 {
 	int epfd;
 	std::array<epoll_event, MAX_EVENTS> events;
-	std::vector<ListeningSocket> listeningSockets;
+	// std::vector<ListeningSocket> listeningSockets;
+	std::deque<ListeningSocket> listeningSockets;
 	std::unordered_map<int, Client> clients;
 	std::map<int, EventData*> fdEventMap;
 
@@ -58,7 +60,8 @@ class Epoll
 		
 		// Утилиты для Server
 		int getEPFD() const; // получить epfd
-		const std::vector<ListeningSocket> &getListeningSockets() const; // access to listeningSockets
+		// const std::vector<ListeningSocket> &getListeningSockets() const; // access to listeningSockets
+		const std::deque<ListeningSocket> &getListeningSockets() const; // access to listeningSockets
 		const std::unordered_map<int, Client> &getClients() const; // access to clients (reading)
 		std::unordered_map<int, Client> &getClients(); // access to clients (writing/changing)
 
@@ -76,5 +79,7 @@ class Epoll
 		void addClient(Client &&client); // добавить нового клиента в epoll
 		void removeClient(int clientFD); // удалить клиента и deregister из epoll
 		Client *getClientByFD(int fd); // получить указатель на клиента по fd
-};
+		void printEvenMap(void);
+
+	};
 

@@ -43,14 +43,23 @@ void Epoll::addListeningSocket(ListeningSocket &&sock)
 	int serverFD = sock.getFD();
 	if (serverFD == -1)
 		throw std::logic_error("addListeningSocket: invalid fd");
-
+		
 	struct epoll_event ev;
+
+	EventData* data = new EventData;
+	data->type = EventData::Type::LISTEN_SOCKET;
+	data->fd = serverFD;
+	
 	ev.events = EPOLLIN;
-	ev.data.fd = serverFD;
+
 	if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, serverFD, &ev) == -1)
 		throw std::runtime_error(std::string("epoll_ctl ADD(server): ") + strerror(errno));
 	
 	listeningSockets.push_back(std::move(sock));
+	data->owner = &listeningSockets.back();
+	ev.data.ptr = data;
+	fdEventMap[serverFD] = data;
+
 	std::cout << "Added listening socket(" << serverFD << ")" << std::endl;
 }
 
@@ -231,11 +240,35 @@ void Epoll::handleEvents(int defaultTimeoutMs)
 		throw std::runtime_error(std::string("epoll_wait: ") + strerror(errno));
 	}
 
+	std::cerr << YELLOW << "n = " << n << "\n EventMap elements: "
+				<< fdEventMap.size() << DEFAULT << std::endl;  
+
 	for (int i = 0; i < n; i++)
 	{
+		this->printEvenMap();
+
 		EventData* data = static_cast<EventData*>(
 			events[i].data.ptr);
 		uint32_t ev = events[i].events;
+
+		if (!data)
+		{
+			std::cerr << RED << "NULL data.ptr" << DEFAULT << std::endl;
+			continue;
+		}
+
+		std::cerr << CYAN
+				<< "data ptr        = " << static_cast<void*>(data) << "\n"
+				<< "data->fd        = " << data->fd << "\n"
+				<< "data->type      = " << static_cast<int>(data->type)
+				<< DEFAULT << std::endl;
+
+		if (fdEventMap.find(data->fd) == fdEventMap.end())
+		{
+			std::cerr << RED << "fd not in fdEventMap -> invalid pointer"
+					<< DEFAULT << std::endl;
+			continue;
+		}
 
 		switch (data->type)
 		{
@@ -269,7 +302,12 @@ int Epoll::getEPFD() const
 	return this->epfd;
 }
 
-const std::vector<ListeningSocket> &Epoll::getListeningSockets() const
+// const std::vector<ListeningSocket> &Epoll::getListeningSockets() const
+// {
+// 	return this->listeningSockets;
+// }
+
+const std::deque<ListeningSocket> &Epoll::getListeningSockets() const
 {
 	return this->listeningSockets;
 }
@@ -513,3 +551,17 @@ void Epoll::removeCgiPipesFromEpoll(const CgiHandler& cgi_obj)
 		}
 	}
 
+void Epoll::printEvenMap(void)
+{
+	for (auto it = fdEventMap.begin(); 
+		it != fdEventMap.end(); ++it)
+	{
+		EventData* data = it->second; 
+		
+		std::cout << MAGENTA
+				<< "data ptr        = " << static_cast<void*>(data) << "\n"
+				<< "data->fd        = " << data->fd << "\n"
+				<< "data->type      = " << static_cast<int>(data->type)
+				<< DEFAULT << std::endl;
+	}
+}

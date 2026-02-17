@@ -30,7 +30,7 @@ OBJS2 = $(SRCS2:%.c=$(OBJ_DIR)/%.o)
 
 CC = cc
 CFLAGS = -Wall -Wextra -Werror
-CXX = c++ -std=c++11 -fsanitize=address
+CXX = c++ -std=c++11 -fsanitize=address -g
 CXXFLAGS = -Wall -Wextra -Werror \
 	-I. \
 	-IClient \
