@@ -52,12 +52,14 @@ void Epoll::addListeningSocket(ListeningSocket &&sock)
 	
 	ev.events = EPOLLIN;
 
-	if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, serverFD, &ev) == -1)
-		throw std::runtime_error(std::string("epoll_ctl ADD(server): ") + strerror(errno));
-	
 	listeningSockets.push_back(std::move(sock));
 	data->owner = &listeningSockets.back();
 	ev.data.ptr = data;
+
+	if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, serverFD, &ev) == -1)
+		throw std::runtime_error(std::string("epoll_ctl ADD(server): ") + strerror(errno));
+	
+
 	fdEventMap[serverFD] = data;
 
 	std::cout << "Added listening socket(" << serverFD << ")" << std::endl;
