@@ -144,9 +144,23 @@ void Server::handleClient(Client &client)
 			}
 			else if (req.method == "POST")
 			{
-				resp.setStatus(200, "OK");
-				resp.setBody("<html><body><h1>Form Submitted!</h1></body></html>");
-				resp.setHeader("Content-Type", "text/html");
+				// ---------- TODO: "client needs to be able to upload files"
+				std::string contentType = req.headers["Content-Type"];
+				if (contentType.find("multiple/form-data") != std::string::npos) // P: to see if file upload, check if "multipart/form-data" is in string
+				{
+					// 1. extract boundary from Content-Type header
+					// 2. use boundary to find & extract file content from body
+					// 3. write content to disk
+
+					// resp.setStatus(201, "OK");
+				}
+				// ---------------
+				else
+				{
+					resp.setStatus(200, "OK");
+					resp.setBody("<html><body><h1>Form Submitted!</h1></body></html>");
+					resp.setHeader("Content-Type", "text/html");
+				}
 			}
 			else if (req.method == "DELETE")
 			{

@@ -47,3 +47,31 @@ Pay attention to the following:
 
 Webserv Entire Project
 1. how to execute: ./webserv [configuration file] 
+
+
+***********************************************************************************
+Feb 16:
+Stuff to do for now P:
+1. subject: client must be able to upload files
+2. webserv config: how to autoindex ?
+3. add php files scripts
+
+*Note: the envp parts from client is given to handleCGI and is being created in CgiHandler T.
+T: epoll cgi. Then merge into main version. add my cgi functions
+
+
+CHANGES MADE IN FOLDER 'ZPROJECT'
+- shown in folder cgi/changes_zproject
+
+
+TASKS broken down
+1. - check if done in code and where:
+    - if its an upload request: if request is a POST & "Content-Type" header contains "multiple/form-data"
+    - parse the body to get file content: strip away the wrapper to get actual file content: wrapper uses a "boundary" string (found in Content-Type header) to mark where the file starts and ends 
+    - write the file to disk: once i got raw file content and its filename, open a file & write it to the configured upload        directory
+    - send back a response: "201 Created"
+
+- summary: the client (rbwoser/curl) sends a POST reuqest with a file attached. 
+    Server needs to receive that file and save it somewhere on disk.
+QUESTIONS for group:
+- where should uploaded files be saved?
