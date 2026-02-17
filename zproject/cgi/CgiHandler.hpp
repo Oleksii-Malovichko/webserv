@@ -16,6 +16,7 @@
 # define CGI_MAX_TIME 5
 
 class Client;
+class Epoll;
 
 class CgiHandler
 {
@@ -29,6 +30,11 @@ class CgiHandler
 		char** _args;
 		char** _envp;
 		size_t _sent_bytes;
+		std::string _cgi_response;
+		bool _stdin_closed;
+		bool _stdout_closed;
+		bool _child_exited;
+
 
 	public:
 		CgiHandler(void);
@@ -41,9 +47,10 @@ class CgiHandler
 			const std::string& key, const std::string& value);
 		
 		void runExecve(void);
-		std::string readFromCgi(void);
-		void writeToCgi(void);
-		void setEnvp(Client& client_obj); // later the request class will be the argument
+		void readFromCgi(Epoll& epoll_obj);
+		void writeToCgi(Epoll& epoll_obj,
+			const std::string& request_body);
+		void setEnvp(Client& client_obj);
 		void setArgsAndCgiPath(char* in_cgi_path);
 		void freeEnvp(void);
 		void freeArgs(void);
@@ -51,9 +58,14 @@ class CgiHandler
 		void printEnvp(std::ostream& out) const;
 		void closePipeFd(int opt);
 		void setNonBlockPipe(void);
+
 		const char* getCgiPath(void) const;
 		int getCgiInWriteFD(void) const;
 		int getCgiOutReadFD(void) const;
+		void finishChildProcess(void);
+		bool IsCgiFinished(void);
+		std::string buildCgiResponse(void);
+		void terminateChild(void);
 		
 };
 

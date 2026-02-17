@@ -56,6 +56,8 @@ class Client
 		Client(Client &&other) noexcept;
 		Client& operator=(Client &&other) noexcept;
 
+		std::string _http_response;
+
 		ssize_t readFromSocket(); // чтение данных в readBuffer
 		ssize_t writeToSocket(); // запись данных в writeBuffer
 		bool hasPendingWrite() const; // есть ли данные для записи

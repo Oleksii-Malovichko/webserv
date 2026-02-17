@@ -63,9 +63,11 @@ class Epoll
 		std::unordered_map<int, Client> &getClients(); // access to clients (writing/changing)
 
 		//Add CGI pipes to epoll events
+		bool handleCgiEvent(EventData* data, uint32_t ev);
 		void addCgiPipesToEpoll(const CgiHandler& cgi_obj,
 			Client& client_obj);
 		void removeCgiPipesFromEpoll(const CgiHandler& cgi_obj);
+		void removeCgiFd(int fd);
 
 	private: // help functions
 		int getMinTimeout(int defaultTimeoutMs);

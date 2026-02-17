@@ -1,5 +1,6 @@
 #include "CgiHandler.hpp"
 #include "../Client/Client.hpp"
+#include "../RAII/epoll/Epoll.hpp"
 
 CgiHandler::CgiHandler(void)
 {
@@ -8,6 +9,10 @@ CgiHandler::CgiHandler(void)
 	this->_envp = NULL;
 	this->_args = NULL;
 	this->_sent_bytes = 0;
+	this->_cgi_response = "";
+	this->_stdin_closed = false;
+	this->_stdout_closed = false;
+	this->_child_exited = false;
 	
 	if (pipe(this->_infd) == -1)
 		throw pipeError("Failed to create input pipe");
@@ -86,16 +91,109 @@ void CgiHandler::addEnvpElement(const std::string& key,
 	this->_envp = new_envp;
 }	
 
+// Old version with blocking solution
+// void CgiHandler::runExecve(void)
+// {
+// 	//the request budy string given to test,
+// 	// later need to change from the http value
+// 	std::string request_body = "test message for execve";
+	
+// 	char buffer[CGI_BUFFER_SIZE + 1];
+// 	std::string response;
+// 	int readbyte = 1;
+
+// 	this->_execution_child = fork();
+// 	if (this->_execution_child == -1 )
+// 		throw forkError();
+	
+// 	if (_execution_child == 0)
+// 	{
+// 		if (dup2(this->_infd[0], STDIN_FILENO) == -1)
+// 			throw dup2Error("Failed to dup2 _infd[0]");
+
+// 		if (dup2(this->_outfd[1], STDOUT_FILENO) == -1)
+// 			throw dup2Error("Failed to dup2 _infd[0]");
+
+// 		this->closePipeFd(0);
+		
+// 		execve("/usr/bin/python3", 
+// 			this->_args, this->_envp);
+// 		throw execveError(*this);
+// 		// perror("Failed to execute execve");
+// 		// exit(1);
+// 	}
+// 	else
+// 	{
+// 		this->closePipeFd(1);
+// 		// this->setNonBlockPipe();
+
+// 		write(this->_infd[1], request_body.c_str(), request_body.length());
+// 		close(this->_infd[1]);
+
+// 		//This part need to continue -> write a nonblocking version
+// 		/*
+// 		while (readbyte > 0)
+// 		{
+// 			readbyte = read(this->_outfd[0], buffer, CGI_BUFFER_SIZE);
+// 			if (readbyte < 0)
+// 			{
+// 				throw readError(*this);
+// 			}
+// 			if (readbyte > 0)
+// 			{
+// 				response.append(buffer, readbyte);
+// 			}
+// 		}
+		
+
+
+// 		waitpid(this->_execution_child, NULL, 0);
+// 		*/
+	
+// 		/*
+// 		Non-blocking version
+// 		*/
+// 		while (true)
+// 		{
+// 			readbyte = read(this->_outfd[0], buffer, CGI_BUFFER_SIZE);
+// 			if (readbyte > 0)
+// 			{
+// 				response.append(buffer, readbyte);
+// 			}
+// 			else if (readbyte == 0)
+// 			{
+// 				close(this->_outfd[0]);
+// 				break ;
+// 			}
+// 			else
+// 			{
+// 				if (errno == EAGAIN || errno == EWOULDBLOCK)
+// 				{
+// 					break ;
+// 				}
+// 				else
+// 				{
+// 					close(this->_outfd[0]);
+// 					throw readError(*this);
+// 				}
+// 			}
+// 		}
+
+// 		close(this->_outfd[0]);
+
+
+// 		int status;
+// 		waitpid(this->_execution_child, &status, WNOHANG);
+
+// 		if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
+// 			throw execveError(*this);
+// 	}
+
+	
+// }
+
 void CgiHandler::runExecve(void)
 {
-	//the request budy string given to test,
-	// later need to change from the http value
-	std::string request_body = "test message for execve";
-	
-	char buffer[CGI_BUFFER_SIZE + 1];
-	std::string response;
-	int readbyte = 1;
-
 	this->_execution_child = fork();
 	if (this->_execution_child == -1 )
 		throw forkError();
@@ -113,83 +211,17 @@ void CgiHandler::runExecve(void)
 		execve("/usr/bin/python3", 
 			this->_args, this->_envp);
 		throw execveError(*this);
-		// perror("Failed to execute execve");
-		// exit(1);
 	}
 	else
 	{
 		this->closePipeFd(1);
-		// this->setNonBlockPipe();
-
-		write(this->_infd[1], request_body.c_str(), request_body.length());
-		close(this->_infd[1]);
-
-		//This part need to continue -> write a nonblocking version
-		/*
-		while (readbyte > 0)
-		{
-			readbyte = read(this->_outfd[0], buffer, CGI_BUFFER_SIZE);
-			if (readbyte < 0)
-			{
-				throw readError(*this);
-			}
-			if (readbyte > 0)
-			{
-				response.append(buffer, readbyte);
-			}
-		}
-		
-
-
-		waitpid(this->_execution_child, NULL, 0);
-		*/
-	
-		/*
-		Non-blocking version
-		*/
-		while (true)
-		{
-			readbyte = read(this->_outfd[0], buffer, CGI_BUFFER_SIZE);
-			if (readbyte > 0)
-			{
-				response.append(buffer, readbyte);
-			}
-			else if (readbyte == 0)
-			{
-				close(this->_outfd[0]);
-				break ;
-			}
-			else
-			{
-				if (errno == EAGAIN || errno == EWOULDBLOCK)
-				{
-					break ;
-				}
-				else
-				{
-					close(this->_outfd[0]);
-					throw readError(*this);
-				}
-			}
-		}
-
-		close(this->_outfd[0]);
-
-
-		int status;
-		waitpid(this->_execution_child, &status, WNOHANG);
-
-		if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
-			throw execveError(*this);
 	}
-
-	
 }
 
-std::string CgiHandler::readFromCgi(void)
+
+void CgiHandler::readFromCgi(Epoll& epoll_obj)
 {
 	char buffer[CGI_BUFFER_SIZE + 1];
-	std::string response;
 	int readbyte = 0;
 	
 	while (true)
@@ -197,13 +229,13 @@ std::string CgiHandler::readFromCgi(void)
 		readbyte = read(this->_outfd[0], buffer, CGI_BUFFER_SIZE);
 		if (readbyte > 0)
 		{
-			response.append(buffer, readbyte);
+			this->_cgi_response.append(buffer, readbyte);
 		}
 		else if (readbyte == 0)
 		{
-			//removefdfrom Epoll!!!
+			epoll_obj.removeCgiFd(this->_outfd[0]);
 			close(this->_outfd[0]);
-			//marking CGIoutput finished???
+			this->_stdout_closed = true;
 			break ;
 		}
 		else
@@ -218,11 +250,10 @@ std::string CgiHandler::readFromCgi(void)
 			}
 		}
 	}
-
-	return (response);
 }
 
-void CgiHandler::writeToCgi(void);
+void CgiHandler::writeToCgi(Epoll& epoll_obj,
+	const std::string& request_body)
 {
 	ssize_t bytes = write(this->_infd[1], 
 		request_body.c_str() + this->_sent_bytes,
@@ -234,9 +265,9 @@ void CgiHandler::writeToCgi(void);
 
 		if (this->_sent_bytes == request_body.length())
 		{
-			//remove filedescriptorfrom epoll
+			epoll_obj.removeCgiFd(this->_infd[1]);
 			close(this->_infd[1]);
-			//markWriteFinished
+			this->_stdin_closed = true;
 		}
 	}
 	else if (bytes == -1 && errno == EAGAIN)
@@ -245,7 +276,7 @@ void CgiHandler::writeToCgi(void);
 	}
 	else
 	{
-		throw writeError();
+		throw writeError(*this);
 	}
 }
 
@@ -255,7 +286,7 @@ void CgiHandler::finishChildProcess(void)
 	pid_t res = waitpid(this->_execution_child, &status, WNOHANG);
 
 	if (res == 0)
-		return
+		return ;
 	else if (res == -1)
 	{
 		throw execveError(*this);
@@ -268,7 +299,7 @@ void CgiHandler::finishChildProcess(void)
 				throw execveError(*this);
 		}
 	}
-	//markChildFinished
+	this->_child_exited = true;
 }
 
 void CgiHandler::setEnvp(Client& client_obj)
@@ -368,5 +399,33 @@ int CgiHandler::getCgiInWriteFD(void) const
 int CgiHandler::getCgiOutReadFD(void) const
 {
 	return (this->_outfd[0]);
+}
+
+bool CgiHandler::IsCgiFinished(void)
+{
+	if (this->_stdin_closed == true &&
+		this->_stdout_closed == true &&
+		this->_child_exited == true)
+	{
+		return (true);
+	}
+
+	return (false);
+}
+
+std::string CgiHandler::buildCgiResponse(void)
+{
+	//need to discuss the script will consist the whole http response
+	// or the HTTPResponse serializer will do it
+	return (this->_cgi_response);
+}
+
+void CgiHandler::terminateChild(void)
+{
+	if (this->_execution_child > 0)
+	{
+		kill(this->_execution_child, SIGTERM);
+		this->closePipeFd(0);
+	}
 }
 

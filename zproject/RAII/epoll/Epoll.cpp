@@ -131,7 +131,7 @@ bool Epoll::handleClient(int fd, uint32_t ev)
 	return true;
 }
 
-bool handleCGIevent(EventData* data, uint32_t ev)
+bool Epoll::handleCgiEvent(EventData* data, uint32_t ev)
 {
 	Client*  client = static_cast<Client*>(data->owner);
 	if (!client)
@@ -146,32 +146,37 @@ bool handleCGIevent(EventData* data, uint32_t ev)
 	{
 		std::cerr	<< RED << "cgi_ptr doesn't exist"
 					<< " in handleCGIevent" << DEFAULT << std::endl;
-		return (false)
+		return (false);
 	}
 
-	if (ev & (EPOLLER | EPOLLHUP))
+	if (ev & (EPOLLERR | EPOLLHUP))
 	{
-		//terminate cgi
+		cgi_ptr->terminateChild();
+		//it should later send 500 error message
 		removeClient(client->getFD());
-		return (false)
+		return (false);
 	}
 
-	if (data->type == EventData:Type::CGI_STDOUT)
+	if (data->type == EventData::Type::CGI_STDIN)
 	{
 		if (ev & EPOLLOUT)
-			cgi_ptr->writeToCgi();
+			cgi_ptr->writeToCgi(*this, client->getRequest().body);
 	}
 
-	if (data->type == EventData:Type::CGI_STDIN)
+	if (data->type == EventData::Type::CGI_STDOUT)
 	{
 		if (ev & EPOLLIN)
-			cgi_ptr->readFromCgi();
+			cgi_ptr->readFromCgi(*this);
 	}
 
-	/*TODO separate the cgi states
-	if (cgi->isFinished())
-		client->finalizeCgiResponse()
-	*/
+	if (cgi_ptr->IsCgiFinished() == true)
+	{
+		client->_http_response = cgi_ptr->buildCgiResponse();
+		client->appendToWriteBuffer(client->_http_response);
+		client->clearReadBuffer();
+		client->setState(Client::State::WRITING);
+		updateClientEvents(*client);
+	}
 
 	return (true);
 }
@@ -243,11 +248,11 @@ void Epoll::handleEvents(int defaultTimeoutMs)
 				break ;
 
 			case EventData::Type::CGI_STDIN:
-				handleCgiEvent(data->fd, ev); // this is still not correct function call
+				handleCgiEvent(data, ev); // this is still not correct function call
 				break ;
 
 			case EventData::Type::CGI_STDOUT:
-				handleCgiEvent(data->fd, ev); // this is still not correct function call
+				handleCgiEvent(data, ev); // this is still not correct function call
 				break ;
 			
 			default:
@@ -405,35 +410,35 @@ void Epoll::addCgiPipesToEpoll(const CgiHandler& cgi_obj, Client& client_obj)
 
 	Client* stored_client = &client_obj;
 	
-	EventData* data_in = new EventData;
-	data_in->type = EventData::Type::CGI_STDOUT;
-	data_in->fd = cgi_out_read;
-	data_in->owner = stored_client;
+	EventData* data_out = new EventData;
+	data_out->type = EventData::Type::CGI_STDOUT;
+	data_out->fd = cgi_out_read;
+	data_out->owner = stored_client;
 
 	cgiev.events = EPOLLIN;
-	cgiev.data.ptr = data_in;
+	cgiev.data.ptr = data_out;
 	if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, cgi_out_read, &cgiev) == -1)
 	{
 		throw std::runtime_error(std::string(
 			"epoll_ctl ADD(cgi_out_read): ") + strerror(errno));
 	}
 
-	fdEventMap[cgi_out_read] = data_in;
+	fdEventMap[cgi_out_read] = data_out;
 
-	EventData* data_out = new EventData;
-	data_out->type = EventData::Type::CGI_STDIN;
-	data_out->fd = cgi_in_write;
-	data_out->owner = stored_client;
+	EventData* data_in = new EventData;
+	data_in->type = EventData::Type::CGI_STDIN;
+	data_in->fd = cgi_in_write;
+	data_in->owner = stored_client;
 
 	cgiev.events = EPOLLOUT;
-	cgiev.data.ptr = data_out;
+	cgiev.data.ptr = data_in;
 	if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, cgi_in_write, &cgiev) == -1)
 	{
 		throw std::runtime_error(std::string(
 			"epoll_ctl ADD(cgi_in_write): ") + strerror(errno));
 	}
 
-	fdEventMap[cgi_in_write] = data_out;
+	fdEventMap[cgi_in_write] = data_in;
 
 	if (PRINT_MSG)
 	{
@@ -444,6 +449,7 @@ void Epoll::addCgiPipesToEpoll(const CgiHandler& cgi_obj, Client& client_obj)
 	
 }
 
+// This function later won't need
 void Epoll::removeCgiPipesFromEpoll(const CgiHandler& cgi_obj)
 {
 	int cgi_in_write = cgi_obj.getCgiInWriteFD();
@@ -483,4 +489,27 @@ void Epoll::removeCgiPipesFromEpoll(const CgiHandler& cgi_obj)
 			  << "CGI OUT read FD: " << cgi_out_read << std::endl;
 	}
 }
+
+	void Epoll::removeCgiFd(int fd)
+	{
+		if (epoll_ctl(epfd, EPOLL_CTL_DEL, fd, nullptr) == -1)
+		{
+			throw std::runtime_error(std::string("Epoll could not remove the"
+				" given " + std::to_string(fd) + " filedescriptor: ") 
+				+ strerror(errno));
+		}
+
+		auto it_event_in = fdEventMap.find(fd);
+		if (it_event_in != fdEventMap.end())
+		{
+			delete it_event_in->second;
+			fdEventMap.erase(it_event_in);
+		}
+
+		if(PRINT_MSG)
+		{
+			std::cout	<< "Remove the following fd to epoll events:\n"
+						<< "filedescriptor: " << fd << std::endl;
+		}
+	}
 

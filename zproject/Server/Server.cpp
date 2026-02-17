@@ -145,6 +145,7 @@ void Server::handleClient(Client &client)
 	{
 		this->handleCGI(client);
 		// only that case if the CGI response consist the header too
+		
 		return ;
 	}
 
@@ -343,9 +344,8 @@ std::string Server::handleCGI(Client &client)
 		cgi_obj.setArgsAndCgiPath(cgi_path);
 		cgi_obj.setEnvp(client);
 		cgi_obj.setNonBlockPipe();
-		this->epoll.addCgiPipesToEpoll(cgi_obj);
-		cgi_http_response = cgi_obj.runExecve();
-		this->epoll.removeCgiPipesFromEpoll(cgi_obj);
+		this->epoll.addCgiPipesToEpoll(cgi_obj, client);
+		cgi_obj.runExecve();
 
 		if (PRINT_MSG)
 		{
