@@ -221,6 +221,8 @@ void Server::shutdownServer()
 	auto &clients = epoll.getClients();
 	for (auto &pair : clients)
 		pair.second.close();
+
+	epoll.clearEventMap();
 }
 
 ServerConfig Server::selectServer(const HttpRequest& req)

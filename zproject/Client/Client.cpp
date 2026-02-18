@@ -141,6 +141,11 @@ const std::string &Client::getReadBuffer() const
 	return this->readBuffer;
 }
 
+const std::string &Client::getWriteBuffer() const
+{
+	return this->writeBuffer;
+}
+
 void Client::clearReadBuffer()
 {
 	this->readBuffer.clear();

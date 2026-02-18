@@ -72,6 +72,9 @@ class Epoll
 		void removeCgiPipesFromEpoll(const CgiHandler& cgi_obj);
 		void removeCgiFd(int fd);
 
+		//clear the EventMap
+		void clearEventMap(void);
+
 	private: // help functions
 		int getMinTimeout(int defaultTimeoutMs);
 		std::vector<int> getRemoveVector();

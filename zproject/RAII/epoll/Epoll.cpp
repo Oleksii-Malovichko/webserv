@@ -108,9 +108,10 @@ bool Epoll::handleClient(int fd, uint32_t ev)
 	Client *client = getClientByFD(fd);
 	if (!client)
 		return false;
-	if (ev & (EPOLLERR | EPOLLHUP)) // ошибка
+	if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) // ошибка
 	{
 		removeClient(fd);
+		std::cerr << RED << "Error occured handleClient EPOLLER" << DEFAULT << std::endl; 
 		return false;
 	}
 	if (ev & EPOLLIN) // reading
@@ -119,14 +120,17 @@ bool Epoll::handleClient(int fd, uint32_t ev)
 		if (bytes == 0) // клиент отключился
 		{
 			removeClient(fd);
+			std::cerr << RED << "Error occured handleClient EPOLLIN" << DEFAULT << std::endl; 
 			return false;
 		}
 		else
 			client->updateLastActivity();
-		// std::cout << "Client(" << client->getFD() << "): " << client->getReadBuffer() << std::endl;
+		
+		std::cout << "Client(" << client->getFD() << ") read: " << client->getReadBuffer() << std::endl;
 	}
 	if (ev & EPOLLOUT)
 	{
+		std::cout << "Client(" << client->getFD() << ") write: " << client->getWriteBuffer() << std::endl;
 		if (client->hasPendingWrite())
 		{
 			client->writeToSocket();
@@ -160,7 +164,7 @@ bool Epoll::handleCgiEvent(EventData* data, uint32_t ev)
 		return (false);
 	}
 
-	if (ev & (EPOLLERR | EPOLLHUP))
+	if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
 	{
 		cgi_ptr->terminateChild();
 		//it should later send 500 error message
@@ -569,4 +573,14 @@ void Epoll::printEvenMap(void)
 				<< "data->type      = " << static_cast<int>(data->type)
 				<< DEFAULT << std::endl;
 	}
+}
+
+void Epoll::clearEventMap(void)
+{
+	for (auto it = this->fdEventMap.begin();
+			it != fdEventMap.end(); ++it)
+	{
+		delete it->second;
+	}
+	this->fdEventMap.clear();
 }

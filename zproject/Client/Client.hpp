@@ -72,6 +72,7 @@ class Client
 		State getState() const;
 		void setState(State newState);
 		const std::string &getReadBuffer() const;
+		const std::string &getWriteBuffer() const;
 		void clearReadBuffer();
 
 		void printHttpRequest(void);
