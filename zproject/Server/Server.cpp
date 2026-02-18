@@ -134,7 +134,9 @@ void Server::handleClient(Client &client)
 	std::string headerPart;
 
 	ServerConfig current_server = selectServer(req);
+	current_server.printServerConfig();
 	LocationConfig loc = selectLocation(req.path, current_server);
+	loc.printLocationConfig();
 	if (isAllowedMethod(req, loc) == false)
 	{
 		//405 Not allowed method
@@ -204,18 +206,7 @@ void Server::handleClient(Client &client)
 		else
 			return ;
 	}
-	std::cout << "\n\nHttpRequest DEBUG:" << std::endl;
-	std::cout << "Method: " << req.method << std::endl;
-	std::cout << "Path: " << req.path << std::endl;
-	std::cout << "Query string: " << req.query_string << std::endl;
-	std::cout << "Version: " << req.version << std::endl;
-	for (auto it = req.headers.begin(); it != req.headers.end(); it++)
-	{
-		std::cout << "Key: " << it->first << std::endl;
-		std::cout << "Value: " << it->second << std::endl;
-	}
-	std::cout << "Content-length: " << req.contentLength << std::endl;
-	std::cout << "Body: " << req.body << std::endl;
+	client.printHttpRequest();
 }
 
 void Server::handleParseRequest(Client &client)
@@ -276,7 +267,8 @@ LocationConfig Server::selectLocation(
 
 	if (PRINT_MSG)
 	{
-		std::cout	<< GREEN << "The following location block founded:"
+		std::cout	<< BLUE << "The request path: " << request_path << "\n"
+					<< GREEN << "The following location block founded:"
 					<< found_location.getPath()
 					<< DEFAULT << std::endl;
 	}
@@ -367,6 +359,24 @@ std::string Server::handleCGI(Client &client)
 
 	return (cgi_http_response);
 }
+
+void ServerConfig::printServerConfig(void) const
+{
+	std::cout	<< "Server information:\n"
+				<< "Ip address: " << this->ip
+				<<  "\nListen port: " << this->port
+				<< "\nRoot: " << this->root
+				<< "\nIndex: " << this->index
+				<< "\nClient max body size: " << this->client_max_body_size;
+
+	for (auto it = error_pages.begin(); it != error_pages.end(); ++it)
+	{
+		std::cout << "\nError page code: " << it->first
+					<< " Error page: " << it->second;
+	}
+	std::cout << std::endl;
+}
+
 
 // void Server::handleClient(Client &client)
 // {

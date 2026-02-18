@@ -80,6 +80,6 @@ class Epoll
 		void removeClient(int clientFD); // удалить клиента и deregister из epoll
 		Client *getClientByFD(int fd); // получить указатель на клиента по fd
 		void printEvenMap(void);
-
+		void dataEventCheck(EventData* data);
 	};
 

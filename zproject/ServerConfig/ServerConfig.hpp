@@ -50,4 +50,5 @@ class ServerConfig
 
 		bool isValid() const;
 		~ServerConfig() = default;
+		void printServerConfig(void) const;
 };

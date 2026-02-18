@@ -74,5 +74,7 @@ class Client
 		const std::string &getReadBuffer() const;
 		void clearReadBuffer();
 
+		void printHttpRequest(void);
+
 		CgiHandler* getCgiPtr(void);
 };

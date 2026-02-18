@@ -230,6 +230,26 @@ void Epoll::handleEvents(int defaultTimeoutMs) // epoll.handleEvents(CLIENT_TIME
 }
 */
 
+void Epoll::dataEventCheck(EventData* data)
+{
+	if (!data)
+	{
+		std::cerr << RED << "NULL data.ptr" << DEFAULT << std::endl;
+	}
+
+	std::cerr << CYAN
+			<< "data ptr        = " << static_cast<void*>(data) << "\n"
+			<< "data->fd        = " << data->fd << "\n"
+			<< "data->type      = " << static_cast<int>(data->type)
+			<< DEFAULT << std::endl;
+
+	if (fdEventMap.find(data->fd) == fdEventMap.end())
+	{
+		std::cerr << RED << "fd not in fdEventMap -> invalid pointer"
+				<< DEFAULT << std::endl;
+	}
+}
+
 void Epoll::handleEvents(int defaultTimeoutMs)
 {
 	int timeout = getMinTimeout(defaultTimeoutMs);
@@ -253,24 +273,7 @@ void Epoll::handleEvents(int defaultTimeoutMs)
 			events[i].data.ptr);
 		uint32_t ev = events[i].events;
 
-		if (!data)
-		{
-			std::cerr << RED << "NULL data.ptr" << DEFAULT << std::endl;
-			continue;
-		}
-
-		std::cerr << CYAN
-				<< "data ptr        = " << static_cast<void*>(data) << "\n"
-				<< "data->fd        = " << data->fd << "\n"
-				<< "data->type      = " << static_cast<int>(data->type)
-				<< DEFAULT << std::endl;
-
-		if (fdEventMap.find(data->fd) == fdEventMap.end())
-		{
-			std::cerr << RED << "fd not in fdEventMap -> invalid pointer"
-					<< DEFAULT << std::endl;
-			continue;
-		}
+		dataEventCheck(data);
 
 		switch (data->type)
 		{

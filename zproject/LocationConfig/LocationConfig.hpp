@@ -45,4 +45,6 @@ class LocationConfig
 
 		bool isValid() const;
 		~LocationConfig() = default;
+
+		void printLocationConfig(void) const;
 };

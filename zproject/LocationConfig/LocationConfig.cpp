@@ -114,3 +114,31 @@ bool LocationConfig::isValid() const
 	}
 	return true;
 }
+
+void LocationConfig::printLocationConfig(void) const
+{
+	std::cout	<< "Location information:"
+				<< "\nPath: " << this->path
+				<< "\nRoot: " << this->root
+				<< "Allowed methodes: ";
+				
+	for (auto it = this->methods.begin(); 
+			it != this->methods.end(); ++it)
+	{
+		std::cout << *it << " ";
+	}
+
+	std::cout	<< std::boolalpha
+				<< "\nPossible to upload: " << this->upload
+				<< "\nUpload direction: " << this->upload_dir
+				<< "\nPossible autoindex: " << this->auto_index
+				<< "\nIndex: " << this->index;
+				
+	for (auto it = this->cgi.begin(); it != this->cgi.end(); ++it)
+	{
+		std::cout	<< "\nCGI extension: " << it->first 
+					<< " CGI binary: " << it->second;
+	}
+
+	std::cout << std::endl;
+}

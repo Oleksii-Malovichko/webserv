@@ -150,3 +150,21 @@ CgiHandler* Client::getCgiPtr(void)
 {
 	return (this->_cgi_obj);
 }
+
+void Client::printHttpRequest(void)
+{
+	HttpRequest &req = this->getRequest();
+	
+	std::cout << "\n\nHttpRequest Information:" << std::endl;
+	std::cout << "Method: " << req.method << std::endl;
+	std::cout << "Path: " << req.path << std::endl;
+	std::cout << "Query string: " << req.query_string << std::endl;
+	std::cout << "Version: " << req.version << std::endl;
+	for (auto it = req.headers.begin(); it != req.headers.end(); it++)
+	{
+		std::cout << "Key: " << it->first << std::endl;
+		std::cout << "Value: " << it->second << std::endl;
+	}
+	std::cout << "Content-length: " << req.contentLength << std::endl;
+	std::cout << "Body: " << req.body << std::endl;
+}
