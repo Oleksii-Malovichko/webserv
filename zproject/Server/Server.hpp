@@ -8,6 +8,7 @@
 #include <csignal>
 #include <algorithm>
 #include <cctype>
+#include <dirent.h>
 
 class Server
 {
@@ -22,11 +23,27 @@ class Server
 	private:
 		static void sigintHandler(int sig); // обработка сигнала SIGINT
 		void handleClient(Client &client); // парсинг запроса и формирование ответа
+		void handleGetRequest(HttpRequest &req, HttpResponce &resp, Client &client);
 		void handleParseRequest(Client &client);
-		void handleCGI(Client &client); // cgi
+		void handleCGI(HttpRequest &req, HttpResponce &resp, Client &client);
 		void shutdownServer();
 };
 	
 // void handleClientEcho(Client &client); // простой echo-ответ
 std::vector<std::string> split(const std::string &s, const std::string &delimiter);
 std::string trim(const std::string &s);
+std::string toLower(const std::string &s);
+bool fileExists(const std::string &path);
+std::string getFileContent(const std::string &path);
+bool isPathSafe(const std::string &fullPath, const std::string &root);
+std::string getMimeType(const std::string& path);
+void generateAutoIndex(const std::string &dirPath, HttpResponce &resp);
+std::string buildFullPath(const LocationConfig *loc, const ServerConfig *server, const std::string &requestPath);
+std::string getReasonPhrase(int code);
+void buildError(HttpResponce &resp, int statusCode, const ServerConfig *server);
+bool isMethodAllowed(const std::string method, const LocationConfig *loc);
+void serveFileOrDirectory(const std::string& path, HttpResponce& resp, const LocationConfig* location, const ServerConfig* server);
+void buildRedirect(HttpResponce &resp, const LocationConfig *loc);
+std::string generateDefaultErrorPage(int code, const std::string &reason);
+std::string getReasonPhrase(int code);
+bool isMethodAllowed(const std::string method, const LocationConfig *loc);

@@ -12,6 +12,7 @@ class Epoll
 	int epfd;
 	std::array<epoll_event, MAX_EVENTS> events;
 	std::vector<ListeningSocket> listeningSockets;
+	std::unordered_map<int, ServerConfig*> listeningFDs;
 	std::unordered_map<int, Client> clients;
 
 	public: // тут explicit НЕ нужен, потому epoll не принимает аргументов
@@ -25,7 +26,7 @@ class Epoll
 		~Epoll();
 
 		// методы для работы с listen-sockets
-		void addListeningSocket(ListeningSocket &&sock); // добавление УЖЕ созданного listen-socket и регистрация в epoll
+		void addListeningSocket(ListeningSocket &&sock, ServerConfig *config); // добавление УЖЕ созданного listen-socket и регистрация в epoll
 		// методы для работы с клиентами for handleEvents
 		void acceptClient(int listenFD); // принять нового клиента в epoll (в цикле)
 		void removeClientVec(); // удаление вектора клиентов
@@ -39,6 +40,7 @@ class Epoll
 		const std::vector<ListeningSocket> &getListeningSockets() const; // access to listeningSockets
 		const std::unordered_map<int, Client> &getClients() const; // access to clients (reading)
 		std::unordered_map<int, Client> &getClients(); // access to clients (writing/changing)
+		ListeningSocket *getListeningSocketByFD(int fd);
 		
 	private: // help functions
 		int getMinTimeout(int defaultTimeoutMs);

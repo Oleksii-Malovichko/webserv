@@ -12,8 +12,7 @@ int main(int argc, char *argv[])
 	// std::cout << "Server pid: " << getpid() << std::endl;
 	try
 	{
-		
-		Server server(static_cast<const std::string>(argv[1]));
+		Server server(argv[1]);
 		server.run();
 	}
 	catch (const std::exception &e)

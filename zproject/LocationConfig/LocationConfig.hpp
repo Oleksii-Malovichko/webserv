@@ -8,10 +8,10 @@
 
 class LocationConfig
 {
-	// Обязательные параметры
+	// necessary parameters
 	std::string path; // for instance: "/uploads", "/cgi-bin"
 
-	// Необязательные параметры
+	// not necessary parameters
 	std::string root;
 	std::vector<std::string> methods; // GET, POST, DELETE; default: GET, POST, DELETE
 	bool upload;
@@ -20,6 +20,11 @@ class LocationConfig
 	std::string index; // дефолтный файл для директорий; default: "index.html" (index)
 	std::unordered_map<std::string, std::string> cgi; // cgi: extension: bin
 	
+	// redirection
+	bool redirect_enable;
+	int redirect_code;
+	std::string redirect_url;
+
 	public:
 		LocationConfig();
 		void setPath(const std::string &p);
@@ -28,11 +33,14 @@ class LocationConfig
 		void setUpload(bool on);
 		void setUploadDir(const std::string &dir);
 		void setAutoIndex(bool on);
-		// void setDefaultFile(const std::string &file);
 		void setIndex(const std::string &index);
-		// void setCgiExtension(const std::string &ext);
-		// void setCgiBin(const std::string &bin);
 		void addCgi(const std::string &ext, const std::string &bin);
+
+		void setRedirect(int code, const std::string &url);
+		bool hasRedirect() const;
+		int getRedirect() const;
+		int getRedirectCode() const;
+		const std::string &getRedirectUrl() const;
 
 		const std::string &getPath() const;
 		const std::string &getRoot() const;
@@ -43,6 +51,7 @@ class LocationConfig
 		const std::string &getIndex() const;
 		const std::unordered_map<std::string, std::string> &getCgi() const;
 
+		bool isCgi(const std::string &path) const;
 		bool isValid() const;
 		~LocationConfig() = default;
 };

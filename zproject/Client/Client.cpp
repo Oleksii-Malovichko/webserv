@@ -2,13 +2,13 @@
 
 // move передает управление сокетом из ClientSocket в Client (после этого в ClientSocket fd == -1, Client имеет уже этот fd)
 
-Client::Client(ClientSocket &&sock) : socket(std::move(sock))
+Client::Client(ClientSocket &&sock, ServerConfig *conf) : socket(std::move(sock)), config(conf)
 {
 	this->state = State::READING;
 	this->lastActivity = std::chrono::steady_clock::now();
 }
 
-Client::Client(Client &&other) noexcept : socket(std::move(other.socket)) // переносим сокет
+Client::Client(Client &&other) noexcept : socket(std::move(other.socket)), config(other.config) // переносим сокет
 {
 	this->readBuffer = std::move(other.readBuffer);
 	this->writeBuffer = std::move(other.writeBuffer);
@@ -16,6 +16,7 @@ Client::Client(Client &&other) noexcept : socket(std::move(other.socket)) // п�
 	this->lastActivity = other.lastActivity;
 
 	other.state = State::CLOSED; // старая копия больше не активна
+	// other.config = nullptr;
 }
 
 Client& Client::operator=(Client &&other) noexcept
@@ -27,6 +28,8 @@ Client& Client::operator=(Client &&other) noexcept
 		this->writeBuffer = std::move(other.writeBuffer);
 		this->state = other.state;
 		this->lastActivity = other.lastActivity;
+		this->config = other.config;
+		// other.config = nullptr;
 	}
 	return *this;
 }
@@ -143,4 +146,9 @@ const std::string &Client::getReadBuffer() const
 void Client::clearReadBuffer()
 {
 	this->readBuffer.clear();
+}
+
+ServerConfig *Client::getConfig() const
+{
+	return this->config;
 }
