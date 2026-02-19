@@ -120,7 +120,7 @@ void LocationConfig::printLocationConfig(void) const
 	std::cout	<< "Location information:"
 				<< "\nPath: " << this->path
 				<< "\nRoot: " << this->root
-				<< "Allowed methodes: ";
+				<< "\nAllowed methodes: ";
 				
 	for (auto it = this->methods.begin(); 
 			it != this->methods.end(); ++it)

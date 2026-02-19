@@ -62,7 +62,7 @@ void Directorylisting::collectDirectory(void)
 	}
 }
 
-std::string Directorylisting::httpResonseL(
+std::string Directorylisting::httpResponseL(
 	const std::string directory_name)
 {
 	std::stringstream ss;

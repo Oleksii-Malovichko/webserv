@@ -5,6 +5,8 @@
 #include "WebServConfig.hpp"
 #include "ConfigParser.hpp"
 #include "HttpResponce.hpp"
+#include "../directory_listing/DirectoryListing.hpp"
+#include "ServerExceptions.hpp"
 #include <csignal>
 #include <algorithm>
 #include <cctype>
@@ -29,6 +31,8 @@ class Server
 			const std::string& request_path,
 			const ServerConfig& current_server);
 		static bool isAllowedMethod(const HttpRequest& req, 
+			const LocationConfig& loc);
+		static bool isDirectoryListing(const HttpRequest& req, 
 			const LocationConfig& loc);
 		static bool isCgiExtensionOK(const HttpRequest& req, 
 			const LocationConfig& loc);

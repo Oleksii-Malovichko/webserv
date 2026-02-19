@@ -69,6 +69,9 @@ void parseRequestLine(std::string requestLine, HttpRequest &req)
 	std::vector<std::string> tokens = split(requestLine, " ");
 	std::vector<std::string> tokens_path = split(tokens[1], "?");
 
+	std::cerr << MAGENTA << "The requestLine: " << requestLine
+				<< DEFAULT << std::endl; 
+	
 	if (tokens.size() != 3)
 		return ;
 	req.method = tokens[0];
@@ -137,17 +140,27 @@ void Server::handleClient(Client &client)
 	current_server.printServerConfig();
 	LocationConfig loc = selectLocation(req.path, current_server);
 	loc.printLocationConfig();
+	client.printHttpRequest();
 	if (isAllowedMethod(req, loc) == false)
 	{
 		//405 Not allowed method
+		std::cerr << RED << "405 Not allowed method"
+					<< DEFAULT << std::endl;
 		return ;
+	}
+
+	if (isDirectoryListing(req, loc) == true)
+	{
+		Directorylisting dir_list(req.path);
+		client._http_response = dir_list.httpResponseL(req.path);
 	}
 
 	if (isCgiExtensionOK(req, loc) == true)
 	{
-		this->handleCGI(client);
+		client._http_response = this->handleCGI(client);
 		// only that case if the CGI response consist the header too
-		
+		std::cerr << BLUE << "CGI finished" 
+					<< DEFAULT << std::endl;
 		return ;
 	}
 
@@ -204,7 +217,11 @@ void Server::handleClient(Client &client)
 			// client.appendToWriteBuffer(back_msg);
 		}
 		else
+		{
+			std::cerr << RED << "HandleClient returned in else"
+					<< DEFAULT << std::endl;
 			return ;
+		}
 	}
 	client.printHttpRequest();
 }
@@ -289,6 +306,31 @@ bool Server::isAllowedMethod(const HttpRequest& req,
 	if (it != loc_methods.end())
 	{
 		return (true);
+	}
+
+	std::cerr << CYAN << "The request Method: " << req.method
+			<< "\nAllowed methods: "
+			<< DEFAULT << std::endl;
+	for (auto it = loc_methods.begin(); it != loc_methods.end(); ++it)
+	{
+		std::cerr << YELLOW << *it << "\n";
+	}
+	return (false);
+}
+
+bool Server::isDirectoryListing(const HttpRequest& req, 
+			const LocationConfig& loc)
+{
+	if (req.path.back() == '/')
+	{
+		if (loc.getAutoIndex() == true)
+		{
+			return (true);
+		}
+		else
+		{
+			throw DirectoryListingOffError();
+		}
 	}
 
 	return (false);

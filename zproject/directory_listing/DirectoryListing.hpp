@@ -23,7 +23,7 @@ class Directorylisting
 		~Directorylisting(void);
 
 		void collectDirectory(void);
-		std::string httpResonseL(const std::string directory_name);
+		std::string httpResponseL(const std::string directory_name);
 
 };
 
