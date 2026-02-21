@@ -201,33 +201,33 @@ void Server::handleClient(Client &client)
 	HttpResponce resp;
 	std::string headerPart;
 
-	ServerConfig current_server = selectServer(req);
-	current_server.printServerConfig();
-	LocationConfig loc = selectLocation(req.path, current_server);
-	loc.printLocationConfig();
-	client.printHttpRequest();
-	if (isAllowedMethod(req, loc) == false)
-	{
-		//405 Not allowed method
-		std::cerr << RED << "405 Not allowed method"
-					<< DEFAULT << std::endl;
-		return ;
-	}
+	// ServerConfig current_server = selectServer(req);
+	// current_server.printServerConfig();
+	// LocationConfig loc = selectLocation(req.path, current_server);
+	// loc.printLocationConfig();
+	// client.printHttpRequest();
+	// if (isAllowedMethod(req, loc) == false)
+	// {
+	// 	//405 Not allowed method
+	// 	std::cerr << RED << "405 Not allowed method"
+	// 				<< DEFAULT << std::endl;
+	// 	return ;
+	// }
 
-	if (isDirectoryListing(req, loc) == true)
-	{
-		Directorylisting dir_list(req.path);
-		client._http_response = dir_list.httpResponseL(req.path);
-	}
+	// if (isDirectoryListing(req, loc) == true)
+	// {
+	// 	Directorylisting dir_list(req.path);
+	// 	client._http_response = dir_list.httpResponseL(req.path);
+	// }
 
-	if (isCgiExtensionOK(req, loc) == true)
-	{
-		client._http_response = this->handleCGI(client);
-		// only that case if the CGI response consist the header too
-		std::cerr << BLUE << "CGI finished" 
-					<< DEFAULT << std::endl;
-		return ;
-	}
+	// if (isCgiExtensionOK(req, loc) == true)
+	// {
+	// 	client._http_response = this->handleCGI(client);
+	// 	// only that case if the CGI response consist the header too
+	// 	std::cerr << BLUE << "CGI finished" 
+	// 				<< DEFAULT << std::endl;
+	// 	return ;
+	// }
 
 	size_t pos = buf.find("\r\n\r\n");
 	if (pos != std::string::npos)
@@ -471,6 +471,33 @@ std::string Server::handleCGI(Client &client)
 	return (cgi_http_response);
 }
 
+void Server::handleCGI(HttpRequest &req, HttpResponce &resp, Client &client)
+{
+	(void)resp;
+	(void)req;
+	char *cgi_path = const_cast<char*>(client.getRequest().path.c_str());
+
+	try
+	{
+		CgiHandler cgi_obj;
+		cgi_obj.setArgsAndCgiPath(cgi_path);
+		cgi_obj.setEnvp(client);
+		cgi_obj.setNonBlockPipe();
+		this->epoll.addCgiPipesToEpoll(cgi_obj, client);
+		cgi_obj.runExecve();
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr	<< RED 
+					<< "The following error occured " 
+					<< e.what() << '\n';
+	}
+	catch(...)
+	{
+		std::cerr << YELLOW << "Some error"; 
+	}
+}
+
 void ServerConfig::printServerConfig(void) const
 {
 	std::cout	<< "Server information:\n"
@@ -486,13 +513,6 @@ void ServerConfig::printServerConfig(void) const
 					<< " Error page: " << it->second;
 	}
 	std::cout << std::endl;
-}
-
-void Server::handleCGI(HttpRequest &req, HttpResponce &resp, Client &client)
-{
-	(void)resp;
-	(void)req;
-	(void)client;
 }
 
 
