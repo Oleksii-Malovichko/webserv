@@ -11,3 +11,6 @@ Structure: folder/file
 void Server::handleClient(Client &client); // function
 
 
+// folder added: uploads
+
+// file added zproject/test_uploadfile.txt

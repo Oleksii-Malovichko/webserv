@@ -53,8 +53,8 @@ Webserv Entire Project
 Feb 16:
 Stuff to do for now P:
 1. subject: client must be able to upload files
-2. webserv config: how to autoindex ?
-3. add php files scripts
+2. add php files scripts
+3. webserv config: how to autoindex ?
 
 *Note: the envp parts from client is given to handleCGI and is being created in CgiHandler T.
 T: epoll cgi. Then merge into main version. add my cgi functions
@@ -73,5 +73,8 @@ TASKS broken down
 
 - summary: the client (rbwoser/curl) sends a POST reuqest with a file attached. 
     Server needs to receive that file and save it somewhere on disk.
+- open file and write extracted bytes into it. file will be sitting in ./uploads directory on the machine running the server
+- testing: curl -v -X POST http://localhost:8080/upload -F "file=@test_uploadfile.txt"
+
 QUESTIONS for group:
 - where should uploaded files be saved?

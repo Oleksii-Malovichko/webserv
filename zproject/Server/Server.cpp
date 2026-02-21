@@ -1,5 +1,8 @@
 #include "Server.hpp"
 
+#include <unistd.h>
+#include <limits.h>
+
 bool Server::running = true;
 
 Server::Server(const std::string &configFile)
@@ -144,17 +147,127 @@ void Server::handleClient(Client &client)
 			}
 			else if (req.method == "POST")
 			{
-				// ---------- TODO: "client needs to be able to upload files"
-				std::string contentType = req.headers["Content-Type"];
-				if (contentType.find("multiple/form-data") != std::string::npos) // P: to see if file upload, check if "multipart/form-data" is in string
-				{
-					// 1. extract boundary from Content-Type header
-					// 2. use boundary to find & extract file content from body
-					// 3. write content to disk
+			// *************************************************** HTTP FILE UPLOAD HANDLER (beginning) P*****************************************************
+				/*
+				--boundary123\r\n
+				Content-Disposition: form-data; name="file"; filename="hello.txt"\r\n
+				Content-Type: text/plain\r\n
+				\r\n
+				<actual file bytes here>
+				\r\n
+				--boundary123--\r\n
+				*/
+				// ------------- TODO: "client needs to be able to upload files"
+				// 1. extract boundary from Content-Type header (--boundary123\r\n) [boundary changes at every request]
+				// 2. use boundary to find & extract file content from body
+				// 3. write content to disk (disk: saving file to the filesystem)
+				std::string contentType = req.headers["content-type"];
+				std::cout << "\033[32mcontent-type = [" << contentType << "]\033[0m" << std::endl;
 
-					// resp.setStatus(201, "OK");
-				}
-				// ---------------
+				if (contentType.find("multipart/form-data") != std::string::npos)
+				{
+					// extract boundary
+					size_t bpos = contentType.find("boundary=");
+					if (bpos == std::string::npos)
+					{
+						resp.setStatus(400, "Bad Request");
+						resp.setBody("No boundary found");
+						return;
+					}
+
+					std::string boundary = contentType.substr(bpos + 9);
+					size_t semi = boundary.find(";");
+					if (semi != std::string::npos)
+						boundary = boundary.substr(0, semi);
+
+					std::string delimiter = "--" + boundary;
+
+					std::string &body = req.body;
+
+					// find start of first part
+					size_t partStart = body.find(delimiter);
+					if (partStart == std::string::npos)
+					{
+						resp.setStatus(400, "Bad Request");
+						resp.setBody("Invalid multipart format");
+						return;
+					}
+
+					partStart += delimiter.length() + 2; // skip \r\n
+
+					// extract filename
+					size_t filenamePos = body.find("filename=\"", partStart);
+					if (filenamePos == std::string::npos)
+					{
+						resp.setStatus(400, "Bad Request");
+						resp.setBody("No filename found");
+						return;
+					}
+
+					filenamePos += 10;
+					size_t filenameEnd = body.find("\"", filenamePos);
+					std::string filename = body.substr(filenamePos, filenameEnd - filenamePos);
+
+					// keep uploaded files inside directory, nowhere else saved outside the folder
+					if (filename.find("..") != std::string::npos)
+					{
+						resp.setStatus(403, "Forbidden");
+						resp.setBody("Invalid filename");
+						return;
+					}
+
+					// find file data start
+					size_t dataStart = body.find("\r\n\r\n", filenameEnd);
+					if (dataStart == std::string::npos)
+					{
+						resp.setStatus(400, "Bad Request");
+						resp.setBody("Invalid file format");
+						return;
+					}
+					dataStart += 4;
+
+					// find file data end
+					size_t dataEnd = body.find(delimiter, dataStart);
+					if (dataEnd == std::string::npos)
+					{
+						resp.setStatus(400, "Bad Request");
+						resp.setBody("Invalid multipart ending");
+						return;
+					}
+
+					dataEnd -= 2; // remove \r\n at end
+
+					std::string fileContent = body.substr(dataStart, dataEnd - dataStart);
+
+					// write file to disk
+					// std::string path = "./uploads/" + filename; (uploads folder currently added myself, not via code)
+					char cwd[PATH_MAX];
+					if (getcwd(cwd, sizeof(cwd)) == NULL)
+					{
+						resp.setStatus(500, "Internal Server Error");
+						resp.setBody("Cannot determine working directory");
+						return;
+					}
+
+					std::string path = std::string(cwd) + "/uploads/" + filename;
+					std::ofstream out(path.c_str(), std::ios::binary);
+					if (!out.is_open())
+					{
+						resp.setStatus(500, "Internal Server Error");
+						resp.setBody("Failed to save file");
+						return;
+					}
+
+					out.write(fileContent.c_str(), fileContent.size());
+					out.close();
+
+					resp.setStatus(201, "Created");
+					resp.setBody("<html><body><h1>Upload successful</h1></body></html>");
+					resp.setHeader("Content-Type", "text/html");
+					std::cout << "Saving file tto: " << path << std::endl;
+					std::cout << "File size: " << fileContent.size() << std::endl;
+			// *************************************************** HTTP FILE UPLOAD HANDLER (end) P*****************************************************
+			}
 				else
 				{
 					resp.setStatus(200, "OK");
