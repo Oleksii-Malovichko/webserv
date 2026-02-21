@@ -21,7 +21,8 @@ SRCS1 = main.cpp RAII/epoll/Epoll.cpp \
 	cgi/CgiHandler.cpp \
 	cgi/CgiExceptions.cpp \
 	directory_listing/DirectoryListing.cpp \
-	error_handler/errorHandler.cpp
+	error_handler/errorHandler.cpp \
+	Server/ServerUtils.cpp \
 
 
 SRCS2 = client.c
@@ -42,13 +43,13 @@ CXXFLAGS = -Wall -Wextra -Werror \
 	-ILocationConfig \
 	-IRAII/epoll \
 	-IRAII/sockets \
-	-IServer \
 	-IConfigParser \
 	-IHttpResponce \
 	-Icgi \
 	-Icgi_bin \
 	-Ierror_handler \
-	-Idirectory_listing
+	-Idirectory_listing \
+	-IServer 
 
 all: $(NAME1) $(NAME2)
 

@@ -12,15 +12,19 @@ void ConfigParser::parseServerLine(const std::string &line, ServerConfig &curren
 	tokens = splitString(line);
 	if (tokens.size() == 1)
 	{
-		std::cerr << "Invalid " << tokens[0] << " in server directive" << std::endl;
-		exit(1);
+		std::stringstream error;
+		error << "Invalid " << tokens[0] << " in server directive";
+		throw std::runtime_error(error.str());
+		// std::cerr << "Invalid " << tokens[0] << " in server directive" << std::endl;
+		// exit(1);
 	}
 	if (tokens[0] == "listen")
 	{
 		if (tokens.size() != 2 || tokens[1].back() != ';')
 		{
-			std::cerr << "Invalid listen directive" << std::endl;
-			exit(1);
+			throw std::runtime_error("Invalid listen directive");
+			// std::cerr << "Invalid listen directive" << std::endl;
+			// exit(1);
 		}
 		std::string listenStr = tokens[1];
 		listenStr.pop_back(); // remove ;
@@ -309,8 +313,9 @@ ConfigParser::ConfigParser(const std::string &configFile)
 	std::ifstream file(configFile);
 	if (!file)
 	{
-		std::cerr << "Couldn't open file" << std::endl;
-		exit(1);
+		// std::cerr << "Couldn't open file" << std::endl;
+		throw std::runtime_error("Couldn't open file");
+		// exit(1);
 	}
 	std::string line;
 	std::vector<std::string> tokens;

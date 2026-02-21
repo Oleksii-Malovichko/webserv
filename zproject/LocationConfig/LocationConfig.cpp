@@ -51,6 +51,29 @@ void LocationConfig::addCgi(const std::string &ext, const std::string &bin)
 }
 
 
+void LocationConfig::setRedirect(int code, const std::string &url)
+{
+	redirect_enable = true;
+	redirect_code = code;
+	redirect_url = url;
+}
+
+bool LocationConfig::hasRedirect() const
+{
+	return redirect_enable;
+}
+
+int LocationConfig::getRedirectCode() const
+{
+	return redirect_code;
+}
+
+const std::string &LocationConfig::getRedirectUrl() const
+{
+	return redirect_url;
+}
+
+
 const std::string &LocationConfig::getPath() const
 {
 	return this->path;
@@ -89,6 +112,16 @@ const std::string &LocationConfig::getIndex() const
 const std::unordered_map<std::string, std::string> &LocationConfig::getCgi() const
 {
 	return this->cgi;
+}
+
+bool LocationConfig::isCgi(const std::string &path) const
+{
+	for (auto it = cgi.begin(); it != cgi.end(); it++)
+	{
+		if (path.size() >= it->first.size() && path.compare(path.size() - it->first.size(), it->first.size(), it->first) == 0)
+			return 1;
+	}
+	return 0;
 }
 
 bool LocationConfig::isValid() const

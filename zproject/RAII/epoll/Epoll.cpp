@@ -38,7 +38,7 @@ Epoll::~Epoll()
 		::close(epfd);
 }
 
-void Epoll::addListeningSocket(ListeningSocket &&sock)
+void Epoll::addListeningSocket(ListeningSocket &&sock, ServerConfig *config)
 {
 	int serverFD = sock.getFD();
 	if (serverFD == -1)
@@ -62,17 +62,34 @@ void Epoll::addListeningSocket(ListeningSocket &&sock)
 
 	fdEventMap[serverFD] = data;
 
+	listeningSockets.push_back(std::move(sock));
+	listeningFDs[serverFD] = config;
 	std::cout << "Added listening socket(" << serverFD << ")" << std::endl;
 }
 
-void Epoll::acceptClient(int clientFD)
+ListeningSocket *Epoll::getListeningSocketByFD(int fd)
 {
+	for (size_t i = 0; i < listeningSockets.size(); i++)
+	{
+		if (listeningSockets[i].getFD() == fd)
+			return &listeningSockets[i];
+	}
+	return NULL;
+}
+
+void Epoll::acceptClient(int serverFD)
+{
+	ServerConfig *config = listeningFDs[serverFD];
+	if (!config)
+		return ;
+	std::cout << "DEBBUG: Epoll:acceptClient:\n";
+	std::cout << "Port: " << config->getPort() << std::endl;
 	while (true)
 	{
-		ClientSocket csock(clientFD); // моя обертка acceptClient внутри конструктора
+		ClientSocket csock(serverFD); // моя обертка acceptClient внутри конструктора
 		if (csock.getFD() == -1)
 			break;
-		Client client(std::move(csock));
+		Client client(std::move(csock), config);
 		addClient(std::move(client)); // добавляем клиента в map от epoll
 	}
 }
@@ -412,6 +429,7 @@ void Epoll::addClient(Client &&client)
 	fdEventMap[clientFD] = data;
 
 	// DEBUG
+
 	struct sockaddr_in addr;
 	socklen_t len = sizeof(addr);
 	getpeername(clientFD, (struct sockaddr*)&addr, &len);
@@ -419,6 +437,11 @@ void Epoll::addClient(Client &&client)
 	inet_ntop(AF_INET, &addr.sin_addr, ip, sizeof(ip));
 	int port = ntohs(addr.sin_port);
 	std::cout << "Added client(" << clientFD << ") "  << ip << ":" << port << std::endl;
+	//
+	ServerConfig *config = client.getConfig();
+	std::cout << "DEBUG: Epoll::addClient\n";
+	std::cout << "Port: " << config->getPort() << std::endl; 
+	// std::cout << "Debug with added ServerConfig to client: ip: " << config->getIP() << "; port: " << config->getPort() << std::endl;
 }
 
 void Epoll::removeClient(int clientFD)

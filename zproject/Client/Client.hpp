@@ -39,6 +39,7 @@ class Client
 	// 	};
 	private:
 		ClientSocket socket;
+		ServerConfig *config;
 		std::string readBuffer;
 		std::string writeBuffer;
 		State state;
@@ -48,7 +49,7 @@ class Client
 
 	public:
 		// контсруктор принимает уже созданный сокет (explicit нужен чтобы не было неявных преоброзований)
-		explicit Client(ClientSocket &&sock);
+		explicit Client(ClientSocket &&sock, ServerConfig *conf);
 		// перемещение, копирование запрещено
 		Client(const Client&) = delete;
 		Client& operator=(const Client&) = delete;
@@ -78,4 +79,5 @@ class Client
 		void printHttpRequest(void);
 
 		CgiHandler* getCgiPtr(void);
+		ServerConfig *getConfig() const;
 };

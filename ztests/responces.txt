@@ -1,0 +1,69 @@
+curl -X GET "https://0.0.0.0:8080/api/resource"
+
+curl -X GET "https://example.com/api/resource?param1=value1&param2=value2"
+
+curl -X POST "https://localhost:8081/api/resource" \
+     -H "Content-Type: application/json" \
+     -d '{"key1": "value1", "key2": "value2"}'
+
+curl -X DELETE "http://localhost:8081/submit-form" \
+     -H "Content-Type: application/json" \
+     -d '{"confirm": true}'
+
+curl -X POST http://localhost:8080/submit-form \
+     -H "Content-Type: application/x-www-form-urlencoded" \
+     -d "name=John+Doe&age=30&city=NY"
+Hello, world!  
+
+-i - показывает заголовки
+curl --path-as-is -i http://localhost:8080/../../../../../../../etc/passwd (directory traversal -> если больше .. то ядро будет их игнорировать)
+
+
+######### GET TESTS
+# 1️⃣ Простая отдача файла
+curl -i http://localhost:8080/index.html
+# -i показывает заголовки
+# ожидается код 200 и Content-Type: text/html
+
+# 2️⃣ Отдача других типов файлов
+curl -i http://localhost:8080/style.css       # Content-Type: text/css
+curl -i http://localhost:8080/script.js       # Content-Type: application/javascript
+curl -i http://localhost:8080/image.png       # Content-Type: image/png
+
+# 3️⃣ Отсутствующий файл
+curl -i http://localhost:8080/nonexistent.file
+# ожидается код 404 и тело с "404 Not Found"
+
+# 4️⃣ Доступ к директории
+# 4a. Директория содержит index.html
+curl -i http://localhost:8080/dir/
+# ожидается отдан index.html, код 200
+
+# 4b. Директория без index.html, autoindex = true
+curl -i http://localhost:8080/empty-dir/
+# ожидается HTML с перечнем файлов, код 200
+
+# 4c. Директория без index.html, autoindex = false
+curl -i http://localhost:8080/private-dir/
+# ожидается код 403, "Forbidden"
+
+# 5️⃣ Редиректы
+curl -i -L http://localhost:8080/old-path/
+# -L заставляет curl следовать редиректам
+# ожидается 301/302 и Location: header
+
+# 6️⃣ Метод не разрешён
+curl -i -X GET http://localhost:8080/post-only/
+# если GET запрещён, ожидается код 405, "Method Not Allowed"
+
+# 7️⃣ Безопасность пути
+curl -i http://localhost:8080/../../etc/passwd
+# ожидается 403 или 404, проверка защиты пути
+
+# 8️⃣ CGI (проверка заглушки)
+curl -i http://localhost:8080/cgi-bin/script.cgi
+# пока CGI пустой, можно просто проверить, что сервер не падает
+
+# 9️⃣ HTTP/1.0 vs HTTP/1.1
+curl -i --http1.0 http://localhost:8080/index.html  # HTTP/1.0
+curl -i --http1.1 http://localhost:8080/index.html  # HTTP/1.1

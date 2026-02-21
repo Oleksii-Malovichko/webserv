@@ -6,6 +6,7 @@
 #include <fstream>
 #include <cctype>
 #include <stack>
+#include <sstream>
 
 class ConfigParser
 {
