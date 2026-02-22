@@ -11,6 +11,7 @@ SRCS1 = main.cpp RAII/epoll/Epoll.cpp \
 	WebServConfig/WebServConfig.cpp \
 	Client/Client.cpp \
 	Server/Server.cpp \
+	Server/FileUploadHandler.cpp \
 	ConfigParser/ConfigParser.cpp \
 	ConfigParser/ConfigParserUtils.cpp \
 	HttpResponce/HttpResponce.cpp

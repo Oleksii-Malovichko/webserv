@@ -76,5 +76,3 @@ TASKS broken down
 - open file and write extracted bytes into it. file will be sitting in ./uploads directory on the machine running the server
 - testing: curl -v -X POST http://localhost:8080/upload -F "file=@test_uploadfile.txt"
 
-QUESTIONS for group:
-- where should uploaded files be saved?

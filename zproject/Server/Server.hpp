@@ -30,3 +30,8 @@ class Server
 // void handleClientEcho(Client &client); // простой echo-ответ
 std::vector<std::string> split(const std::string &s, const std::string &delimiter);
 std::string trim(const std::string &s);
+
+// File Upload Handler
+std::string extractBoundary(std::string &contentType);
+int getDataStart(std::string &requestBody, std::string &delimiter, std::string &filename);
+int getDataEnd(std::string &body, std::string &delimiter, int dataStart);

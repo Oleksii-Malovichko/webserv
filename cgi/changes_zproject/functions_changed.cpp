@@ -2,7 +2,6 @@
 This file serves as a sole purpose to make merging smoother (pasting below changes in the final webserv version). 
 Changes to the folder 'zproject' are done due to the following tasks:
 1. Client must be able to upload files
-2. Autoindexxing in webserv config
 Structure: folder/file
 */
 
