@@ -288,36 +288,49 @@ void Epoll::handleEvents(int defaultTimeoutMs)
 
 	for (int i = 0; i < n; i++)
 	{
-		this->printEvenMap();
+		// this->printEvenMap();
 
-		EventData* data = static_cast<EventData*>(
-			events[i].data.ptr);
+		// EventData* data = static_cast<EventData*>(
+		// 	events[i].data.ptr);
+		// uint32_t ev = events[i].events;
+
+		// dataEventCheck(data);
+
+		// switch (data->type)
+		// {
+		// 	case EventData::Type::LISTEN_SOCKET:
+		// 		acceptClient(data->fd);
+		// 		break ;
+
+		// 	case EventData::Type::CLIENT_SOCKET:
+		// 		handleClient(data->fd, ev);
+		// 		break ;
+
+		// 	case EventData::Type::CGI_STDIN:
+		// 		handleCgiEvent(data, ev); // this is still not correct function call
+		// 		break ;
+
+		// 	case EventData::Type::CGI_STDOUT:
+		// 		handleCgiEvent(data, ev); // this is still not correct function call
+		// 		break ;
+			
+		// 	default:
+		// 		std::cerr	<< RED << "The data type not in"
+		// 					<< " the possible list" << DEFAULT << std::endl;
+		// 		break;
+		// }
+		
+		int fd = events[i].data.fd;
 		uint32_t ev = events[i].events;
 
-		dataEventCheck(data);
-
-		switch (data->type)
+		// если это listen-socket -> accept клиентов
+		bool isListening = checkListeningSockets(fd);
+		if (isListening)
+			acceptClient(fd); // accept для всех клиентов, пока accept не вернет -1 и errno = EAGAIN/EWOULDBLOCK
+		else
 		{
-			case EventData::Type::LISTEN_SOCKET:
-				acceptClient(data->fd);
-				break ;
-
-			case EventData::Type::CLIENT_SOCKET:
-				handleClient(data->fd, ev);
-				break ;
-
-			case EventData::Type::CGI_STDIN:
-				handleCgiEvent(data, ev); // this is still not correct function call
-				break ;
-
-			case EventData::Type::CGI_STDOUT:
-				handleCgiEvent(data, ev); // this is still not correct function call
-				break ;
-			
-			default:
-				std::cerr	<< RED << "The data type not in"
-							<< " the possible list" << DEFAULT << std::endl;
-				break;
+			if (!handleClient(fd, ev))
+				continue;
 		}
 	}
 	removeClientVec();
