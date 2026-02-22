@@ -138,6 +138,10 @@ bool Epoll::handleClient(int fd, uint32_t ev)
 		}
 		if (!client->hasPendingWrite()) // если мы уже все отправили клиенту - закрываем его
 		{
+			// if (!client->isKeepAlive() || client->getKeepAliveRequests() >= client->getKeepAliveMaxRequests())
+			// {
+			// 	removeClient(fd); // закрываем соединение
+			// }
 			removeClient(fd);
 			return false;
 		}

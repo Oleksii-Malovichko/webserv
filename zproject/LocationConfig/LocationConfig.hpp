@@ -38,7 +38,6 @@ class LocationConfig
 
 		void setRedirect(int code, const std::string &url);
 		bool hasRedirect() const;
-		int getRedirect() const;
 		int getRedirectCode() const;
 		const std::string &getRedirectUrl() const;
 

@@ -20,6 +20,7 @@ Server::Server(const std::string &configFile)
 			ip = "0.0.0.0";
 		std::cout << "Listening on  ip: " << ip << "; port: " << configs[i].getPort() << std::endl;
 	}
+	std::cout << "\n\n";
 }
 
 void Server::sigintHandler(int sig)
@@ -49,65 +50,6 @@ void Server::run()
 		}
 	}
 	shutdownServer();
-}
-
-std::vector<std::string> split(const std::string &s, const std::string &delimiter)
-{
-	std::vector<std::string> result;
-	size_t start = 0;
-	size_t end = s.find(delimiter, 0);
-	while (end != std::string::npos)
-	{
-		result.push_back(s.substr(start, end - start));
-		start = end + delimiter.length();
-		end = s.find(delimiter, start);
-	}
-	result.push_back(s.substr(start));
-	return result;
-}
-
-void parseRequestLine(std::string requestLine, HttpRequest &req)
-{
-	std::vector<std::string> tokens = split(requestLine, " ");
-	if (tokens.size() != 3)
-		return ;
-	req.method = tokens[0];
-	req.path = tokens[1];
-	req.version = tokens[2];
-}
-
-void parseHttpHeaders(std::string header, HttpRequest &req)
-{
-	std::vector<std::string> lines = split(header, "\r\n");
-
-	parseRequestLine(lines[0], req); // parse example: {POST /submit-form HTTP/1.1}
-	for (size_t i = 1; i < lines.size(); i++)
-	{
-		// тут происходит парсинг всего остального после request line
-		if (lines[i].empty())
-			continue;
-		size_t colonPos = lines[i].find(":");
-		if (colonPos != std::string::npos)
-		{
-			std::string key = trim(lines[i].substr(0, colonPos));
-			std::string value = trim(lines[i].substr(colonPos + 1));
-			if (toLower(key) == "content-length")
-			{
-				try
-				{
-					size_t contentLength = std::stoul(value);
-					req.contentLength = contentLength;
-				}
-				catch(...)
-				{
-					std::cerr << "Invalid client_max_body_size" << std::endl;
-				}
-				continue;
-			}
-			req.headers[toLower(key)] = value;
-		}
-	}
-	req.headersParsed = true;
 }
 
 LocationConfig *matchLocation(const std::string &path, std::vector<LocationConfig> &locs)
@@ -146,6 +88,97 @@ void buildError(HttpResponce &resp, int statusCode, const ServerConfig *server)
 	resp.setBody(body);
 }
 
+std::vector<std::string> split(const std::string &s, const std::string &delimiter)
+{
+	std::vector<std::string> result;
+	size_t start = 0;
+	size_t end = s.find(delimiter, 0);
+	while (end != std::string::npos)
+	{
+		result.push_back(s.substr(start, end - start));
+		start = end + delimiter.length();
+		end = s.find(delimiter, start);
+	}
+	result.push_back(s.substr(start));
+	return result;
+}
+
+void parseRequestLine(std::string requestLine, HttpRequest &req)
+{
+	std::vector<std::string> tokens = split(requestLine, " ");
+	if (tokens.size() != 3)
+	{
+		req.errorCode = 400;
+		return ;
+	}
+	req.method = tokens[0];
+	req.path = tokens[1];
+	req.version = tokens[2];
+	// check for forbitten elements in header
+	if (req.path.empty() || req.path == "." || req.path.find(" ") != std::string::npos || req.path[0] != '/')
+	{
+		req.errorCode = 400;
+		return ;
+	}
+	if (req.method != "GET" && req.method != "POST" && req.method != "DELETE")
+	{
+		req.errorCode = 501;
+		return ;
+	}
+	if (req.version != "HTTP/1.1" && req.version != "HTTP/1.0")
+	{
+		req.errorCode = 505;
+		return ;
+	}
+	req.errorCode = 0; // no error
+}
+
+void parseHttpHeaders(std::string header, HttpRequest &req)
+{
+	std::vector<std::string> lines = split(header, "\r\n");
+	if (lines.empty() || lines[0].empty())
+	{
+		req.errorCode = 400;
+		return ;
+	}
+	parseRequestLine(lines[0], req); // parse example: {POST /submit-form HTTP/1.1}
+	for (size_t i = 1; i < lines.size(); i++)
+	{
+		// тут происходит парсинг всего остального после request line
+		if (lines[i].empty())
+			continue;
+		size_t colonPos = lines[i].find(":");
+		if (colonPos != std::string::npos)
+		{
+			std::string key = trim(lines[i].substr(0, colonPos));
+			std::string value = trim(lines[i].substr(colonPos + 1));
+			if (toLower(key) == "content-length")
+			{
+				try
+				{
+					size_t contentLength = std::stoul(value);
+					req.contentLength = contentLength;
+				}
+				catch(...)
+				{
+					std::cerr << "Invalid client_max_body_size" << std::endl;
+				}
+				continue;
+			}
+			req.headers[toLower(key)] = value;
+		}
+	}
+	if (req.version == "HTTP/1.1")
+	{
+		if (req.headers.find("host") == req.headers.end())
+		{
+			req.errorCode = 400;
+			return ;
+		}
+	}
+	req.headersParsed = true;
+}
+
 void Server::handleGetRequest(HttpRequest &req, HttpResponce &resp, Client &client)
 {
 	ServerConfig *server = client.getConfig();
@@ -154,30 +187,110 @@ void Server::handleGetRequest(HttpRequest &req, HttpResponce &resp, Client &clie
 	const LocationConfig *location = matchLocation(req.path, server->getLocations());
 	if (!location)
 		return buildError(resp, 404, server);
-	// std::cout << "location: " << location->getPath() << std::endl;
 
 	// check method
+	std::cout << "Location: " << location->getPath() << std::endl;
 	if (!isMethodAllowed(req.method, location))
+	{
+		std::cout << "[handleGetRequest] method not allowed" << std::endl;
 		return buildError(resp, 405, server);
+	}
+
 	// redirect
 	if (location->hasRedirect())
 		return buildRedirect(resp, location);
-	// form filesystem path
-	std::string fullPath = buildFullPath(location, server, req.path);
-	std::cout << "[Server::handleGetRequest] fullPath: " << fullPath << std::endl;
-	// check if path is safe
+	
+	// figure out filesystem path
+	std::cout << "req.path: " << req.path << std::endl;
+	std::string fullPath = buildFullPath(location, server, req.path); // here is used the macros
+	std::cout << "[handleGetRequest] fullPath: " << fullPath << std::endl;
+	// get root path from location (if it's empty, get it from server)
 	std::string root = location->getRoot();
 	if (root.empty())
 		root = server->getRoot();
-	if (!isPathSafe(fullPath, root))
+	if (!isPathSafe(fullPath, root)) // here is used the macros
 		return buildError(resp, 403, server);
-	std::cout << "[Server::handleGetRequest] path is safe" << std::endl;
+
 	// CGI part
 	if (location->isCgi(fullPath))
 		return handleCGI(req, resp, client);
 	
 	// proccessing file/directory
 	serveFileOrDirectory(fullPath, resp, location, server);
+}
+
+void Server::handlePostRequest(HttpRequest &req, HttpResponce &resp, Client &client)
+{
+	ServerConfig *server = client.getConfig();
+
+	// find location
+	const LocationConfig *location = matchLocation(req.path, server->getLocations());
+	if (!location)
+		return buildError(resp, 404, server);
+	
+	// check method
+	if (!isMethodAllowed(req.method, location))
+		return buildError(resp, 405, server);
+	
+	// check for Content-Length and Transfer-Encoding
+	if (req.contentLength == 0 && req.headers.find("transfer-encoding") == req.headers.end())
+		return buildError(resp, 411, server);
+	if (req.contentLength != 0 && req.headers.find("transfer-encoding") != req.headers.end())
+		return buildError(resp, 400, server);
+	// handle the case with Content-Length
+	if (req.contentLength != 0)
+	{
+		std::size_t contentLenth = req.contentLength;
+		if (req.body.size() != contentLenth)
+			return buildError(resp, 400, server);	
+	}
+
+	// Handle the case with Transfer-Encoding: chunked
+	if (req.headers.find("Transfer-Encoding") != req.headers.end() &&
+        req.headers["Transfer-Encoding"] == "chunked")
+	{
+		;
+	}
+
+	// figure out filesystem path
+	std::string fullPath = buildFullPath(location, server, req.path);
+	std::cout << "[handlePostRequest] fullPath: " << fullPath << std::endl;
+
+	std::string root = location->getRoot();
+	if (root.empty())
+		root = server->getRoot();
+	if (!isPathSafe(fullPath, root))
+		return buildError(resp, 403, server);
+
+	//  дальше нужна логика, если fullPath это файл, то мы возваращаем код 200 и перезаписываем файл содержимым body из запроса
+	// 
+
+	// generate the name of file
+	std::string filename = "upload_" + std::to_string(time(NULL));
+	if (fullPath.back() != '/')
+		fullPath += "/";
+	fullPath += filename;
+
+	// write the body to the file (must be realised the multipart)
+	std::ofstream ofs(fullPath.c_str(), std::ios::binary);
+	if (!ofs)
+	{
+		std::cerr << "Error with opening file: " << fullPath << std::endl;
+		return buildError(resp, 500, server);
+	}
+	ofs << req.body;
+	ofs.close();
+
+	// build the responce
+	resp.setStatus(201, "Created");
+	resp.setHeader("Content-Type", "text/html");
+
+	std::stringstream body;
+	body << "<html><body>"
+		<< "<h1>File uploaded succesfully!</h1>"
+		// << "<p>Path: " << filename << "</p>"
+		<< "</body></html>";
+	resp.setBody(body.str());
 }
 
 void Server::handleClient(Client &client)
@@ -192,26 +305,44 @@ void Server::handleClient(Client &client)
 	{
 		req.contentLength = 0;
 		headerPart = buf.substr(0, pos);
-		parseHttpHeaders(headerPart, req);
+		parseHttpHeaders(headerPart, req); // can be error 400 for non-right header
+		if (req.errorCode != 0)
+		{
+			buildError(resp, req.errorCode, client.getConfig());
+			std::string responceMessage = resp.serialize(req);
+			client.appendToWriteBuffer(responceMessage);
+			client.clearReadBuffer();
+			client.setState(Client::State::WRITING);
+			epoll.updateClientEvents(client);
+			return ;
+		}
+
 		size_t bodyStart = pos + 4; // after '\r\n\r\n'
 		if (buf.size() - bodyStart >= req.contentLength && req.headersParsed)
 		{
-			std::cout << "\nWHOLE READBUFFER:"<< std::endl;
-			std::cout << buf << std::endl;
-			std::cout << "\nServer connected: " << std::endl;
+			// std::cout << "\nWHOLE READBUFFER:"<< std::endl;
+			// std::cout << buf << std::endl;
+			// std::cout << "\nServer connected: " << std::endl;
 			req.body = buf.substr(bodyStart, req.contentLength); // only body
 
-			if (req.method == "GET")
+			if (req.method == "GET" && !req.errorCode)
 			{
 				handleGetRequest(req, resp, client);
 			}
-			else if (req.method == "POST")
+			else if (req.method == "POST" && !req.errorCode)
 			{
-				resp.setStatus(200, "OK");
-				resp.setBody("<html><body><h1>Form Submitted!</h1></body></html>");
-				resp.setHeader("Content-Type", "text/html");
+				handlePostRequest(req, resp, client);
+				// if (req.headers.find("Content-Length") == req.headers.end() && req.headers.find("Transfer-Encoding") == req.headers.end())
+				// 	buildError(resp, 411, client.getConfig());
+				// else
+				// std::cout << "\nWHOLE READBUFFER:"<< std::endl;
+				// std::cout << buf << std::endl;
+				// std::cout << std::endl;
+				// resp.setStatus(200, "OK");
+				// resp.setBody("<html><body><h1>Form Submitted!</h1></body></html>");
+				// resp.setHeader("Content-Type", "text/html");
 			}
-			else if (req.method == "DELETE")
+			else if (req.method == "DELETE" && !req.errorCode)
 			{
 				resp.setStatus(200, "OK");
 				resp.setBody("<html><body><h1>Element Removed!</h1></body></html>");
@@ -228,38 +359,10 @@ void Server::handleClient(Client &client)
 			client.clearReadBuffer();
 			client.setState(Client::State::WRITING);
 			epoll.updateClientEvents(client);
-
-			// HttpResponce resp;
-			// const std::string &back_msg =
-			// "HTTP/1.1 200 OK\r\n"
-			// "Content-Length: 13\r\n"
-			// "Content-Type: text/plain\r\n"
-			// "Connection: close\r\n"
-			// "\r\n"
-			// "Hello, world!";
-			// std::cout << "\nWHOLE READBUFFER:"<< std::endl;
-			// std::cout << buf << std::endl;
-			// client.appendToWriteBuffer(back_msg);
 		}
 		else
 			return ;
 	}
-	// std::cout << "\n\nHttpRequest DEBUG:" << std::endl;
-	// std::cout << "Method: " << req.method << std::endl;
-	// std::cout << "Path: " << req.path << std::endl;
-	// std::cout << "Version: " << req.version << std::endl;
-	// for (auto it = req.headers.begin(); it != req.headers.end(); it++)
-	// {
-	// 	std::cout << "Key: " << it->first << std::endl;
-	// 	std::cout << "Value: " << it->second << std::endl;
-	// }
-	// std::cout << "Content-length: " << req.contentLength << std::endl;
-	// std::cout << "Body: " << req.body << std::endl;
-}
-
-void Server::handleParseRequest(Client &client)
-{
-	(void)client;
 }
 
 void Server::shutdownServer()

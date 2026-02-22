@@ -10,11 +10,17 @@ struct HttpRequest
 {
 	std::string method;
 	std::string path;
-	std::string version;
+	std::string version = "HTTP/1.1";
 	std::unordered_map<std::string, std::string> headers;
 	std::string body;
 	bool headersParsed = false;
 	size_t contentLength = 0; // если есть тело
+	int errorCode = 0;
+	// keep-alive futures
+	// bool keepAlive = false;
+	// int keepAliveTimeoutMs = 0; // timeout for keep-alive
+	// int keepAliveMaxRequests = 0; // max q of requests
+	// int keepAliveRequestsDone = 0; // request done
 };
 
 class Client

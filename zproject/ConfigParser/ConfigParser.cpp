@@ -267,6 +267,36 @@ void ConfigParser::parseLocationLine(const std::string &line, LocationConfig &cu
 		}
 		currentLocation.addCgi(extenstion, bin);
 	}
+	else if (tokens[0] == "redirect") // redirect
+	{
+		if (tokens.size() != 3 || tokens[2].back() != ';')
+		{
+			throw std::runtime_error("Invalid redirect directive");
+		}
+		int code;
+		try
+		{
+			code = std::stoi(tokens[1]);
+			if (code < 300 || code > 308)
+			{
+				std::cerr << "Invalid error code in redirect " << code << std::endl;
+				exit(1);
+			}
+		}
+		catch (...)
+		{
+			std::cerr << "Invalid redirect" << std::endl;
+			exit(1);
+		}
+		std::string url = tokens[2];
+		url.pop_back();
+		if (url.empty())
+		{
+			std::cerr << "Empty url in redirect directive" << std::endl;
+			exit(1);
+		}
+		currentLocation.setRedirect(code, url);	
+	}
 	else
 	{
 		std::cerr << "Uknown directive in location block: " << line << std::endl;
@@ -423,6 +453,3 @@ ConfigParser::ConfigParser(const std::string &configFile)
 	}
 	file.close();
 }
-
-/* 
- */

@@ -6,6 +6,11 @@ Client::Client(ClientSocket &&sock, ServerConfig *conf) : socket(std::move(sock)
 {
 	this->state = State::READING;
 	this->lastActivity = std::chrono::steady_clock::now();
+	// init HttpRequest
+	this->request.version = "HTTP/1.1";
+	this->request.headersParsed = false;
+	this->request.contentLength = 0;
+	this->request.errorCode = 0;
 }
 
 Client::Client(Client &&other) noexcept : socket(std::move(other.socket)), config(other.config) // переносим сокет
