@@ -12,6 +12,8 @@
 #include <cctype>
 #include <dirent.h>
 
+#define PHYSICAL_ROOT "./resources"
+
 class Server
 {
 	// std::vector<ServerConfig> configs; // configuration from file (удалить)
@@ -24,8 +26,8 @@ class Server
 		void run(); // основной цикл событий
 
 	private:
-		static void sigintHandler(int sig); // обработка сигнала SIGINT
-		void handleClient(Client &client); // парсинг запроса и формирование ответа
+		static void sigintHandler(int sig); // to correctly stop the program
+		void handleClient(Client &client); // parse the request and build responce (via handleGetRequest/Post/Delete)
 		void handleGetRequest(HttpRequest &req, HttpResponce &resp, Client &client);
 		void handleParseRequest(Client &client);
 		ServerConfig selectServer(const HttpRequest& req);
@@ -39,6 +41,7 @@ class Server
 		static bool isCgiExtensionOK(const HttpRequest& req, 
 			const LocationConfig& loc);
 		std::string  handleCGI(Client &client); // cgi
+		void handlePostRequest(HttpRequest &req, HttpResponce &resp, Client &client);
 		void handleCGI(HttpRequest &req, HttpResponce &resp, Client &client);
 		void shutdownServer();
 };

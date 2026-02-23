@@ -75,26 +75,35 @@ std::string getReasonPhrase(int code)
 
 bool isPathSafe(const std::string &fullPath, const std::string &root)
 {
-	char resolvedPath[PATH_MAX];
 	char resolvedRoot[PATH_MAX];
+	std::string fullRoot = PHYSICAL_ROOT + root;
 
-	if (!realpath(fullPath.c_str(), resolvedPath))
-	{
-		return 0;
-	}
-	std::cout << root << std::endl;
-	if (!realpath(root.c_str(), resolvedRoot))
-	{
-		return 0;
-	}
-	
-	std::string path(resolvedPath);
+	if (!realpath(fullRoot.c_str(), resolvedRoot))
+		return false;
+
 	std::string rootPath(resolvedRoot);
-	if (path == rootPath)
-		return 1;
 	if (rootPath.back() != '/')
 		rootPath += '/';
-	return path.compare(0, rootPath.size(), rootPath) == 0;
+
+	std::string existingPart = fullPath;
+	while (!existingPart.empty())
+	{
+		char resolvedPath[PATH_MAX];
+		if (realpath(existingPart.c_str(), resolvedPath))
+		{
+			std::string path(resolvedPath);
+			if (path == rootPath.substr(0, rootPath.size() - 1))
+				return true;
+			return path.compare(0, rootPath.size(), rootPath) == 0;
+		}
+		if (existingPart.size() > 1 && existingPart.back() == '/')
+			existingPart.erase(existingPart.size() - 1);
+		size_t pos = existingPart.find_last_of('/');
+		if (pos == std::string::npos)
+			break;
+		existingPart = existingPart.substr(0, pos);
+	}
+	return false;
 }
 
 bool endsWith(const std::string &str, const std::string &suffix)
@@ -106,12 +115,20 @@ bool endsWith(const std::string &str, const std::string &suffix)
 
 std::string getMimeType(const std::string& path)
 {
-	if (endsWith(path, ".html")) return "text/html";
-	if (endsWith(path, ".css")) return "text/css";
-	if (endsWith(path, ".js")) return "application/javascript";
-	if (endsWith(path, ".png")) return "image/png";
-	if (endsWith(path, ".jpg") || endsWith(path, ".jpeg")) return "image/jpeg";
-	if (endsWith(path, ".gif")) return "image/gif";
+	if (endsWith(path, ".html"))
+		return "text/html";
+	if (endsWith(path, ".css"))
+		return "text/css";
+	if (endsWith(path, ".js"))
+		return "application/javascript";
+	if (endsWith(path, ".png"))
+		return "image/png";
+	if (endsWith(path, ".jpg") || endsWith(path, ".jpeg"))
+		return "image/jpeg";
+	if (endsWith(path, ".gif"))
+		return "image/gif";
+	if (endsWith(path, ".txt"))
+		return "text/plain";
 	return "application/octet-stream";
 }
 
@@ -125,12 +142,17 @@ void generateAutoIndex(const std::string &dirPath, HttpResponce &resp)
 	html << "<html><body><ul>";
 	
 	struct dirent *entry;
+	html << "<li><a href=\"../\">main page</a></li>";
 	while ((entry = readdir(dir)) != NULL)
 	{
-		html << "<li><a href=\"" << entry->d_name << "\">"
-			<< entry->d_name << "</a></li>";
+		std::string name = entry->d_name;
+		if (name == "." || name == "..")
+			continue;
+		html << "<li><a href=\"" << name << "\">"
+			<< name << "</a></li>";
 	}
 	html << "</ul></body></html>";
+
 	closedir(dir);
 
 	resp.setStatus(200, "OK");
@@ -143,7 +165,6 @@ std::string buildFullPath(const LocationConfig *loc, const ServerConfig *server,
 	std::string root = loc->getRoot(); // ./resources/www
 	if (root.empty())
 		root = server->getRoot();
-
 	std::string locationPath = loc->getPath(); // / or /upload etc.
 	std::string relativePath;
 
@@ -156,7 +177,7 @@ std::string buildFullPath(const LocationConfig *loc, const ServerConfig *server,
 	if (locationPath == "/")
 		relativePath = requestPath;
 	
-	std::string fullPath = root;
+	std::string fullPath = PHYSICAL_ROOT + root;
 	if (!fullPath.empty() && fullPath.back() != '/')
 		fullPath += "/";
 
@@ -169,26 +190,34 @@ std::string buildFullPath(const LocationConfig *loc, const ServerConfig *server,
 
 void buildRedirect(HttpResponce &resp, const LocationConfig *loc)
 {
-	int statusCode = loc->getRedirectCode(); // 301 or 302
-	std::string target = loc->getRedirectUrl();
+	int code = loc->getRedirectCode(); // 301 or 302
+	std::string url = loc->getRedirectUrl();
 
+	if (url.find("http://") != 0 && url.find("https://") != 0)
+	{
+		if (url.empty() || url[0] != '/')
+			url = "/" + url;
+	}
+
+	std::cout << "redirectCode: " << code << std::endl;
+	std::cout << "redirectUrl: " << url << std::endl;
 	resp.clear();
-	resp.setStatus(statusCode, getReasonPhrase(statusCode));
-	resp.setHeader("Location", target);
+	resp.setStatus(code, getReasonPhrase(code));
+	resp.setHeader("Location", url);
 	resp.setHeader("Content-Type", "text/html");
 
 	std::stringstream body;
 	body << "<html>\n"
-		<< "<head><title>" << statusCode << " "
-		<< getReasonPhrase(statusCode)
+		<< "<head><title>" << code << " "
+		<< getReasonPhrase(code)
 		<< "</title></head>\n"
 		<< "<body>\n"
-		<< "<h1>" << statusCode << " "
-		<< getReasonPhrase(statusCode)
+		<< "<h1>" << code << " "
+		<< getReasonPhrase(code)
 		<< "</h1>\n"
 		<< "<p>Redirecting to <a href=\""
-		<< target << "\">"
-		<< target << "</a></p>\n"
+		<< url << "\">"
+		<< url << "</a></p>\n"
 		<< "</body>\n"
 		<< "</html>";
 
@@ -229,7 +258,12 @@ void serveFileOrDirectory(const std::string& path, HttpResponce& resp, const Loc
 			return serveFile(indexPath, resp);
 
 		if (location->getAutoIndex())
+		{
+			std::cout << "Autoindex is on" << std::endl;
 			return generateAutoIndex(path, resp);
+		}
+		else
+			std::cout << "Autoindex is off" << std::endl;
 
 		return buildError(resp, 403, server);
 	}
