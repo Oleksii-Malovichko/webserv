@@ -288,50 +288,54 @@ void Epoll::handleEvents(int defaultTimeoutMs)
 
 	for (int i = 0; i < n; i++)
 	{
-		// this->printEvenMap();
+		this->printEvenMap();
 
-		// EventData* data = static_cast<EventData*>(
-		// 	events[i].data.ptr);
-		// uint32_t ev = events[i].events;
-
-		// dataEventCheck(data);
-
-		// switch (data->type)
-		// {
-		// 	case EventData::Type::LISTEN_SOCKET:
-		// 		acceptClient(data->fd);
-		// 		break ;
-
-		// 	case EventData::Type::CLIENT_SOCKET:
-		// 		handleClient(data->fd, ev);
-		// 		break ;
-
-		// 	case EventData::Type::CGI_STDIN:
-		// 		handleCgiEvent(data, ev); // this is still not correct function call
-		// 		break ;
-
-		// 	case EventData::Type::CGI_STDOUT:
-		// 		handleCgiEvent(data, ev); // this is still not correct function call
-		// 		break ;
-			
-		// 	default:
-		// 		std::cerr	<< RED << "The data type not in"
-		// 					<< " the possible list" << DEFAULT << std::endl;
-		// 		break;
-		// }
-		
-		int fd = events[i].data.fd;
+		EventData* data = static_cast<EventData*>(
+			events[i].data.ptr);
 		uint32_t ev = events[i].events;
 
-		// если это listen-socket -> accept клиентов
-		bool isListening = checkListeningSockets(fd);
-		if (isListening)
-			acceptClient(fd); // accept для всех клиентов, пока accept не вернет -1 и errno = EAGAIN/EWOULDBLOCK
-		else
+		dataEventCheck(data);
+
+		switch (data->type)
 		{
-			if (!handleClient(fd, ev))
-				continue;
+			case EventData::Type::LISTEN_SOCKET:
+				std::cerr << MAGENTA << "AcceptClient" << DEFAULT << std::endl;
+				acceptClient(data->fd);
+				break ;
+
+			case EventData::Type::CLIENT_SOCKET:
+				std::cerr << MAGENTA << "HandleClient" << DEFAULT << std::endl;
+				handleClient(data->fd, ev);
+				break ;
+
+			case EventData::Type::CGI_STDIN:
+				std::cerr << MAGENTA << "CGI_STDIN" << DEFAULT << std::endl;
+				handleCgiEvent(data, ev); // this is still not correct function call
+				break ;
+
+			case EventData::Type::CGI_STDOUT:
+				std::cerr << MAGENTA << "CGI_STDOUT" << DEFAULT << std::endl;
+				handleCgiEvent(data, ev); // this is still not correct function call
+				break ;
+			
+			default:
+				std::cerr	<< RED << "The data type not in"
+							<< " the possible list" << DEFAULT << std::endl;
+				break;
 		}
+		
+		// int fd = events[i].data.fd;
+		// uint32_t ev = events[i].events;
+
+		// // если это listen-socket -> accept клиентов
+		// bool isListening = checkListeningSockets(fd);
+		// if (isListening)
+		// 	acceptClient(fd); // accept для всех клиентов, пока accept не вернет -1 и errno = EAGAIN/EWOULDBLOCK
+		// else
+		// {
+		// 	if (!handleClient(fd, ev))
+		// 		continue;
+		// }
 	}
 	removeClientVec();
 }
@@ -460,6 +464,8 @@ void Epoll::addClient(Client &&client)
 void Epoll::removeClient(int clientFD)
 {
 	auto it = clients.find(clientFD);
+	std::cerr << GREEN << "The following Client fd removed: "
+				<< clientFD << DEFAULT << std::endl;
 	if (it != clients.end())
 	{
 		epoll_ctl(epfd, EPOLL_CTL_DEL, clientFD, nullptr);
