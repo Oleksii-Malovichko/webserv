@@ -106,18 +106,46 @@ void Epoll::removeClientVec()
 
 void Epoll::updateClientEvents(Client &client)
 {
+
 	int fd = client.getFD();
 	struct epoll_event ev;
 	ev.data.fd = fd;
 	ev.events = 0;
+
+	auto it_event = fdEventMap.find(fd);
+	if (it_event != fdEventMap.end())
+	{
+		delete it_event->second;
+		fdEventMap.erase(it_event);
+	}
+
+	EventData* data = new EventData;
+	data->type = EventData::Type::CLIENT_SOCKET;
+	data->fd = fd;
+	data->owner = &client;
+
+	ev.data.ptr = data;
+
+	std::cerr	<< YELLOW << "The update client event function called for client"
+				<< fd << DEFAULT << std::endl;
 	// то есть тут мы получаем state клиента и меняем его в epollin
 	if (client.getState() == Client::State::READING)
+	{
+		std::cerr	<< BLUE << "The event changed EPOLLIN"
+					<< DEFAULT << std::endl;
 		ev.events |= EPOLLIN;
+	}
 	else if (client.getState() == Client::State::WRITING && client.hasPendingWrite())
+	{
+		std::cerr	<< CYAN << "The event changed EPOLLOUT"
+					<< DEFAULT << std::endl;
 		ev.events |= EPOLLOUT;
+	}
 
 	if (epoll_ctl(epfd, EPOLL_CTL_MOD, fd, &ev) == -1)
 		throw std::runtime_error(std::string("epoll_ctl MOD: ") + strerror(errno));
+
+	fdEventMap[fd] = data;
 }
 
 bool Epoll::handleClient(int fd, uint32_t ev)
@@ -447,6 +475,7 @@ void Epoll::addClient(Client &&client)
 	if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, clientFD, &cev) == -1)
 		throw std::runtime_error(std::string("epoll_ctl ADD(client): ") + strerror(errno));
 
+	// cev.data.ptr = data;
 	fdEventMap[clientFD] = data;
 
 	// DEBUG
