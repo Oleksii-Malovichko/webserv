@@ -6,7 +6,7 @@
 /*   By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/22 00:04:33 by pdrettas          #+#    #+#             */
-/*   Updated: 2026/02/22 03:05:14 by pdrettas         ###   ########.fr       */
+/*   Updated: 2026/02/23 03:30:02 by pdrettas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -104,14 +104,84 @@ int getDataEnd(std::string &body, std::string &delimiter, int dataStart)
     return dataEnd;
 }
 
-
-// called in POST request if client needs to upload a file
-void handleHttpFileUpload()
+// helper ft 4
+std::string getFilePath(std::string &filename)
 {
-	// ft 1: extract boundary & find start of first part
+    HttpResponce resp;
+     
+    if (chdir("uploads") == -1) // goes from zproject into upload folder
+    {
+        resp.setStatus(500, "Internal Server Error");
+        resp.setBody("Cannot access uploads directory");
+        return "";
+    }
 
-
+    std::string path = filename; // build relative path consisting of just the filename now
     
+    return path;
 }
 
+// helper ft 5
+void createFileAndWriteContent(std::string &path, std::string &fileContent)
+{
+    HttpResponce resp;
+    
+    std::ofstream out(path.c_str(), std::ios::binary); // actual file is being created by path into ofstream
+    if (!out.is_open()) // if rohr is closed
+    {
+        resp.setStatus(500, "Internal Server Error");
+        resp.setBody("Failed to save file");
+        return;
+    }
+
+    out.write(fileContent.c_str(), fileContent.size()); // content of file is written into rohr
+    out.close();
+
+    resp.setStatus(201, "Created");
+    resp.setBody("<html><body><h1>Upload Successful!</h1></body></html>");
+    resp.setHeader("Content-Type", "text/html");
+    std::cout << "Saving file tto: " << path << std::endl;
+    std::cout << "File size: " << fileContent.size() << std::endl;
+}
+
+// called in POST request if client needs to upload a file
+/*
+--boundary123\r\n
+Content-Disposition: form-data; name="file"; filename="hello.txt"\r\n
+Content-Type: text/plain\r\n
+\r\n
+<actual file bytes here>
+\r\n
+--boundary123--\r\n
+*/
+// 1. extract boundary from Content-Type header (--boundary123\r\n) [boundary changes at every request]
+// 2. use boundary to find & extract file content from body
+// 3. write content to disk (disk: saving file to the filesystem)
 // first part of it is parsing. rest is writing file content to disk
+int handleHttpFileUpload(std::string &contentType, std::string &requestBody)
+{
+    std::string delimiter = extractBoundary(contentType); // TODO: change delimiter name to boundary ??
+    if (delimiter == "")
+        return -1;
+        
+    std::string &body = requestBody;
+    std::string filename;
+    int dataStart = getDataStart(body, delimiter, filename);
+    if (dataStart == -1)
+        return -1;
+        
+    int dataEnd = getDataEnd(body, delimiter, dataStart);
+    if (dataEnd == -1)
+        return -1;
+        
+    std::string fileContent = body.substr(dataStart, dataEnd - dataStart); // only get actual content (so without content-type line)
+    std::cout << "fileContent = " << fileContent << std::endl; // TODO: delete later
+    
+    std::string path = getFilePath(filename);
+    if (path == "")
+        return -1;
+        
+    createFileAndWriteContent(path, fileContent);
+
+    return 0;
+}

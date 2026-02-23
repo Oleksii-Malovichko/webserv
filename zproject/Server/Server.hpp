@@ -35,3 +35,6 @@ std::string trim(const std::string &s);
 std::string extractBoundary(std::string &contentType);
 int getDataStart(std::string &requestBody, std::string &delimiter, std::string &filename);
 int getDataEnd(std::string &body, std::string &delimiter, int dataStart);
+std::string getFilePath(std::string &filename);
+void createFileAndWriteContent(std::string &path, std::string &fileContent);
+int handleHttpFileUpload(std::string &contentType, std::string &requestBody);
