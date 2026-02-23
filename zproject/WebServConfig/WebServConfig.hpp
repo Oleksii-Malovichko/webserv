@@ -13,4 +13,5 @@ class WebServConfig
 		WebServConfig();
 		void addServer(const ServerConfig &server);
 		const std::vector<ServerConfig>& getServers() const;
+		std::vector<ServerConfig>& getServers();
 };

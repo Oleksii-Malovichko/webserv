@@ -14,3 +14,8 @@ const std::vector<ServerConfig>& WebServConfig::getServers() const
 {
 	return servers;
 }
+
+std::vector<ServerConfig>& WebServConfig::getServers()
+{
+	return servers;
+}

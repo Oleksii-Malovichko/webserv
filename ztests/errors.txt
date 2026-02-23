@@ -1,0 +1,44 @@
+	#1
+curl -i http://localhost:8080/nofile.html
+HTTP/1.1 403 Forbidden
+Content-Length: 114
+Content-Type: text/html
+
+<html>
+<head><title>403 Forbidden</title></head>
+<body>
+<h1>403 Forbidden</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html> 
+
+	#2
+curl -i http://localhost:8080/cgi-bin/lalla   
+HTTP/1.1 403 Forbidden
+Content-Length: 114
+Content-Type: text/html
+
+<html>
+<head><title>403 Forbidden</title></head>
+<body>
+<h1>403 Forbidden</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>  
+
+	#3
+curl -i http://localhost:8080/www
+HTTP/1.1 403 Forbidden
+Content-Length: 114
+Content-Type: text/html
+
+<html>
+<head><title>403 Forbidden</title></head>
+<body>
+<h1>403 Forbidden</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html> 

@@ -10,11 +10,17 @@ struct HttpRequest
 {
 	std::string method;
 	std::string path;
-	std::string version;
+	std::string version = "HTTP/1.1";
 	std::unordered_map<std::string, std::string> headers;
 	std::string body;
 	bool headersParsed = false;
 	size_t contentLength = 0; // если есть тело
+	int errorCode = 0;
+	// keep-alive futures
+	// bool keepAlive = false;
+	// int keepAliveTimeoutMs = 0; // timeout for keep-alive
+	// int keepAliveMaxRequests = 0; // max q of requests
+	// int keepAliveRequestsDone = 0; // request done
 };
 
 class Client
@@ -36,6 +42,7 @@ class Client
 	// 	};
 	private:
 		ClientSocket socket;
+		ServerConfig *config;
 		std::string readBuffer;
 		std::string writeBuffer;
 		State state;
@@ -44,7 +51,7 @@ class Client
 
 	public:
 		// контсруктор принимает уже созданный сокет (explicit нужен чтобы не было неявных преоброзований)
-		explicit Client(ClientSocket &&sock);
+		explicit Client(ClientSocket &&sock, ServerConfig *conf);
 		// перемещение, копирование запрещено
 		Client(const Client&) = delete;
 		Client& operator=(const Client&) = delete;
@@ -67,4 +74,5 @@ class Client
 		void setState(State newState);
 		const std::string &getReadBuffer() const;
 		void clearReadBuffer();
+		ServerConfig *getConfig() const;
 };
