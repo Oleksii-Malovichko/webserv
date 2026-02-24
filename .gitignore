@@ -1,5 +1,3 @@
-cgi/
-cgi_bin/
 config_parser/
 configuration_files/
 error_handler/

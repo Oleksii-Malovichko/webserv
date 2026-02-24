@@ -1,9 +1,10 @@
-Webserv Test Report - Tue Feb 24 07:44:47 PM CET 2026
+Webserv Test Report - Tue Feb 24 08:27:34 PM CET 2026
 
 ===== Test: GET method =====
 CURL Command: curl -s -i http://localhost:8080/
 Response (exit code: 0):
 HTTP/1.1 200 OK
+Content-Type: 
 Content-Length: 595
 Content-Type: text/html
 
@@ -31,6 +32,7 @@ Content-Type: text/html
 CURL Command: curl -s -i http://localhost:8080/assets
 Response (exit code: 0):
 HTTP/1.1 404 Not Found
+Content-Type: 
 Content-Length: 114
 Content-Type: text/html
 
@@ -47,6 +49,7 @@ Content-Type: text/html
 CURL Command: curl -s -i -X PUT http://localhost:8080/putfile
 Response (exit code: 0):
 HTTP/1.1 501 Error
+Content-Type: 
 Content-Length: 106
 Content-Type: text/html
 
@@ -63,6 +66,7 @@ Content-Type: text/html
 CURL Command: curl -s -i -X POST -F file=@Makefile;type=text/plain -H Transfer-Encoding: chunked http://localhost:8080/upload
 Response (exit code: 0):
 HTTP/1.1 201 Created
+Content-Type: 
 Content-Length: 61
 Content-Type: text/html
 
@@ -72,6 +76,7 @@ Content-Type: text/html
 CURL Command: curl -s -i http://localhost:8080/ -H Host: webserv.com
 Response (exit code: 0):
 HTTP/1.1 200 OK
+Content-Type: 
 Content-Length: 595
 Content-Type: text/html
 
@@ -99,6 +104,7 @@ Content-Type: text/html
 CURL Command: curl -s -i http://localhost:8080/ -H Host: portfolio.com
 Response (exit code: 0):
 HTTP/1.1 200 OK
+Content-Type: 
 Content-Length: 595
 Content-Type: text/html
 
@@ -129,6 +135,7 @@ GET / HTTP/1.1
 
 Response received:
 HTTP/1.1 400 Bad Request
+Content-Type: 
 Content-Length: 118
 Content-Type: text/html
 
@@ -149,6 +156,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 501 Error
+Content-Type: 
 Content-Length: 106
 Content-Type: text/html
 
@@ -169,6 +177,7 @@ Host: localhost
 
 Response received:
 HTTP/2.0 505 HTTP Version Not Supported
+Content-Type: 
 Content-Length: 148
 Content-Type: text/html
 
@@ -188,6 +197,7 @@ GET / HTTP/1.1Host: localhost
 
 Response received:
 HTTP/1.1 400 Bad Request
+Content-Type: 
 Content-Length: 118
 Content-Type: text/html
 
@@ -207,6 +217,7 @@ Raw request sent:
 
 Response received:
 HTTP/1.1 400 Bad Request
+Content-Type: 
 Content-Length: 118
 Content-Type: text/html
 
@@ -227,6 +238,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 400 Bad Request
+Content-Type: 
 Content-Length: 118
 Content-Type: text/html
 
@@ -247,6 +259,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 400 Bad Request
+Content-Type: 
 Content-Length: 118
 Content-Type: text/html
 
@@ -267,6 +280,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 400 Bad Request
+Content-Type: 
 Content-Length: 118
 Content-Type: text/html
 
@@ -287,6 +301,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 200 OK
+Content-Type: 
 Content-Length: 595
 Content-Type: text/html
 
@@ -318,6 +333,7 @@ Host: localhost:8080
 
 Response received:
 HTTP/1.1 200 OK
+Content-Type: 
 Content-Length: 595
 Content-Type: text/html
 
@@ -349,6 +365,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 400 Bad Request
+Content-Type: 
 Content-Length: 118
 Content-Type: text/html
 
@@ -369,6 +386,7 @@ Host: localhost
 shuai
 Response received:
 HTTP/1.1 200 OK
+Content-Type: 
 Content-Length: 595
 Content-Type: text/html
 
@@ -400,6 +418,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 400 Bad Request
+Content-Type: 
 Content-Length: 118
 Content-Type: text/html
 
@@ -420,6 +439,7 @@ Host: localhost
 shuai
 Response received:
 HTTP/1.1 411 Error
+Content-Type: 
 Content-Length: 106
 Content-Type: text/html
 
@@ -442,6 +462,7 @@ Transfer-Encoding: chunked
 shuai
 Response received:
 HTTP/1.1 400 Bad Request
+Content-Type: 
 Content-Length: 118
 Content-Type: text/html
 
@@ -463,6 +484,7 @@ Content-Length: 5
 shuai
 Response received:
 HTTP/1.1 200 OK
+Content-Type: 
 Content-Length: 18
 Content-Length: text/plain
 
@@ -477,6 +499,7 @@ Content-Length: 5
 shuai
 Response received:
 HTTP/1.1 403 Forbidden
+Content-Type: 
 Content-Length: 114
 Content-Type: text/html
 
@@ -498,6 +521,7 @@ Content-Length: 2
 shuai
 Response received:
 HTTP/1.1 200 OK
+Content-Type: 
 Content-Length: 18
 Content-Length: text/plain
 
@@ -512,6 +536,7 @@ Content-Length: 2000000
 shuai
 Response received:
 HTTP/1.1 413 Payload Too Large
+Content-Type: 
 Content-Length: 130
 Content-Type: text/html
 
@@ -533,6 +558,7 @@ Content-Length: 2147483648
 shuai
 Response received:
 HTTP/1.1 400 Bad Request
+Content-Type: 
 Content-Length: 118
 Content-Type: text/html
 
@@ -554,6 +580,7 @@ Content-Length: 0
 shuai
 Response received:
 HTTP/1.1 200 OK
+Content-Type: 
 Content-Length: 18
 Content-Length: text/plain
 
@@ -568,6 +595,7 @@ Content-Length: -1
 shuai
 Response received:
 HTTP/1.1 400 Bad Request
+Content-Type: 
 Content-Length: 118
 Content-Type: text/html
 
@@ -589,6 +617,7 @@ Content-Length: 005
 shuai
 Response received:
 HTTP/1.1 400 Bad Request
+Content-Type: 
 Content-Length: 118
 Content-Type: text/html
 
@@ -619,6 +648,7 @@ Network
 
 Response received:
 HTTP/1.1 200 OK
+Content-Type: 
 Content-Length: 18
 Content-Length: text/plain
 
@@ -643,6 +673,7 @@ Network
 
 Response received:
 HTTP/1.1 200 OK
+Content-Type: 
 Content-Length: 18
 Content-Length: text/plain
 
@@ -655,6 +686,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 404 Not Found
+Content-Type: 
 Content-Length: 114
 Content-Type: text/html
 
@@ -674,6 +706,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 200 OK
+Content-Type: 
 Content-Length: 595
 Content-Type: text/html
 
@@ -704,6 +737,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 404 Not Found
+Content-Type: 
 Content-Length: 114
 Content-Type: text/html
 
@@ -723,6 +757,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 404 Not Found
+Content-Type: 
 Content-Length: 114
 Content-Type: text/html
 
@@ -742,6 +777,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 404 Not Found
+Content-Type: 
 Content-Length: 114
 Content-Type: text/html
 
@@ -761,6 +797,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 404 Not Found
+Content-Type: 
 Content-Length: 114
 Content-Type: text/html
 
@@ -780,6 +817,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 404 Not Found
+Content-Type: 
 Content-Length: 114
 Content-Type: text/html
 
@@ -799,6 +837,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 200 OK
+Content-Type: 
 Content-Length: 51
 Content-Type: text/html
 
@@ -811,6 +850,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 200 OK
+Content-Type: 
 Content-Length: 51
 Content-Type: text/html
 
@@ -823,6 +863,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 200 OK
+Content-Type: 
 Content-Length: 51
 Content-Type: text/html
 
@@ -835,6 +876,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 200 OK
+Content-Type: 
 Content-Length: 51
 Content-Type: text/html
 
@@ -847,6 +889,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 200 OK
+Content-Type: 
 Content-Length: 51
 Content-Type: text/html
 
@@ -859,6 +902,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 404 Not Found
+Content-Type: 
 Content-Length: 114
 Content-Type: text/html
 
@@ -878,6 +922,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 404 Not Found
+Content-Type: 
 Content-Length: 114
 Content-Type: text/html
 
@@ -897,6 +942,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 404 Not Found
+Content-Type: 
 Content-Length: 114
 Content-Type: text/html
 
@@ -916,6 +962,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 403 Forbidden
+Content-Type: 
 Content-Length: 114
 Content-Type: text/html
 
@@ -938,6 +985,7 @@ Content-Length: 1
 
 Response received:
 HTTP/1.1 201 Created
+Content-Type: 
 Content-Length: 61
 Content-Type: text/html
 
@@ -954,6 +1002,7 @@ Content-Type: text/html
 
 Response received:
 HTTP/1.1 201 Created
+Content-Type: 
 Content-Length: 61
 Content-Type: text/html
 
@@ -968,6 +1017,7 @@ Content-Length: 0
 
 Response received:
 HTTP/1.1 403 Forbidden
+Content-Type: 
 Content-Length: 114
 Content-Type: text/html
 
@@ -989,6 +1039,7 @@ Content-Length: 0
 
 Response received:
 HTTP/1.1 403 Forbidden
+Content-Type: 
 Content-Length: 114
 Content-Type: text/html
 
@@ -1010,6 +1061,7 @@ Content-Length: 0
 
 Response received:
 HTTP/1.1 403 Forbidden
+Content-Type: 
 Content-Length: 114
 Content-Type: text/html
 
@@ -1031,6 +1083,7 @@ Content-Length: 0
 
 Response received:
 HTTP/1.1 403 Forbidden
+Content-Type: 
 Content-Length: 114
 Content-Type: text/html
 
@@ -1052,6 +1105,7 @@ Content-Length: 0
 
 Response received:
 HTTP/1.1 403 Forbidden
+Content-Type: 
 Content-Length: 114
 Content-Type: text/html
 
@@ -1073,6 +1127,7 @@ Content-Length: 0
 
 Response received:
 HTTP/1.1 403 Forbidden
+Content-Type: 
 Content-Length: 114
 Content-Type: text/html
 

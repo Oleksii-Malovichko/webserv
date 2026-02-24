@@ -66,7 +66,7 @@ execveError::execveError(CgiHandler& cgi_hand)
 
 	setMessage(ss.str());
 
-	cgi_hand.closePipeFd(0);
+	cgi_hand.closePipeFds(CLOSE_ALL);
 	_exit(1);
 }
 
@@ -78,7 +78,7 @@ readError::readError(CgiHandler& cgi_hand)
 		<< strerror(errno);
 
 	setMessage(ss.str());
-	cgi_hand.closePipeFd(0);
+	cgi_hand.closePipeFds(CLOSE_ALL);
 }
 
 fileAccessError::fileAccessError(const std::string& file_path)
@@ -100,5 +100,5 @@ writeError::writeError(CgiHandler& cgi_hand)
 		<< strerror(errno);
 
 	setMessage(ss.str());
-	cgi_hand.closePipeFd(0);
+	cgi_hand.closePipeFds(CLOSE_ALL);
 }

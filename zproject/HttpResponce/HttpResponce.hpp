@@ -17,7 +17,7 @@ class HttpResponce
 		HttpResponce();
 		
 		void setStatus(int code, const std::string &message);
-		// void setContentType(const std::string &type);
+		void setContentType(const std::string &type);
 		void setBody(const std::string &content);
 		void setHeader(const std::string &key, const std::string &value);
 		std::string serialize(const HttpRequest &req) const;

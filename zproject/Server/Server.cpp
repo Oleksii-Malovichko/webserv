@@ -563,40 +563,40 @@ bool Server::isCgiExtensionOK(const HttpRequest& req,
 	return (false);
 }
 
-std::string Server::handleCGI(Client &client)
-{
-	std::string cgi_http_response = "";
-	char *cgi_path = const_cast<char*>(client.getRequest().path.c_str());
+// std::string Server::handleCGI(Client &client)
+// {
+// 	std::string cgi_http_response = "";
+// 	char *cgi_path = const_cast<char*>(client.getRequest().path.c_str());
 
-	try
-	{
-		CgiHandler cgi_obj;
-		cgi_obj.setArgsAndCgiPath(cgi_path);
-		cgi_obj.setEnvp(client);
-		cgi_obj.setNonBlockPipe();
-		this->epoll.addCgiPipesToEpoll(cgi_obj, client);
-		cgi_obj.runExecve();
+// 	try
+// 	{
+// 		CgiHandler cgi_obj;
+// 		cgi_obj.setArgsAndCgiPath(cgi_path);
+// 		cgi_obj.setEnvp(client);
+// 		cgi_obj.setNonBlockPipe();
+// 		this->epoll.addCgiPipesToEpoll(cgi_obj, client);
+// 		cgi_obj.execute();
 
-		if (PRINT_MSG)
-		{
-			std::cout	<< GREEN << "The HTTP response:\n"
-						<< CYAN << cgi_http_response
-						<< DEFAULT << std::endl;
-		}
-	}
-	catch(const std::exception& e)
-	{
-		std::cerr	<< RED 
-					<< "The following error occured " 
-					<< e.what() << '\n';
-	}
-	catch(...)
-	{
-		std::cerr << YELLOW << "Some error"; 
-	}
+// 		if (PRINT_MSG)
+// 		{
+// 			std::cout	<< GREEN << "The HTTP response:\n"
+// 						<< CYAN << cgi_http_response
+// 						<< DEFAULT << std::endl;
+// 		}
+// 	}
+// 	catch(const std::exception& e)
+// 	{
+// 		std::cerr	<< RED 
+// 					<< "The following error occured " 
+// 					<< e.what() << '\n';
+// 	}
+// 	catch(...)
+// 	{
+// 		std::cerr << YELLOW << "Some error"; 
+// 	}
 
-	return (cgi_http_response);
-}
+// 	return (cgi_http_response);
+// }
 
 void Server::handleCGI(HttpRequest &req, HttpResponce &resp, Client &client)
 {
@@ -611,11 +611,12 @@ void Server::handleCGI(HttpRequest &req, HttpResponce &resp, Client &client)
 	try
 	{
 		CgiHandler cgi_obj;
+		cgi_obj.setInterpreterPath(client.getRequest().path);
 		cgi_obj.setArgsAndCgiPath(cgi_path);
 		cgi_obj.setEnvp(client);
 		cgi_obj.setNonBlockPipe();
 		this->epoll.addCgiPipesToEpoll(cgi_obj, client);
-		cgi_obj.runExecve();
+		cgi_obj.execute();
 	}
 	catch(const std::exception& e)
 	{
