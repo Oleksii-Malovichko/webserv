@@ -67,3 +67,11 @@ void buildRedirect(HttpResponce &resp, const LocationConfig *loc);
 std::string generateDefaultErrorPage(int code, const std::string &reason);
 std::string getReasonPhrase(int code);
 bool isMethodAllowed(const std::string method, const LocationConfig *loc);
+
+// File Upload Handler
+std::string extractBoundary(std::string &contentType);
+int getDataStart(std::string &requestBody, std::string &delimiter, std::string &filename);
+int getDataEnd(std::string &body, std::string &delimiter, int dataStart);
+std::string getFilePath(std::string &filename);
+void createFileAndWriteContent(std::string &path, std::string &fileContent);
+int handleHttpFileUpload(std::string &contentType, std::string &requestBody);
