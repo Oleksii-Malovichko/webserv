@@ -6,7 +6,7 @@
 /*   By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 17:07:24 by pauladretta       #+#    #+#             */
-/*   Updated: 2026/02/16 00:40:35 by pdrettas         ###   ########.fr       */
+/*   Updated: 2026/02/23 17:58:16 by pdrettas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@
 #include <cstring>
 #include <cerrno>
 #include <time.h>
+#include "Client.hpp"
 
 enum PipeCloseCall
 {
@@ -63,6 +64,7 @@ class CgiHandler
         bool execute();
         void waitAndGetExitCode();
         std::string buildHttpResponseFromCgi();
+        void setEnvp(Client& client_obj);
     };
 
 #endif

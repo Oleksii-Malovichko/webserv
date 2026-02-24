@@ -6,7 +6,7 @@
 /*   By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 17:04:59 by pauladretta       #+#    #+#             */
-/*   Updated: 2026/02/16 01:09:53 by pdrettas         ###   ########.fr       */
+/*   Updated: 2026/02/24 21:24:30 by pdrettas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,23 @@ CgiHandler::CgiHandler(const std::string& requestBody, char **envp, const std::s
 // destructor // TODO: cleanup
 CgiHandler::~CgiHandler()
 {}
+
+// TODO: addEnvpElement ft
+// void CgiHandler::setEnvp(Client& client_obj)
+// {
+//     this->addEnvpElement("REQUEST_METHOD", client_obj.getRequest().method);
+//     this->addEnvpElement("SCRIPT_NAME", client_obj.getRequest().path);
+//     this->addEnvpElement("PATH_INFO", "");
+//     this->addEnvpElement("QUERY_STRING", client_obj.getRequest().query_string);
+//     this->addEnvpElement("CONTENT_LENGTH", std::to_string(client_obj.getRequest().contentLength));
+//     this->addEnvpElement("CONTENT_TYPE", "");
+//     this->addEnvpElement("SERVER_PROTOCOL", client_obj.getRequest().version);
+
+//     this->addEnvpElement("GATEWAY_INTERFACE", "CGI/1.1");
+//     this->addEnvpElement("SERVER_SOFTWARE", "webserv/1.0");
+//     this->addEnvpElement("HTTP_HOST", "localhost");
+//     this->addEnvpElement("HTTP_USER_AGENT", "curl/7.88");
+// }
 
 // check if input from server is valid (ex. file accessible) before moving on to executing (argv, envp)
 bool CgiHandler::validateExecveArgs(char **argv, char **envp)
@@ -236,7 +253,6 @@ bool CgiHandler::execute()
     }
     return true;
 }       
-
 
 // TODO: ft: translate cgi output as http response
 /* The CGI script only produces headers and body content.

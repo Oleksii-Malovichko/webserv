@@ -391,7 +391,20 @@ void Server::handleCGI(HttpRequest &req, HttpResponce &resp, Client &client)
 {
 	(void)resp;
 	(void)req;
-	(void)client;
+
+	setEnvp(client);
+
+	CgiHandler cgi(postBody, envp, argv[0], argv);
+    // FT: safety check
+    if (!cgi.validateExecveArgs(argv, envp))
+        return 1;
+
+    // FT: execute cgi
+    if (!cgi.execute())
+    {
+        std::cerr << "CGI execution failed!" << std::endl;
+        return 1;
+    }
 }
 
 // void Server::handleGetRequest(HttpRequest &req, HttpResponce &resp, Client &client)

@@ -16,6 +16,7 @@ SRCS1 = main.cpp RAII/epoll/Epoll.cpp \
 	ConfigParser/ConfigParser.cpp \
 	ConfigParser/ConfigParserUtils.cpp \
 	HttpResponce/HttpResponce.cpp \
+	cgi/CgiHandler.cpp \
 
 SRCS2 = client.c
 
@@ -39,6 +40,7 @@ CXXFLAGS = -Wall -Wextra -Werror \
 	-IConfigParser \
 	-IServer \
 	-IHttpResponce \
+	-Icgi \
 
 all: $(NAME1) $(NAME2)
 

@@ -115,6 +115,8 @@ https://www.youtube.com/watch?v=wB9tIg209-8
 - How Epoll works
 https://www.youtube.com/watch?v=WuwUk7Mk80E
 
+- Virtualisation of Memory/CPU & Threading
+Book: "Operating Systems: Three Easy Pieces"
 
 #### How AI was used for this project
 AI tools were used as a learning and support resource throughout the development of this project. 

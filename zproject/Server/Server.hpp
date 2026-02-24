@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <cctype>
 #include <dirent.h>
+#include "CgiHandler.hpp"
 
 #define PHYSICAL_ROOT "./resources"
 

@@ -76,3 +76,12 @@ TASKS broken down
 - open file and write extracted bytes into it. file will be sitting in ./uploads directory on the machine running the server
 - testing: curl -v -X POST http://localhost:8080/upload -F "file=@test_uploadfile.txt"
 
+
+
+
+
+TODO (done by Tuesday):
+- Server.cpp: finish handleCGI by implementing my CGI
+- CgiHandler.cpp: get setEnvp to work by adding addEnvpElement ft
+- Server.cpp: finish POST method function by replacing alex's part with my part (fileUpload)
+- run the cgi tester & tester from webserv! and see (check group chat)
