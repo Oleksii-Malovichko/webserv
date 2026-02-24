@@ -269,6 +269,7 @@ void Server::handlePostRequest(HttpRequest &req, HttpResponce &resp, Client &cli
 	if (location->isCgi(fullPath))
 		return handleCGI(req, resp, client);
 
+	// *******
 	if (!location->getUpload())
 		return buildError(resp, 403, server);
 
@@ -276,22 +277,40 @@ void Server::handlePostRequest(HttpRequest &req, HttpResponce &resp, Client &cli
 	if (!fileExists(fullPath))
 		return buildError(resp, 403, server); // file not exist
 
+	// *********** alex beginning
 	// generate the name of file
-	std::string filename = "upload_" + std::to_string(time(NULL));
-	if (fullPath.back() != '/')
-		fullPath += "/";
-	fullPath += filename;
+	// std::string filename = "upload_" + std::to_string(time(NULL));
+	// if (fullPath.back() != '/')
+	// 	fullPath += "/";
+	// fullPath += filename;
 
 	// here should be code of Paula with parsing of boundary
-	std::ofstream ofs(fullPath.c_str(), std::ios::binary);
-	if (!ofs)
+	// std::ofstream ofs(fullPath.c_str(), std::ios::binary);
+	// if (!ofs)
+	// {
+	// 	std::cerr << "Error with opening file: " << fullPath << std::endl;
+	// 	return buildError(resp, 500, server);
+	// }
+	// // write the body to the file (must be realised the multipart)
+	// ofs << req.body;
+	// ofs.close();
+	// *********** alex end
+
+	// *********** HTTP FILE UPLOAD HANDLER (beginning) Paula*****************************************************
+	std::string contentType = req.headers["content-type"];
+	std::cout << "\033[32mcontent-type = [" << contentType << "]\033[0m" << std::endl; // TODO: delete later
+
+	if (contentType.find("multipart/form-data") != std::string::npos)
 	{
-		std::cerr << "Error with opening file: " << fullPath << std::endl;
-		return buildError(resp, 500, server);
+		int status = handleHttpFileUpload(contentType, req.body);
+		if (status == -1)
+			return buildError(resp, 400, server); // new
+		resp.setStatus(201, "Created");
+		resp.setBody("<html><body><h1>Upload Successful!</h1></body></html>");
+		resp.setHeader("Content-Type", "text/html");
 	}
-	// write the body to the file (must be realised the multipart)
-	ofs << req.body;
-	ofs.close();
+// *************** HTTP FILE UPLOAD HANDLER (end) Paula*****************************************************
+
 
 	// build the responce
 	resp.setStatus(201, "Created");

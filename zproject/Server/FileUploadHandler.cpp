@@ -6,7 +6,7 @@
 /*   By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/22 00:04:33 by pdrettas          #+#    #+#             */
-/*   Updated: 2026/02/23 03:30:02 by pdrettas         ###   ########.fr       */
+/*   Updated: 2026/02/25 00:36:33 by pdrettas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -137,9 +137,9 @@ void createFileAndWriteContent(std::string &path, std::string &fileContent)
     out.write(fileContent.c_str(), fileContent.size()); // content of file is written into rohr
     out.close();
 
-    resp.setStatus(201, "Created");
-    resp.setBody("<html><body><h1>Upload Successful!</h1></body></html>");
-    resp.setHeader("Content-Type", "text/html");
+    // resp.setStatus(201, "Created");
+    // resp.setBody("<html><body><h1>Upload Successful!</h1></body></html>");
+    // resp.setHeader("Content-Type", "text/html");
     std::cout << "Saving file tto: " << path << std::endl;
     std::cout << "File size: " << fileContent.size() << std::endl;
 }
@@ -185,3 +185,10 @@ int handleHttpFileUpload(std::string &contentType, std::string &requestBody)
 
     return 0;
 }
+
+
+/*
+TODO:
+1. add HTTp response as reference in main ft and all others, and remove all others inside functions
+2. use std::string path = uploadDirectory + "/" + filename; instead of chdir bc of server
+*/
