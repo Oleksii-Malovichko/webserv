@@ -356,18 +356,6 @@ void Epoll::handleEvents(int defaultTimeoutMs)
 				break;
 		}
 		
-		// int fd = events[i].data.fd;
-		// uint32_t ev = events[i].events;
-
-		// // если это listen-socket -> accept клиентов
-		// bool isListening = checkListeningSockets(fd);
-		// if (isListening)
-		// 	acceptClient(fd); // accept для всех клиентов, пока accept не вернет -1 и errno = EAGAIN/EWOULDBLOCK
-		// else
-		// {
-		// 	if (!handleClient(fd, ev))
-		// 		continue;
-		// }
 	}
 	removeClientVec();
 }

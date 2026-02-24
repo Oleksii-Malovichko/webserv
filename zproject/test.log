@@ -1,4 +1,4 @@
-Webserv Test Report - Вс 22 фев 2026 23:08:19 CET
+Webserv Test Report - Tue Feb 24 05:08:09 PM CET 2026
 
 ===== Test: GET method =====
 CURL Command: curl -s -i http://localhost:8080/
@@ -29,11 +29,18 @@ Content-Type: text/html
 ===== Test: GET method fail =====
 CURL Command: curl -s -i http://localhost:8080/assets
 Response (exit code: 0):
-HTTP/1.1 403 Forbidden
-Content-Length: 22
+HTTP/1.1 404 Not Found
+Content-Length: 114
 Content-Type: text/html
 
-<h1>403 Forbidden</h1>
+<html>
+<head><title>404 Not Found</title></head>
+<body>
+<h1>404 Not Found</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
 
 ===== Test: PUT method =====
 CURL Command: curl -s -i -X PUT http://localhost:8080/putfile
@@ -710,11 +717,18 @@ GET /assets HTTP/1.1
 Host: localhost
 
 Response received:
-HTTP/1.1 403 Forbidden
-Content-Length: 22
+HTTP/1.1 404 Not Found
+Content-Length: 114
 Content-Type: text/html
 
-<h1>403 Forbidden</h1>
+<html>
+<head><title>404 Not Found</title></head>
+<body>
+<h1>404 Not Found</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
 
 ===== Test: GET /notexist, return 404 =====
 Raw request sent:
