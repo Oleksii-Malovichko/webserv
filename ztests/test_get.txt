@@ -1,0 +1,24 @@
+curl -v http://localhost:8080/index.html
+Ожидаем:
+HTTP/1.1 200 OK
+Content-Type: text/html
+Content-Length: XXX
+
+curl -v http://localhost:8080/file
+Если нет расширения -> должен быть:
+Content-Type: application/octet-stream
+
+curl -v http://localhost:8080/doesnotexist.html
+Ожидаем:
+HTTP/1.1 404 Not Found
+
+curl -X POST -v http://localhost:8080/index.html
+405 Method Not Allowed (если разрешен только GET)
+
+printf "GETTTT / HTTP/1.1\r\n\r\n" | nc localhost 8080
+400 Bad Request
+
+
+ab -n 10000 -c 100 http://127.0.0.1:8080/index.html
+
+также сравнить с nginx

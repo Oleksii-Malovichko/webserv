@@ -4,7 +4,7 @@ Webserv Test Report - Tue Feb 24 05:08:09 PM CET 2026
 CURL Command: curl -s -i http://localhost:8080/
 Response (exit code: 0):
 HTTP/1.1 200 OK
-Content-Length: 557
+Content-Length: 595
 Content-Type: text/html
 
 <!DOCTYPE html>
@@ -23,6 +23,7 @@ Content-Type: text/html
 	<h1>Welcome to The Webserv!</h1>
 	<p>This is the home page served by my C++ 11 HTTP server.</p>
 	<p>Try uploading files, accessing /cgi-bin, or visiting non-existent pages to test error handling :)</p>
+	<p><a href="/dir">Go to /dir</a></p>
 </body>
 </html>
 
@@ -71,7 +72,7 @@ Content-Type: text/html
 CURL Command: curl -s -i http://localhost:8080/ -H Host: webserv.com
 Response (exit code: 0):
 HTTP/1.1 200 OK
-Content-Length: 557
+Content-Length: 595
 Content-Type: text/html
 
 <!DOCTYPE html>
@@ -90,6 +91,7 @@ Content-Type: text/html
 	<h1>Welcome to The Webserv!</h1>
 	<p>This is the home page served by my C++ 11 HTTP server.</p>
 	<p>Try uploading files, accessing /cgi-bin, or visiting non-existent pages to test error handling :)</p>
+	<p><a href="/dir">Go to /dir</a></p>
 </body>
 </html>
 
@@ -97,7 +99,7 @@ Content-Type: text/html
 CURL Command: curl -s -i http://localhost:8080/ -H Host: portfolio.com
 Response (exit code: 0):
 HTTP/1.1 200 OK
-Content-Length: 557
+Content-Length: 595
 Content-Type: text/html
 
 <!DOCTYPE html>
@@ -116,6 +118,7 @@ Content-Type: text/html
 	<h1>Welcome to The Webserv!</h1>
 	<p>This is the home page served by my C++ 11 HTTP server.</p>
 	<p>Try uploading files, accessing /cgi-bin, or visiting non-existent pages to test error handling :)</p>
+	<p><a href="/dir">Go to /dir</a></p>
 </body>
 </html>
 
@@ -284,7 +287,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 200 OK
-Content-Length: 557
+Content-Length: 595
 Content-Type: text/html
 
 <!DOCTYPE html>
@@ -303,6 +306,7 @@ Content-Type: text/html
 	<h1>Welcome to The Webserv!</h1>
 	<p>This is the home page served by my C++ 11 HTTP server.</p>
 	<p>Try uploading files, accessing /cgi-bin, or visiting non-existent pages to test error handling :)</p>
+	<p><a href="/dir">Go to /dir</a></p>
 </body>
 </html>
 
@@ -314,7 +318,7 @@ Host: localhost:8080
 
 Response received:
 HTTP/1.1 200 OK
-Content-Length: 557
+Content-Length: 595
 Content-Type: text/html
 
 <!DOCTYPE html>
@@ -333,6 +337,7 @@ Content-Type: text/html
 	<h1>Welcome to The Webserv!</h1>
 	<p>This is the home page served by my C++ 11 HTTP server.</p>
 	<p>Try uploading files, accessing /cgi-bin, or visiting non-existent pages to test error handling :)</p>
+	<p><a href="/dir">Go to /dir</a></p>
 </body>
 </html>
 
@@ -364,7 +369,7 @@ Host: localhost
 shuai
 Response received:
 HTTP/1.1 200 OK
-Content-Length: 557
+Content-Length: 595
 Content-Type: text/html
 
 <!DOCTYPE html>
@@ -383,6 +388,7 @@ Content-Type: text/html
 	<h1>Welcome to The Webserv!</h1>
 	<p>This is the home page served by my C++ 11 HTTP server.</p>
 	<p>Try uploading files, accessing /cgi-bin, or visiting non-existent pages to test error handling :)</p>
+	<p><a href="/dir">Go to /dir</a></p>
 </body>
 </html>
 
@@ -408,7 +414,7 @@ Content-Type: text/html
 
 ===== Test: POST without content-length or chunked =====
 Raw request sent:
-POST /cgi/php/showbody.php HTTP/1.1
+POST /cgi-bin/showbody.php HTTP/1.1
 Host: localhost
 
 shuai
@@ -428,7 +434,7 @@ Content-Type: text/html
 
 ===== Test: POST with both content-length and chunked =====
 Raw request sent:
-POST /cgi/php/showbody.php HTTP/1.1
+POST /cgi-bin/showbody.php HTTP/1.1
 Host: localhost
 Content-Length: 5
 Transfer-Encoding: chunked
@@ -450,24 +456,17 @@ Content-Type: text/html
 
 ===== Test: POST with exact content-length =====
 Raw request sent:
-POST /cgi/php/showbody.php HTTP/1.1
+POST /cgi-bin/showbody.php HTTP/1.1
 Host: localhost
 Content-Length: 5
 
 shuai
 Response received:
-HTTP/1.1 500 Internal Server Error
-Content-Length: 138
-Content-Type: text/html
+HTTP/1.1 200 OK
+Content-Length: 18
+Content-Length: text/plain
 
-<html>
-<head><title>500 Internal Server Error</title></head>
-<body>
-<h1>500 Internal Server Error</h1>
-<hr>
-<p>webserv</p>
-</body>
-</html>
+CGI stub responce
 
 ===== Test: POST without /upload =====
 Raw request sent:
@@ -477,14 +476,14 @@ Content-Length: 5
 
 shuai
 Response received:
-HTTP/1.1 500 Internal Server Error
-Content-Length: 138
+HTTP/1.1 403 Forbidden
+Content-Length: 114
 Content-Type: text/html
 
 <html>
-<head><title>500 Internal Server Error</title></head>
+<head><title>403 Forbidden</title></head>
 <body>
-<h1>500 Internal Server Error</h1>
+<h1>403 Forbidden</h1>
 <hr>
 <p>webserv</p>
 </body>
@@ -492,92 +491,111 @@ Content-Type: text/html
 
 ===== Test: POST with content-length too short =====
 Raw request sent:
-POST /cgi/php/showbody.php HTTP/1.1
+POST /cgi-bin/showbody.php HTTP/1.1
 Host: localhost
 Content-Length: 2
 
 shuai
 Response received:
-HTTP/1.1 500 Internal Server Error
-Content-Length: 138
-Content-Type: text/html
+HTTP/1.1 200 OK
+Content-Length: 18
+Content-Length: text/plain
 
-<html>
-<head><title>500 Internal Server Error</title></head>
-<body>
-<h1>500 Internal Server Error</h1>
-<hr>
-<p>webserv</p>
-</body>
-</html>
+CGI stub responce
 
 ===== Test: POST with content-length larger than max size =====
 Raw request sent:
-POST /cgi/php/showbody.php HTTP/1.1
+POST /cgi-bin/showbody.php HTTP/1.1
 Host: localhost
 Content-Length: 2000000
 
 shuai
 Response received:
-
-
-===== Test: POST with content-length larger than max size, overflow =====
-Raw request sent:
-POST /cgi/php/showbody.php HTTP/1.1
-Host: localhost
-Content-Length: 2147483648
-
-shuai
-Response received:
-
-
-===== Test: POST with content-length 0 =====
-Raw request sent:
-POST /cgi/php/showbody.php HTTP/1.1
-Host: localhost
-Content-Length: 0
-
-shuai
-Response received:
-HTTP/1.1 411 Error
-Content-Length: 106
+HTTP/1.1 413 Payload Too Large
+Content-Length: 130
 Content-Type: text/html
 
 <html>
-<head><title>411 Error</title></head>
+<head><title>413 Payload Too Large</title></head>
 <body>
-<h1>411 Error</h1>
+<h1>413 Payload Too Large</h1>
 <hr>
 <p>webserv</p>
 </body>
 </html>
 
+===== Test: POST with content-length larger than max size, overflow =====
+Raw request sent:
+POST /cgi-bin/showbody.php HTTP/1.1
+Host: localhost
+Content-Length: 2147483648
+
+shuai
+Response received:
+HTTP/1.1 400 Bad Request
+Content-Length: 118
+Content-Type: text/html
+
+<html>
+<head><title>400 Bad Request</title></head>
+<body>
+<h1>400 Bad Request</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: POST with content-length 0 =====
+Raw request sent:
+POST /cgi-bin/showbody.php HTTP/1.1
+Host: localhost
+Content-Length: 0
+
+shuai
+Response received:
+HTTP/1.1 200 OK
+Content-Length: 18
+Content-Length: text/plain
+
+CGI stub responce
+
 ===== Test: POST with content-length negative =====
 Raw request sent:
-POST /cgi/php/showbody.php HTTP/1.1
+POST /cgi-bin/showbody.php HTTP/1.1
 Host: localhost
 Content-Length: -1
 
 shuai
 Response received:
+HTTP/1.1 400 Bad Request
+Content-Length: 118
+Content-Type: text/html
 
+<html>
+<head><title>400 Bad Request</title></head>
+<body>
+<h1>400 Bad Request</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
 
 ===== Test: POST with content-length begin with 0 =====
 Raw request sent:
-POST /cgi/php/showbody.php HTTP/1.1
+POST /cgi-bin/showbody.php HTTP/1.1
 Host: localhost
 Content-Length: 005
 
 shuai
 Response received:
-HTTP/1.1 500 Internal Server Error
-Content-Length: 138
+HTTP/1.1 400 Bad Request
+Content-Length: 118
 Content-Type: text/html
 
 <html>
-<head><title>500 Internal Server Error</title></head>
+<head><title>400 Bad Request</title></head>
 <body>
-<h1>500 Internal Server Error</h1>
+<h1>400 Bad Request</h1>
 <hr>
 <p>webserv</p>
 </body>
@@ -585,7 +603,7 @@ Content-Type: text/html
 
 ===== Test: POST with chunked 1 =====
 Raw request sent:
-POST /cgi/php/showbody.php HTTP/1.1
+POST /cgi-bin/showbody.php HTTP/1.1
 Host: localhost
 Transfer-Encoding: chunked
 Content-Type: text/plain
@@ -600,22 +618,15 @@ Network
 
 
 Response received:
-HTTP/1.1 500 Internal Server Error
-Content-Length: 138
-Content-Type: text/html
+HTTP/1.1 200 OK
+Content-Length: 18
+Content-Length: text/plain
 
-<html>
-<head><title>500 Internal Server Error</title></head>
-<body>
-<h1>500 Internal Server Error</h1>
-<hr>
-<p>webserv</p>
-</body>
-</html>
+CGI stub responce
 
 ===== Test: POST with chunked 2 =====
 Raw request sent:
-POST /cgi/php/showbody.php HTTP/1.1
+POST /cgi-bin/showbody.php HTTP/1.1
 Host: localhost
 Transfer-Encoding: chunked
 Content-Type: text/plain
@@ -631,18 +642,11 @@ Network
 
 
 Response received:
-HTTP/1.1 500 Internal Server Error
-Content-Length: 138
-Content-Type: text/html
+HTTP/1.1 200 OK
+Content-Length: 18
+Content-Length: text/plain
 
-<html>
-<head><title>500 Internal Server Error</title></head>
-<body>
-<h1>500 Internal Server Error</h1>
-<hr>
-<p>webserv</p>
-</body>
-</html>
+CGI stub responce
 
 ===== Test: GET /cgi/python/showenv.py, with pathinfo and querystring return autoindex =====
 Raw request sent:
@@ -670,7 +674,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 200 OK
-Content-Length: 557
+Content-Length: 595
 Content-Type: text/html
 
 <!DOCTYPE html>
@@ -689,6 +693,7 @@ Content-Type: text/html
 	<h1>Welcome to The Webserv!</h1>
 	<p>This is the home page served by my C++ 11 HTTP server.</p>
 	<p>Try uploading files, accessing /cgi-bin, or visiting non-existent pages to test error handling :)</p>
+	<p><a href="/dir">Go to /dir</a></p>
 </body>
 </html>
 
@@ -948,18 +953,11 @@ Content-Type: text/html
 
 
 Response received:
-HTTP/1.1 411 Error
-Content-Length: 106
+HTTP/1.1 201 Created
+Content-Length: 61
 Content-Type: text/html
 
-<html>
-<head><title>411 Error</title></head>
-<body>
-<h1>411 Error</h1>
-<hr>
-<p>webserv</p>
-</body>
-</html>
+<html><body><h1>File uploaded succesfully!</h1></body></html>
 
 ===== Test: POST script not exist, return 404 =====
 Raw request sent:
@@ -969,14 +967,14 @@ Content-Length: 0
 
 
 Response received:
-HTTP/1.1 411 Error
-Content-Length: 106
+HTTP/1.1 403 Forbidden
+Content-Length: 114
 Content-Type: text/html
 
 <html>
-<head><title>411 Error</title></head>
+<head><title>403 Forbidden</title></head>
 <body>
-<h1>411 Error</h1>
+<h1>403 Forbidden</h1>
 <hr>
 <p>webserv</p>
 </body>
@@ -990,14 +988,14 @@ Content-Length: 0
 
 
 Response received:
-HTTP/1.1 411 Error
-Content-Length: 106
+HTTP/1.1 403 Forbidden
+Content-Length: 114
 Content-Type: text/html
 
 <html>
-<head><title>411 Error</title></head>
+<head><title>403 Forbidden</title></head>
 <body>
-<h1>411 Error</h1>
+<h1>403 Forbidden</h1>
 <hr>
 <p>webserv</p>
 </body>
@@ -1011,14 +1009,14 @@ Content-Length: 0
 
 
 Response received:
-HTTP/1.1 411 Error
-Content-Length: 106
+HTTP/1.1 403 Forbidden
+Content-Length: 114
 Content-Type: text/html
 
 <html>
-<head><title>411 Error</title></head>
+<head><title>403 Forbidden</title></head>
 <body>
-<h1>411 Error</h1>
+<h1>403 Forbidden</h1>
 <hr>
 <p>webserv</p>
 </body>
@@ -1032,14 +1030,14 @@ Content-Length: 0
 
 
 Response received:
-HTTP/1.1 411 Error
-Content-Length: 106
+HTTP/1.1 403 Forbidden
+Content-Length: 114
 Content-Type: text/html
 
 <html>
-<head><title>411 Error</title></head>
+<head><title>403 Forbidden</title></head>
 <body>
-<h1>411 Error</h1>
+<h1>403 Forbidden</h1>
 <hr>
 <p>webserv</p>
 </body>
@@ -1053,14 +1051,14 @@ Content-Length: 0
 
 
 Response received:
-HTTP/1.1 411 Error
-Content-Length: 106
+HTTP/1.1 403 Forbidden
+Content-Length: 114
 Content-Type: text/html
 
 <html>
-<head><title>411 Error</title></head>
+<head><title>403 Forbidden</title></head>
 <body>
-<h1>411 Error</h1>
+<h1>403 Forbidden</h1>
 <hr>
 <p>webserv</p>
 </body>
@@ -1074,14 +1072,14 @@ Content-Length: 0
 
 
 Response received:
-HTTP/1.1 411 Error
-Content-Length: 106
+HTTP/1.1 403 Forbidden
+Content-Length: 114
 Content-Type: text/html
 
 <html>
-<head><title>411 Error</title></head>
+<head><title>403 Forbidden</title></head>
 <body>
-<h1>411 Error</h1>
+<h1>403 Forbidden</h1>
 <hr>
 <p>webserv</p>
 </body>

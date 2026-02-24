@@ -1,9 +1,5 @@
 #include "Server.hpp"
 
-#include <fstream>
-#include <sstream>
-#include <sys/stat.h>
-
 bool fileExists(const std::string &path)
 {
 	struct stat buffer;
@@ -132,12 +128,12 @@ std::string getMimeType(const std::string& path)
 	return "application/octet-stream";
 }
 
-void generateAutoIndex(const std::string &dirPath, HttpResponce &resp)
+void generateAutoIndex(const std::string &dirPath, const std::string &url, HttpResponce &resp)
 {
 	DIR *dir = opendir(dirPath.c_str());
 	if (!dir)
 		return ;
-	
+
 	std::stringstream html;
 	html << "<html><body><ul>";
 	
@@ -148,7 +144,11 @@ void generateAutoIndex(const std::string &dirPath, HttpResponce &resp)
 		std::string name = entry->d_name;
 		if (name == "." || name == "..")
 			continue;
-		html << "<li><a href=\"" << name << "\">"
+		std::string link = url;
+		if (link.back() != '/')
+			link += '/';
+		link += name;
+		html << "<li><a href=\"" << link << "\">"
 			<< name << "</a></li>";
 	}
 	html << "</ul></body></html>";
@@ -243,7 +243,7 @@ void serveFile(const std::string &path, HttpResponce &resp)
 	resp.setBody(buffer.str());
 }
 
-void serveFileOrDirectory(const std::string& path, HttpResponce& resp, const LocationConfig* location, const ServerConfig* server)
+void serveFileOrDirectory(const std::string& path, const HttpRequest &req, HttpResponce& resp, const LocationConfig* location, const ServerConfig* server)
 {
 	struct stat st;
 
@@ -260,7 +260,7 @@ void serveFileOrDirectory(const std::string& path, HttpResponce& resp, const Loc
 		if (location->getAutoIndex())
 		{
 			std::cout << "Autoindex is on" << std::endl;
-			return generateAutoIndex(path, resp);
+			return generateAutoIndex(path, req.path, resp);
 		}
 		else
 			std::cout << "Autoindex is off" << std::endl;

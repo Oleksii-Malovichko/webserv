@@ -230,17 +230,17 @@ run_nc_test "GET HTTP Method with invalid uri" \
 echo -e "${YELLOW}\n>>>>>>>>>>>> POST <<<<<<<<<<<\n${NC}"
 
 run_nc_test "POST without content-length or chunked" \
-"POST /cgi/php/showbody.php HTTP/1.1\r
+"POST /cgi-bin/showbody.php HTTP/1.1\r
 Host: localhost\r\n\r\nshuai" \
 "411"
 
 run_nc_test "POST with both content-length and chunked" \
-"POST /cgi/php/showbody.php HTTP/1.1\r\nHost: localhost\r
+"POST /cgi-bin/showbody.php HTTP/1.1\r\nHost: localhost\r
 Content-Length: 5\r\nTransfer-Encoding: chunked\r\n\r\nshuai" \
 "400"
 
 run_nc_test "POST with exact content-length" \
-"POST /cgi/php/showbody.php HTTP/1.1\r\nHost: localhost\r
+"POST /cgi-bin/showbody.php HTTP/1.1\r\nHost: localhost\r
 Content-Length: 5\r\n\r\nshuai" \
 "200"
 
@@ -252,44 +252,44 @@ Content-Length: 5\r\n\r\nshuai" \
 ########################################
 
 run_nc_test "POST with content-length too short" \
-"POST /cgi/php/showbody.php HTTP/1.1\r\nHost: localhost\r
+"POST /cgi-bin/showbody.php HTTP/1.1\r\nHost: localhost\r
 Content-Length: 2\r\n\r\nshuai" \
 "200"
 
 run_nc_test "POST with content-length larger than max size" \
-"POST /cgi/php/showbody.php HTTP/1.1\r\nHost: localhost\r
+"POST /cgi-bin/showbody.php HTTP/1.1\r\nHost: localhost\r
 Content-Length: 2000000\r\n\r\nshuai" \
 "413"
 
 run_nc_test "POST with content-length larger than max size, overflow" \
-"POST /cgi/php/showbody.php HTTP/1.1\r\nHost: localhost\r
+"POST /cgi-bin/showbody.php HTTP/1.1\r\nHost: localhost\r
 Content-Length: 2147483648\r\n\r\nshuai" \
 "400"
 
 run_nc_test "POST with content-length 0" \
-"POST /cgi/php/showbody.php HTTP/1.1\r\nHost: localhost\r
+"POST /cgi-bin/showbody.php HTTP/1.1\r\nHost: localhost\r
 Content-Length: 0\r\n\r\nshuai" \
 "200"
 
 run_nc_test "POST with content-length negative" \
-"POST /cgi/php/showbody.php HTTP/1.1\r\nHost: localhost\r
+"POST /cgi-bin/showbody.php HTTP/1.1\r\nHost: localhost\r
 Content-Length: -1\r\n\r\nshuai" \
 "400"
 
 run_nc_test "POST with content-length begin with 0" \
-"POST /cgi/php/showbody.php HTTP/1.1\r\nHost: localhost\r
+"POST /cgi-bin/showbody.php HTTP/1.1\r\nHost: localhost\r
 Content-Length: 005\r\n\r\nshuai" \
 "400"
 
 run_nc_test "POST with chunked 1" \
-"POST /cgi/php/showbody.php HTTP/1.1\r\nHost: localhost\r
+"POST /cgi-bin/showbody.php HTTP/1.1\r\nHost: localhost\r
 Transfer-Encoding: chunked\r
 Content-Type: text/plain\r\n\r
 7\r\nMozilla\r\n9\r\nDeveloper\r\n7\r\nNetwork\r\n0\r\n\r\n" \
 "200"
 
 run_nc_test "POST with chunked 2" \
-"POST /cgi/php/showbody.php HTTP/1.1\r\nHost: localhost\r
+"POST /cgi-bin/showbody.php HTTP/1.1\r\nHost: localhost\r
 Transfer-Encoding: chunked\r
 Content-Type: text/plain\r\n\r
 c\r\nMozilla\r\n; ;\r\n9\r\nDeveloper\r\n7\r\nNetwork\r\n0\r\n\r\n" \

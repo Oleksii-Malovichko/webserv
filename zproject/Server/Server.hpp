@@ -11,6 +11,9 @@
 #include <algorithm>
 #include <cctype>
 #include <dirent.h>
+#include <fstream>
+#include <sstream>
+#include <sys/stat.h>
 
 #define PHYSICAL_ROOT "./resources"
 
@@ -59,7 +62,7 @@ std::string buildFullPath(const LocationConfig *loc, const ServerConfig *server,
 std::string getReasonPhrase(int code);
 void buildError(HttpResponce &resp, int statusCode, const ServerConfig *server);
 bool isMethodAllowed(const std::string method, const LocationConfig *loc);
-void serveFileOrDirectory(const std::string& path, HttpResponce& resp, const LocationConfig* location, const ServerConfig* server);
+void serveFileOrDirectory(const std::string& path, const HttpRequest &req, HttpResponce& resp, const LocationConfig* location, const ServerConfig* server);
 void buildRedirect(HttpResponce &resp, const LocationConfig *loc);
 std::string generateDefaultErrorPage(int code, const std::string &reason);
 std::string getReasonPhrase(int code);

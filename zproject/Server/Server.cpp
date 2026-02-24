@@ -8,12 +8,10 @@ Server::Server(const std::string &configFile)
 	webserv = parser.getWebServ();
 	std::vector<ServerConfig> &configs = webserv.getServers();
 
-	// создаем listening sockets и добавляем в epoll
+	// creating listening sockets and add it to epoll
 	for (size_t i = 0; i < configs.size(); i++)
 	{
 		ListeningSocket sock(configs[i].getIP(), configs[i].getPort());
-		// std::cout << "DEBUGGING in Server::Server:\n";
-		// std::cout << "Port: " << configs[i].getPort() << std::endl;;
 		epoll.addListeningSocket(std::move(sock), &configs[i]);
 		std::string ip = configs[i].getIP();
 		if (ip.empty())
@@ -34,10 +32,10 @@ void Server::run()
 	std::signal(SIGINT, sigintHandler);
 	while (running)
 	{
-		// epoll делает всю работу
-		epoll.handleEvents(1000); // дефолтное значение таймаута, пока нет клиентов
+		// epoll is doing the whole job for events
+		epoll.handleEvents(1000); // default value of timeout, till we don't have the clients
 		
-		// Сервер решает, что делать с данными
+		// The Server is deciding what to do with clients
 		auto &clients = epoll.getClients();
 
 		for (auto it = clients.begin(); it != clients.end(); it++)
@@ -144,7 +142,7 @@ void parseHttpHeaders(std::string header, HttpRequest &req)
 	parseRequestLine(lines[0], req); // parse example: {POST /submit-form HTTP/1.1}
 	for (size_t i = 1; i < lines.size(); i++)
 	{
-		// тут происходит парсинг всего остального после request line
+		// here is happenning the parsing of the rest AFTER request line (METHOD /path version/1.*)
 		if (lines[i].empty())
 			continue;
 		size_t colonPos = lines[i].find(":");
@@ -154,6 +152,11 @@ void parseHttpHeaders(std::string header, HttpRequest &req)
 			std::string value = trim(lines[i].substr(colonPos + 1));
 			if (toLower(key) == "content-length")
 			{
+				if (value[0] == '0' && value != "0")
+				{
+					req.errorCode = 400;
+					return ;
+				}
 				try
 				{
 					size_t contentLength = std::stoul(value);
@@ -161,9 +164,10 @@ void parseHttpHeaders(std::string header, HttpRequest &req)
 				}
 				catch(...)
 				{
-					std::cerr << "Invalid client_max_body_size" << std::endl;
+					std::cerr << "Invalid Content-Length" << std::endl;
+					req.errorCode = 400;
+					return ;
 				}
-				continue;
 			}
 			req.headers[toLower(key)] = value;
 		}
@@ -196,14 +200,15 @@ void Server::handleGetRequest(HttpRequest &req, HttpResponce &resp, Client &clie
 		return buildError(resp, 405, server);
 	}
 
-	// redirect
+	// redirect (if it's needed)
 	if (location->hasRedirect())
 		return buildRedirect(resp, location);
 	
 	// figure out filesystem path
-	std::cout << "req.path: " << req.path << std::endl;
+	// std::cout << "req.path: " << req.path << std::endl;
 	std::string fullPath = buildFullPath(location, server, req.path); // here is used the macros
-	std::cout << "[handleGetRequest] fullPath: " << fullPath << std::endl;
+	// std::cout << "[handleGetRequest] fullPath: " << fullPath << std::endl;
+
 	// get root path from location (if it's empty, get it from server)
 	std::string root = location->getRoot();
 	if (root.empty())
@@ -215,8 +220,9 @@ void Server::handleGetRequest(HttpRequest &req, HttpResponce &resp, Client &clie
 	if (location->isCgi(fullPath))
 		return handleCGI(req, resp, client);
 	
+	std::cout << "req.path: " << req.path << std::endl;
 	// proccessing file/directory
-	serveFileOrDirectory(fullPath, resp, location, server);
+	serveFileOrDirectory(fullPath, req, resp, location, server);
 }
 
 void Server::handlePostRequest(HttpRequest &req, HttpResponce &resp, Client &client)
@@ -232,38 +238,43 @@ void Server::handlePostRequest(HttpRequest &req, HttpResponce &resp, Client &cli
 	if (!isMethodAllowed(req.method, location))
 		return buildError(resp, 405, server);
 	
-	// check for Content-Length and Transfer-Encoding
-	if (req.contentLength == 0 && req.headers.find("transfer-encoding") == req.headers.end())
+	// check the correctness of Content-Length and Transfer-Encoding (they're already toLower)
+	if (req.headers.find("content-length") == req.headers.end() && req.headers.find("transfer-encoding") == req.headers.end())
 		return buildError(resp, 411, server);
 	if (req.contentLength != 0 && req.headers.find("transfer-encoding") != req.headers.end())
 		return buildError(resp, 400, server);
-	// handle the case with Content-Length
 	if (req.contentLength != 0)
 	{
-		std::size_t contentLenth = req.contentLength;
-		if (req.body.size() != contentLenth)
+		if (req.body.size() != req.contentLength)
 			return buildError(resp, 400, server);	
 	}
 
-	// Handle the case with Transfer-Encoding: chunked
+	// Handle the case with Transfer-Encoding: chunked (not sure that we should do that)
 	if (req.headers.find("Transfer-Encoding") != req.headers.end() &&
         req.headers["Transfer-Encoding"] == "chunked")
 	{
 		;
 	}
-
+	
 	// figure out filesystem path
 	std::string fullPath = buildFullPath(location, server, req.path);
-	std::cout << "[handlePostRequest] fullPath: " << fullPath << std::endl;
+	// std::cout << "[handlePostRequest] fullPath: " << fullPath << std::endl;
 
 	std::string root = location->getRoot();
 	if (root.empty())
 		root = server->getRoot();
 	if (!isPathSafe(fullPath, root))
+		return buildError(resp, 404, server);
+
+	if (location->isCgi(fullPath))
+		return handleCGI(req, resp, client);
+
+	if (!location->getUpload())
 		return buildError(resp, 403, server);
 
-	//  дальше нужна логика, если fullPath это файл, то мы возваращаем код 200 и перезаписываем файл содержимым body из запроса
-	// 
+	// check if file/path exist (here is such error, cause the responce can be POST /check HTTP/1.1\r\nHost:)
+	if (!fileExists(fullPath))
+		return buildError(resp, 403, server); // file not exist
 
 	// generate the name of file
 	std::string filename = "upload_" + std::to_string(time(NULL));
@@ -271,26 +282,54 @@ void Server::handlePostRequest(HttpRequest &req, HttpResponce &resp, Client &cli
 		fullPath += "/";
 	fullPath += filename;
 
-	// write the body to the file (must be realised the multipart)
+	// here should be code of Paula with parsing of boundary
 	std::ofstream ofs(fullPath.c_str(), std::ios::binary);
 	if (!ofs)
 	{
 		std::cerr << "Error with opening file: " << fullPath << std::endl;
 		return buildError(resp, 500, server);
 	}
+	// write the body to the file (must be realised the multipart)
 	ofs << req.body;
 	ofs.close();
 
 	// build the responce
 	resp.setStatus(201, "Created");
 	resp.setHeader("Content-Type", "text/html");
-
 	std::stringstream body;
 	body << "<html><body>"
 		<< "<h1>File uploaded succesfully!</h1>"
-		// << "<p>Path: " << filename << "</p>"
 		<< "</body></html>";
 	resp.setBody(body.str());
+}
+
+bool isErrorsHeaders(HttpResponce &resp, HttpRequest &req, Client &client)
+{
+	bool err = 0;
+
+	if (req.errorCode != 0)
+	{
+		err = 1;
+		buildError(resp, req.errorCode, client.getConfig());
+	}
+	else if (req.contentLength > 2147483647)
+	{
+		err = 1;
+		buildError(resp, 400, client.getConfig());
+	}
+	else if (req.contentLength > client.getConfig()->getClientMaxBodySize())
+	{
+		err = 1;
+		buildError(resp, 413, client.getConfig());
+	}
+	if (err)
+	{
+		std::string responceMessage = resp.serialize(req);
+		client.appendToWriteBuffer(responceMessage);
+		client.clearReadBuffer();
+		client.setState(Client::State::WRITING);
+	}
+	return err;
 }
 
 void Server::handleClient(Client &client)
@@ -333,24 +372,16 @@ void Server::handleClient(Client &client)
 	{
 		req.contentLength = 0;
 		headerPart = buf.substr(0, pos);
-		parseHttpHeaders(headerPart, req); // can be error 400 for non-right header
-		if (req.errorCode != 0)
-		{
-			buildError(resp, req.errorCode, client.getConfig());
-			std::string responceMessage = resp.serialize(req);
-			client.appendToWriteBuffer(responceMessage);
-			client.clearReadBuffer();
-			client.setState(Client::State::WRITING);
-			epoll.updateClientEvents(client);
-			return ;
-		}
+		parseHttpHeaders(headerPart, req);
+		if (isErrorsHeaders(resp, req, client)) // find errors after parsing headers
+			return epoll.updateClientEvents(client);
 
 		size_t bodyStart = pos + 4; // after '\r\n\r\n'
 		if (buf.size() - bodyStart >= req.contentLength && req.headersParsed)
 		{
 			// std::cout << "\nWHOLE READBUFFER:"<< std::endl;
 			// std::cout << buf << std::endl;
-			// std::cout << "\nServer connected: " << std::endl;
+			// std::cout << "\nClient connected: " << std::endl;
 			req.body = buf.substr(bodyStart, req.contentLength); // only body
 
 			if (req.method == "GET" && !req.errorCode)
@@ -360,15 +391,6 @@ void Server::handleClient(Client &client)
 			else if (req.method == "POST" && !req.errorCode)
 			{
 				handlePostRequest(req, resp, client);
-				// if (req.headers.find("Content-Length") == req.headers.end() && req.headers.find("Transfer-Encoding") == req.headers.end())
-				// 	buildError(resp, 411, client.getConfig());
-				// else
-				// std::cout << "\nWHOLE READBUFFER:"<< std::endl;
-				// std::cout << buf << std::endl;
-				// std::cout << std::endl;
-				// resp.setStatus(200, "OK");
-				// resp.setBody("<html><body><h1>Form Submitted!</h1></body></html>");
-				// resp.setHeader("Content-Type", "text/html");
 			}
 			else if (req.method == "DELETE" && !req.errorCode)
 			{
@@ -578,9 +600,13 @@ std::string Server::handleCGI(Client &client)
 
 void Server::handleCGI(HttpRequest &req, HttpResponce &resp, Client &client)
 {
-	(void)resp;
 	(void)req;
 	char *cgi_path = const_cast<char*>(client.getRequest().path.c_str());
+	(void)client;
+	resp.setStatus(200, "OK");
+	resp.setHeader("Content-Length", "text/plain");
+	resp.setBody("CGI stub responce\n"); // need to discuss the CGI response will contains the header or not
+
 
 	try
 	{
@@ -601,6 +627,7 @@ void Server::handleCGI(HttpRequest &req, HttpResponce &resp, Client &client)
 	{
 		std::cerr << YELLOW << "Some error"; 
 	}
+
 }
 
 void ServerConfig::printServerConfig(void) const
