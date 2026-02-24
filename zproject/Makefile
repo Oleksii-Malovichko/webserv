@@ -23,6 +23,7 @@ SRCS1 = main.cpp RAII/epoll/Epoll.cpp \
 	directory_listing/DirectoryListing.cpp \
 	error_handler/errorHandler.cpp \
 	Server/ServerUtils.cpp \
+	Server/FileUploadHandler.cpp \
 
 
 SRCS2 = client.c

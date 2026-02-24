@@ -9,8 +9,8 @@
 class HttpResponce
 {
 	int statusCode; // for instance: 200, 404, 500
-	std::string statusMessage; // for instance: "OK", "Not Found"
-	// std::string contentType; // for instance: "text/html", "application/json"
+	std::string statusMessage; // for instance: "OK", "Not Founc"
+	std::string contentType; // for instance: "text/html", "application/json"
 	std::string body; // for instance: HTML, JSON, text
 	std::unordered_map<std::string, std::string> headers;
 	public:

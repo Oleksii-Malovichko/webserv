@@ -487,3 +487,9 @@ ConfigParser::ConfigParser(const std::string &configFile)
 	}
 	file.close();
 }
+<<<<<<< HEAD
+=======
+
+/* 
+ */
+>>>>>>> paula

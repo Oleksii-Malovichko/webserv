@@ -106,7 +106,6 @@ void Epoll::removeClientVec()
 
 void Epoll::updateClientEvents(Client &client)
 {
-
 	int fd = client.getFD();
 	struct epoll_event ev;
 	ev.data.fd = fd;
