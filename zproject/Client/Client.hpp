@@ -62,6 +62,7 @@ class Client
 		// разрешить перемещение
 		Client(Client &&other) noexcept;
 		Client& operator=(Client &&other) noexcept;
+		~Client(void);
 
 		std::string _http_response;
 
@@ -83,6 +84,8 @@ class Client
 		void clearReadBuffer();
 
 		void printHttpRequest(void);
+
+		void setCgiPtr(CgiHandler* ptr);
 
 		CgiHandler* getCgiPtr(void);
 		ServerConfig *getConfig() const;

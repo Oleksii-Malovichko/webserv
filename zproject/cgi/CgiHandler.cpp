@@ -32,6 +32,8 @@ CgiHandler::~CgiHandler(void)
 	this->freeEnvp();
 	this->_envp_num = 0;
 	this->_sent_bytes = 0;
+	std::cerr << CYAN << "Deleting CgiHandler this=" 
+				<< this << DEFAULT << std::endl;
 }
 
 void CgiHandler::freeEnvp(void)
@@ -219,6 +221,15 @@ void CgiHandler::readFromCgi(Epoll& epoll_obj)
 void CgiHandler::writeToCgi(Epoll& epoll_obj,
 	const std::string& request_body)
 {
+	if (request_body.size() == 0)
+	{
+		std::cerr << RED << "The request body empty"
+					<< DEFAULT << std::endl;
+		close(this->_srv_to_cgi[1]);
+		this->_stdin_closed = true;
+		return ;
+	}
+	
 	ssize_t bytes = write(this->_srv_to_cgi[1], 
 		request_body.c_str() + this->_sent_bytes,
 		request_body.length() - this->_sent_bytes);
@@ -405,6 +416,8 @@ int CgiHandler::getCgiOutReadFD(void) const
 
 bool CgiHandler::IsCgiFinished(void)
 {
+	std::cerr << YELLOW << "CgiHandler this = " << this 
+				<< DEFAULT << std::endl;
 	if (this->_stdin_closed == true &&
 		this->_stdout_closed == true &&
 		this->_child_exited == true)

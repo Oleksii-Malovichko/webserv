@@ -1,4 +1,5 @@
 #include "Client.hpp"
+#include "../../cgi/CgiHandler.hpp"
 
 // move передает управление сокетом из ClientSocket в Client (после этого в ClientSocket fd == -1, Client имеет уже этот fd)
 
@@ -38,6 +39,12 @@ Client& Client::operator=(Client &&other) noexcept
 		// other.config = nullptr;
 	}
 	return *this;
+}
+
+Client::~Client(void)
+{
+	delete this->_cgi_obj;
+	this->setCgiPtr(NULL);
 }
 
 // errno запрещено использовать после read/write, потому неблокирующие сокеты и epoll гарантируют что ошибок не будет
@@ -157,6 +164,11 @@ const std::string &Client::getWriteBuffer() const
 void Client::clearReadBuffer()
 {
 	this->readBuffer.clear();
+}
+
+void Client::setCgiPtr(CgiHandler* ptr)
+{
+	this->_cgi_obj = ptr;
 }
 
 CgiHandler* Client::getCgiPtr(void)

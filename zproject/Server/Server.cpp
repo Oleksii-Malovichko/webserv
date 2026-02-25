@@ -531,9 +531,14 @@ void Server::shutdownServer()
 
 	auto &clients = epoll.getClients();
 	for (auto &pair : clients)
+	{
 		pair.second.close();
+		delete pair.second.getCgiPtr();
+		pair.second.setCgiPtr(NULL);
+	}
 
 	epoll.clearEventMap();
+
 }
 
 ServerConfig Server::selectServer(const HttpRequest& req)
@@ -712,15 +717,18 @@ void Server::handleCGI(HttpRequest &req, HttpResponce &resp, Client &client)
 	std::cerr << CYAN << "In handleCGI path: " << cgi_path 
 				<< "\n Interpreter: " << Interpreter << DEFAULT << std::endl;
 
+	CgiHandler* cgi_obj = new CgiHandler();
+	
 	try
 	{
-		CgiHandler cgi_obj;
-		cgi_obj.setInterpreterPath(client.getRequest().path);
-		cgi_obj.setArgsAndCgiPath(cgi_path);
-		cgi_obj.setEnvp(client);
-		cgi_obj.setNonBlockPipe();
-		this->epoll.addCgiPipesToEpoll(cgi_obj, client);
-		cgi_obj.execute();
+		cgi_obj->setInterpreterPath(client.getRequest().path);
+		cgi_obj->setArgsAndCgiPath(cgi_path);
+		cgi_obj->setEnvp(client);
+		cgi_obj->setNonBlockPipe();
+		this->epoll.addCgiPipesToEpoll(*cgi_obj, client);
+		cgi_obj->execute();
+
+		client.setCgiPtr(cgi_obj);
 	}
 	catch(const std::exception& e)
 	{

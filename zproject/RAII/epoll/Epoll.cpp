@@ -238,6 +238,8 @@ bool Epoll::handleCgiEvent(EventData* data, uint32_t ev)
 		client->appendToWriteBuffer(client->_http_response);
 		client->clearReadBuffer();
 		client->setState(Client::State::WRITING);
+		delete cgi_ptr;
+		client->setCgiPtr(NULL);
 		updateClientEvents(*client);
 	}
 
