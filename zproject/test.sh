@@ -343,10 +343,10 @@ run_nc_test "DELETE /hello.test, return 204" \
 "DELETE /hello.test HTTP/1.1\r\nHost: localhost\r\n\r" \
 "204"
 
-mkdir -p ./site/web1/test/
-touch ./site/web1/test/hello2.test
+mkdir -p ./resources/www/test/
+touch ./resources/www/test/hello2.test
 run_nc_test "DELETE /test/, return 204" \
-"DELETE /test/ HTTP/1.1\r\nHost: localhost\r\n\r" \
+"DELETE /test HTTP/1.1\r\nHost: localhost\r\n\r" \
 "204"
 
 run_nc_test "GET /redir, redirect to /data, return 301" \

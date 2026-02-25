@@ -169,11 +169,20 @@ std::string buildFullPath(const LocationConfig *loc, const ServerConfig *server,
 	std::string relativePath;
 
 	// remove prefix location from the path of request
+	// std::cout << "requestPath: " << requestPath << std::endl;
+	// if (requestPath.back() == '/')
+	// 	locationPath += '/';
+	// std::cout << "locationPath: " << locationPath << std::endl;
+	// if (locationPath != "/" && requestPath == locationPath)
+	// {
+	// 	size_t pos = locationPath.find_first_of('/');
+	// 	relativePath = (pos == std::string::npos) ? locationPath : locationPath.substr(pos + 1);
+	// }
 	if (requestPath.find(locationPath) == 0)
 		relativePath = requestPath.substr(locationPath.length());
 	else
 		relativePath = requestPath;
-
+	std::cout << "relativePath: " << relativePath << std::endl;
 	if (locationPath == "/")
 		relativePath = requestPath;
 	

@@ -329,6 +329,50 @@ void Server::handlePostRequest(HttpRequest &req, HttpResponce &resp, Client &cli
 	resp.setBody(body.str());
 }
 
+void Server::handleDeleteRequest(HttpRequest &req, HttpResponce &resp, Client &client)
+{
+	ServerConfig *server = client.getConfig();
+
+	// find location
+	const LocationConfig *location = matchLocation(req.path, server->getLocations());
+	if (!location)
+		return buildError(resp, 404, server);
+	
+	if (!isMethodAllowed(req.method, location))
+		return buildError(resp, 405, server);
+	
+	std::string fullPath = buildFullPath(location, server, req.path);
+	
+	std::string root = location->getRoot();
+	if (root.empty())
+		root = server->getRoot();
+	if (!isPathSafe(fullPath, root))
+		return buildError(resp, 403, server);
+	
+	if (!fileExists(fullPath))
+		return buildError(resp, 404, server);
+	
+	struct stat st;
+	std::cout << "Fullpath: " << fullPath << std::endl;
+	if (stat(fullPath.c_str(), &st) == -1)
+		return buildError(resp, 500, server);
+	
+	int status = 0;
+	if (S_ISDIR(st.st_mode))
+		status = rmdir(fullPath.c_str()); // remove only empty directory
+	else
+		status = remove(fullPath.c_str());
+	
+	if (status != 0)
+	{
+		std::cerr << "Failed to delete " << fullPath << ": " << strerror(errno) << std::endl;
+		return buildError(resp, 500, server);
+	}
+
+	resp.setStatus(204, "No Content");
+	resp.setBody("");
+}
+
 bool isErrorsHeaders(HttpResponce &resp, HttpRequest &req, Client &client)
 {
 	bool err = 0;
@@ -392,9 +436,10 @@ void Server::handleClient(Client &client)
 			}
 			else if (req.method == "DELETE" && !req.errorCode)
 			{
-				resp.setStatus(200, "OK");
-				resp.setBody("<html><body><h1>Element Removed!</h1></body></html>");
-				resp.setHeader("Content-Type", "text/html");
+				handleDeleteRequest(req, resp, client);
+				// resp.setStatus(200, "OK");
+				// resp.setBody("<html><body><h1>Element Removed!</h1></body></html>");
+				// resp.setHeader("Content-Type", "text/html");
 			}
 			else // error
 			{

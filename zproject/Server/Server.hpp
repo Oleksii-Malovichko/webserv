@@ -30,6 +30,7 @@ class Server
 		void handleClient(Client &client); // parse the request and build responce (via handleGetRequest/Post/Delete)
 		void handleGetRequest(HttpRequest &req, HttpResponce &resp, Client &client);
 		void handlePostRequest(HttpRequest &req, HttpResponce &resp, Client &client);
+		void handleDeleteRequest(HttpRequest &req, HttpResponce &resp, Client &client);
 		void handleCGI(HttpRequest &req, HttpResponce &resp, Client &client);
 		void shutdownServer();
 };
