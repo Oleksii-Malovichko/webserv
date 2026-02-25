@@ -6,7 +6,7 @@
 /*   By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/22 00:04:33 by pdrettas          #+#    #+#             */
-/*   Updated: 2026/02/25 00:36:33 by pdrettas         ###   ########.fr       */
+/*   Updated: 2026/02/25 01:22:50 by pdrettas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,10 +15,8 @@
 #include <limits.h>
 
 // helper ft 1
-std::string extractBoundary(std::string &contentType)
+std::string extractBoundary(std::string &contentType, HttpResponce &resp)
 {
-    HttpResponce resp;
-    
     size_t bpos = contentType.find("boundary=");
     if (bpos == std::string::npos)
     {
@@ -38,10 +36,8 @@ std::string extractBoundary(std::string &contentType)
 }
 
 // helper ft 2
-int getDataStart(std::string &body, std::string &delimiter, std::string &filename)
+int getDataStart(std::string &body, std::string &delimiter, std::string &filename, HttpResponce &resp)
 {
-    HttpResponce resp;
-    
     // find start of first part
     size_t partStart = body.find(delimiter);
     if (partStart == std::string::npos) // if boundary is not in body 
@@ -88,10 +84,8 @@ int getDataStart(std::string &body, std::string &delimiter, std::string &filenam
 }
 
 // helper ft 3
-int getDataEnd(std::string &body, std::string &delimiter, int dataStart)
+int getDataEnd(std::string &body, std::string &delimiter, int dataStart, HttpResponce &resp)
 {
-    HttpResponce resp;
-    
     size_t dataEnd = body.find(delimiter, dataStart); // gives me position of end (goes thru from start until delimiter (boundary))
     if (dataEnd == std::string::npos) // if no beginning of boundary found
     {
@@ -105,10 +99,8 @@ int getDataEnd(std::string &body, std::string &delimiter, int dataStart)
 }
 
 // helper ft 4
-std::string getFilePath(std::string &filename)
+std::string getFilePath(std::string &filename, HttpResponce &resp)
 {
-    HttpResponce resp;
-     
     if (chdir("uploads") == -1) // goes from zproject into upload folder
     {
         resp.setStatus(500, "Internal Server Error");
@@ -122,10 +114,8 @@ std::string getFilePath(std::string &filename)
 }
 
 // helper ft 5
-void createFileAndWriteContent(std::string &path, std::string &fileContent)
+void createFileAndWriteContent(std::string &path, std::string &fileContent, HttpResponce &resp)
 {
-    HttpResponce resp;
-    
     std::ofstream out(path.c_str(), std::ios::binary); // actual file is being created by path into ofstream
     if (!out.is_open()) // if rohr is closed
     {
@@ -137,11 +127,11 @@ void createFileAndWriteContent(std::string &path, std::string &fileContent)
     out.write(fileContent.c_str(), fileContent.size()); // content of file is written into rohr
     out.close();
 
-    // resp.setStatus(201, "Created");
-    // resp.setBody("<html><body><h1>Upload Successful!</h1></body></html>");
-    // resp.setHeader("Content-Type", "text/html");
-    std::cout << "Saving file tto: " << path << std::endl;
-    std::cout << "File size: " << fileContent.size() << std::endl;
+    resp.setStatus(201, "Created");
+    resp.setBody("<html><body><h1>Upload Successful!</h1></body></html>");
+    resp.setHeader("Content-Type", "text/html");
+    // std::cout << "Saving file tto: " << path << std::endl;
+    // std::cout << "File size: " << fileContent.size() << std::endl;
 }
 
 // called in POST request if client needs to upload a file
@@ -158,30 +148,30 @@ Content-Type: text/plain\r\n
 // 2. use boundary to find & extract file content from body
 // 3. write content to disk (disk: saving file to the filesystem)
 // first part of it is parsing. rest is writing file content to disk
-int handleHttpFileUpload(std::string &contentType, std::string &requestBody)
+int handleHttpFileUpload(std::string &contentType, std::string &requestBody, HttpResponce &resp)
 {
-    std::string delimiter = extractBoundary(contentType); // TODO: change delimiter name to boundary ??
+    std::string delimiter = extractBoundary(contentType, resp); // TODO: change delimiter name to boundary ??
     if (delimiter == "")
         return -1;
         
     std::string &body = requestBody;
     std::string filename;
-    int dataStart = getDataStart(body, delimiter, filename);
+    int dataStart = getDataStart(body, delimiter, filename, resp);
     if (dataStart == -1)
         return -1;
         
-    int dataEnd = getDataEnd(body, delimiter, dataStart);
+    int dataEnd = getDataEnd(body, delimiter, dataStart, resp);
     if (dataEnd == -1)
         return -1;
         
     std::string fileContent = body.substr(dataStart, dataEnd - dataStart); // only get actual content (so without content-type line)
     std::cout << "fileContent = " << fileContent << std::endl; // TODO: delete later
     
-    std::string path = getFilePath(filename);
+    std::string path = getFilePath(filename, resp);
     if (path == "")
         return -1;
         
-    createFileAndWriteContent(path, fileContent);
+    createFileAndWriteContent(path, fileContent, resp);
 
     return 0;
 }

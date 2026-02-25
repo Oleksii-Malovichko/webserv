@@ -96,7 +96,6 @@ class CgiHandler
         bool execute();
         void waitAndGetExitCode();
 		void setInterpreterPath(const std::string& i_path);
-		
 };
 
 #endif

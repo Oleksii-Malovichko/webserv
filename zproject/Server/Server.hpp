@@ -69,9 +69,9 @@ std::string getReasonPhrase(int code);
 bool isMethodAllowed(const std::string method, const LocationConfig *loc);
 
 // File Upload Handler
-std::string extractBoundary(std::string &contentType);
-int getDataStart(std::string &requestBody, std::string &delimiter, std::string &filename);
-int getDataEnd(std::string &body, std::string &delimiter, int dataStart);
-std::string getFilePath(std::string &filename);
-void createFileAndWriteContent(std::string &path, std::string &fileContent);
-int handleHttpFileUpload(std::string &contentType, std::string &requestBody);
+std::string extractBoundary(std::string &contentType, HttpResponce &resp);
+int getDataStart(std::string &requestBody, std::string &delimiter, std::string &filename, HttpResponce &resp);
+int getDataEnd(std::string &body, std::string &delimiter, int dataStart, HttpResponce &resp);
+std::string getFilePath(std::string &filename, HttpResponce &resp);
+void createFileAndWriteContent(std::string &path, std::string &fileContent, HttpResponce &resp);
+int handleHttpFileUpload(std::string &contentType, std::string &requestBody, HttpResponce &resp);

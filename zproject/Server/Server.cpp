@@ -273,18 +273,21 @@ void Server::handlePostRequest(HttpRequest &req, HttpResponce &resp, Client &cli
 	if (!location->getUpload())
 		return buildError(resp, 403, server);
 
+	std::string contentType = req.headers["content-type"]; // P: added here instead of right before upload ft
+	// std::cout << "\033[32mcontent-type = [" << contentType << "]\033[0m" << std::endl; // TODO: delete later
+
 	// check if file/path exist (here is such error, cause the responce can be POST /check HTTP/1.1\r\nHost:)
-	if (!fileExists(fullPath))
+	if (!(contentType.find("multipart/form-data") != std::string::npos) && !fileExists(fullPath)) // P: add condition for uploads bc file may not exist YET but will be created later in upload ft
 		return buildError(resp, 403, server); // file not exist
 
 	// *********** alex beginning
-	// generate the name of file
+	// // generate the name of file
 	// std::string filename = "upload_" + std::to_string(time(NULL));
 	// if (fullPath.back() != '/')
 	// 	fullPath += "/";
 	// fullPath += filename;
 
-	// here should be code of Paula with parsing of boundary
+	// // here should be code of Paula with parsing of boundary
 	// std::ofstream ofs(fullPath.c_str(), std::ios::binary);
 	// if (!ofs)
 	// {
@@ -297,29 +300,24 @@ void Server::handlePostRequest(HttpRequest &req, HttpResponce &resp, Client &cli
 	// *********** alex end
 
 	// *********** HTTP FILE UPLOAD HANDLER (beginning) Paula*****************************************************
-	std::string contentType = req.headers["content-type"];
-	std::cout << "\033[32mcontent-type = [" << contentType << "]\033[0m" << std::endl; // TODO: delete later
 
 	if (contentType.find("multipart/form-data") != std::string::npos)
 	{
-		int status = handleHttpFileUpload(contentType, req.body);
+		int status = handleHttpFileUpload(contentType, req.body, resp);
 		if (status == -1)
 			return buildError(resp, 400, server); // new
-		resp.setStatus(201, "Created");
-		resp.setBody("<html><body><h1>Upload Successful!</h1></body></html>");
-		resp.setHeader("Content-Type", "text/html");
 	}
 // *************** HTTP FILE UPLOAD HANDLER (end) Paula*****************************************************
 
 
 	// build the responce
-	resp.setStatus(201, "Created");
-	resp.setHeader("Content-Type", "text/html");
-	std::stringstream body;
-	body << "<html><body>"
-		<< "<h1>File uploaded succesfully!</h1>"
-		<< "</body></html>";
-	resp.setBody(body.str());
+	// resp.setStatus(201, "Created");
+	// resp.setHeader("Content-Type", "text/html");
+	// std::stringstream body;
+	// body << "<html><body>"
+	// 	<< "<h1>File uploaded succesfully!</h1>"
+	// 	<< "</body></html>";
+	// resp.setBody(body.str());
 }
 
 bool isErrorsHeaders(HttpResponce &resp, HttpRequest &req, Client &client)
