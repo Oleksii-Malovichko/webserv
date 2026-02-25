@@ -692,8 +692,8 @@ void Server::handleCGI(HttpRequest &req, HttpResponce &resp, Client &client)
 	char *cgi_path = const_cast<char*>(client.getRequest().path.c_str());
 	(void)client;
 	resp.setStatus(200, "OK");
-	resp.setHeader("Content-Length", "text/plain");
-	resp.setBody("CGI stub responce\n"); // need to discuss the CGI response will contains the header or not
+	resp.setHeader("Content-Type", "text/plain");
+	// resp.setBody("CGI stub responce\n"); // need to discuss the CGI response will contains the header or not
 
 
 	try
