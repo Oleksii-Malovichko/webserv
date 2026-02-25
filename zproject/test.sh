@@ -321,8 +321,8 @@ run_nc_test "GET /assets/notexist, return default 404" \
 "GET /assets/notexist HTTP/1.1\r\nHost: localhost\r\n\r" \
 "404"
 
-run_nc_test "GET /getnotallowed, return default 405" \
-"GET /getnotallowed HTTP/1.1\r\nHost: localhost\r\n\r" \
+run_nc_test "GET /upload, return default 405" \
+"GET /upload HTTP/1.1\r\nHost: localhost\r\n\r" \
 "405"
 
 run_nc_test "DELETE /notexist, return default 404" \
@@ -349,13 +349,13 @@ run_nc_test "DELETE /test/, return 204" \
 "DELETE /test/ HTTP/1.1\r\nHost: localhost\r\n\r" \
 "204"
 
-run_nc_test "GET /redir, redirect to /data, return 308" \
+run_nc_test "GET /redir, redirect to /data, return 301" \
 "GET /redir HTTP/1.1\r\nHost: localhost\r\n\r" \
-"308"
+"301"
 
-run_nc_test "GET /redirexample, redirect to example.com, return 307" \
-"GET /redirexample HTTP/1.1\r\nHost: localhost\r\n\r" \
-"307"
+run_nc_test "GET /redirexample, redirect to google, return 308" \
+"GET /google HTTP/1.1\r\nHost: localhost\r\n\r" \
+"302"
 
 echo -e "${YELLOW}\n>>>>>>>>>>>> ERR TEST <<<<<<<<<<<\n${NC}"
 

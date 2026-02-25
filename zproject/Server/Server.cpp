@@ -118,6 +118,26 @@ void parseRequestLine(std::string requestLine, HttpRequest &req)
 		req.errorCode = 400;
 		return ;
 	}
+	for (size_t i = 0; i < req.path.size(); i++)
+	{
+		unsigned char ch = req.path[i];
+
+		// forbidden control-symbols
+		if (ch <= 31 || ch == 127)
+		{
+			req.errorCode = 400;
+			return;
+		}
+		// only these symbols should be allowed
+		if (!(std::isalnum(ch) ||
+			ch == '-' || ch == '.' || ch == '_' ||
+			ch == '~' || ch == '/' || ch == '%' || ch == '?' || ch == '='))
+		{
+			std::cout << "[parseRequestLine] bad checking...\n";
+			req.errorCode = 400;
+			return;
+		}
+	}
 	if (req.method != "GET" && req.method != "POST" && req.method != "DELETE")
 	{
 		req.errorCode = 501;
@@ -150,6 +170,11 @@ void parseHttpHeaders(std::string header, HttpRequest &req)
 		{
 			std::string key = trim(lines[i].substr(0, colonPos));
 			std::string value = trim(lines[i].substr(colonPos + 1));
+			if (req.headers.find(toLower(key)) != req.headers.end()) // repeating of key in request
+			{
+				req.errorCode = 400;
+				return ;
+			}
 			if (toLower(key) == "content-length")
 			{
 				if (value[0] == '0' && value != "0")
@@ -216,6 +241,7 @@ void Server::handleGetRequest(HttpRequest &req, HttpResponce &resp, Client &clie
 	if (!isPathSafe(fullPath, root)) // here is used the macros
 		return buildError(resp, 403, server);
 
+	// parse: /cgi/python/showenv.py/data/comment?userinfo=hello if token has '?', than it's a query, not the part of path 
 	// CGI part
 	if (location->isCgi(fullPath))
 		return handleCGI(req, resp, client);
