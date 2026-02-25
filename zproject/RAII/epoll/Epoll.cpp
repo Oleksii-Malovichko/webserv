@@ -180,12 +180,13 @@ bool Epoll::handleClient(int fd, uint32_t ev)
 			client->writeToSocket();
 			client->updateLastActivity();
 		}
-		if (!client->hasPendingWrite()) // если мы уже все отправили клиенту - закрываем его
+		if (!client->hasPendingWrite() && client->getCgiPtr()->IsCgiFinished() == true) // если мы уже все отправили клиенту - закрываем его
 		{
 			// if (!client->isKeepAlive() || client->getKeepAliveRequests() >= client->getKeepAliveMaxRequests())
 			// {
 			// 	removeClient(fd); // закрываем соединение
 			// }
+
 			removeClient(fd);
 			return false;
 		}
@@ -222,8 +223,17 @@ bool Epoll::handleCgiEvent(EventData* data, uint32_t ev)
 
 	if (data->type == EventData::Type::CGI_STDIN)
 	{
-		if (ev & EPOLLOUT)
-			cgi_ptr->writeToCgi(*this, client->getRequest().body);
+		if (ev & EPOLLOUT )
+		{
+			if (client->getRequest().body.size() > 0)
+			{
+				cgi_ptr->writeToCgi(*this, client->getRequest().body);
+			}
+			else
+			{
+				this->removeCgiFd(cgi_ptr->getCgiInWriteFD());
+			}
+		}
 	}
 
 	if (data->type == EventData::Type::CGI_STDOUT)

@@ -225,6 +225,7 @@ void CgiHandler::writeToCgi(Epoll& epoll_obj,
 	{
 		std::cerr << RED << "The request body empty"
 					<< DEFAULT << std::endl;
+		epoll_obj.removeCgiFd(this->_srv_to_cgi[1]);
 		close(this->_srv_to_cgi[1]);
 		this->_stdin_closed = true;
 		return ;
@@ -632,7 +633,10 @@ bool CgiHandler::execute()
         if (!this->redirectIO())
             exit(1);
         execve(this->_interpreterPath.c_str(), this->_args, this->_envp);
-        std::cerr << "CGI Error: execve() failed." << std::endl;
+        std::cerr << RED << "CGI Error: execve() failed: " 
+					<< YELLOW << strerror(errno) 
+					<< RED << "\nInterpreter path: " << this->_interpreterPath
+					<< DEFAULT << std::endl;
         exit(1);
     }
     else // parent process ("server")

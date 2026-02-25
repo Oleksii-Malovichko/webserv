@@ -712,16 +712,16 @@ void Server::handleCGI(HttpRequest &req, HttpResponce &resp, Client &client)
 	resp.setHeader("Content-Type", "text/plain");
 	// resp.setBody("CGI stub responce\n"); // need to discuss the CGI response will contains the header or not
 	// std::string Interpreter = client.getRequest().path;
-	std::string Interpreter = "/usr/bin/python3";
+	std::string interpreter = "/usr/bin/python3";
 
 	std::cerr << CYAN << "In handleCGI path: " << cgi_path 
-				<< "\n Interpreter: " << Interpreter << DEFAULT << std::endl;
+				<< "\n Interpreter: " << interpreter << DEFAULT << std::endl;
 
 	CgiHandler* cgi_obj = new CgiHandler();
 	
 	try
 	{
-		cgi_obj->setInterpreterPath(client.getRequest().path);
+		cgi_obj->setInterpreterPath(interpreter);
 		cgi_obj->setArgsAndCgiPath(cgi_path);
 		cgi_obj->setEnvp(client);
 		cgi_obj->setNonBlockPipe();
