@@ -6,9 +6,12 @@
 #    By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/02/10 21:13:34 by pdrettas          #+#    #+#              #
-#    Updated: 2026/02/10 21:14:05 by pdrettas         ###   ########.fr        #
+#    Updated: 2026/02/25 21:07:35 by pdrettas         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
+
+# Tests: Memory-Heavy Stress Test (allocates large list (100 mb)
+# Does the server handle memory, cleanup, and no crashes correctly?
 
 print("Content-Type: text/plain\n", flush=True)
 print("Starting memory-heavy loop...", flush=True)

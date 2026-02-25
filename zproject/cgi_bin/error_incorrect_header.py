@@ -1,25 +1,17 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    test_basic.py                                      :+:      :+:    :+:    #
+#    error_incorrect_header.py                          :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2026/02/10 21:03:12 by pdrettas          #+#    #+#              #
-#    Updated: 2026/02/25 20:55:38 by pdrettas         ###   ########.fr        #
+#    Created: 2026/02/25 21:17:50 by pdrettas          #+#    #+#              #
+#    Updated: 2026/02/25 21:19:25 by pdrettas         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-# Tests: GET Handling & Basic Response (prints hello msg with method and query)
-# Are request method & query string correct? (GET echo)
+# Tests: Incorrect Header
+# Does CGI handle no colon, no blank newline below content-type, and invalid content-type correctly?
 
-import os
-
-# CGI header
-print("Content-Type: text/plain\n")
-
-# Body
-print("Hello from CGI!")
-print(f"REQUEST_METHOD: {os.getenv('REQUEST_METHOD')}")
-print(f"QUERY_STRING: {os.getenv('QUERY_STRING')}")
-
+print("Content-Type text/plain")  # missing colon
+print("Hello")

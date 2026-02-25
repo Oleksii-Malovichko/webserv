@@ -6,9 +6,14 @@
 #    By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/02/10 21:03:24 by pdrettas          #+#    #+#              #
-#    Updated: 2026/02/10 21:14:24 by pdrettas         ###   ########.fr        #
+#    Updated: 2026/02/25 20:34:23 by pdrettas         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
+
+# Tests: Crash / Error Handling
+# Does server return 500?
+# Does it avoid hanging?
+# Does it close pipe correctly?
 
 print("Content-Type: text/plain\n")
 

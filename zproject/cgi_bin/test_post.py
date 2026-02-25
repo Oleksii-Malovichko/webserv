@@ -6,9 +6,12 @@
 #    By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/02/15 23:08:52 by pdrettas          #+#    #+#              #
-#    Updated: 2026/02/15 23:53:36 by pdrettas         ###   ########.fr        #
+#    Updated: 2026/02/25 21:08:48 by pdrettas         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
+
+# Tests: POST Handling / Body Reading (Reads POST from stdin and echoes back)
+# Does the server read POST body correctly? (displays it) 
 
 import sys
 

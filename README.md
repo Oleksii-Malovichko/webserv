@@ -39,7 +39,7 @@ make
 ./webserv config/webserv.config     # [configuration file]
 ```
 
-### Usage Examples
+### Usage Examples - General
 ```bash
 curl -X GET "http://localhost:8080/api/resource"            # GET request (retrieve data)
 ```
@@ -60,6 +60,15 @@ curl -X DELETE "http://localhost:8080/submit-form" \
      -H "Content-Type: application/json" \
      -d '{"confirm": true}'                                 # DELETE request (remove resources)
 ```
+
+### Usage Examples - CGI
+The scripts to test CGI are located in folder cgi_bin.
+The following tests are covered: GET, POST, environment variables, infinite loop, crash / exception, large output, memory stress, timeout test, HTML output, plain text output, incorrect header, and exit code.
+
+```bash
+curl http://localhost:8080/cgi-bin/script.py      # replace script.py with actual script
+```
+add more here.
 
 ## Webserv Concepts
 

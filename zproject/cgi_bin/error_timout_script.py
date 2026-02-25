@@ -1,25 +1,29 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    test_basic.py                                      :+:      :+:    :+:    #
+#    timout_script.py                                   :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: pdrettas <pdrettas@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2026/02/10 21:03:12 by pdrettas          #+#    #+#              #
-#    Updated: 2026/02/25 20:55:38 by pdrettas         ###   ########.fr        #
+#    Created: 2026/02/25 21:11:57 by pdrettas          #+#    #+#              #
+#    Updated: 2026/02/25 21:12:00 by pdrettas         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-# Tests: GET Handling & Basic Response (prints hello msg with method and query)
-# Are request method & query string correct? (GET echo)
+# Tests: Timeout / Slow CGI (sleeps 15s after reading body)
+# Does the server enforce max execution time?
 
-import os
+#!/usr/bin/python3
+import os, sys
+import time
 
-# CGI header
-print("Content-Type: text/plain\n")
+body = sys.stdin.read()
 
-# Body
-print("Hello from CGI!")
-print(f"REQUEST_METHOD: {os.getenv('REQUEST_METHOD')}")
-print(f"QUERY_STRING: {os.getenv('QUERY_STRING')}")
+print("Content-type: text/plain")
+print()
+print("Body: ", body)
+print("Sleeping for 15 seconds")
+time.sleep(15)
+print("Never will be printed if CGI "
+	"time max < 15 seconds")
 
