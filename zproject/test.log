@@ -741,14 +741,7 @@ Content-Type:
 Content-Length: 114
 Content-Type: text/html
 
-<html>
-<head><title>404 Not Found</title></head>
-<body>
-<h1>404 Not Found</h1>
-<hr>
-<p>webserv</p>
-</body>
-</html>
+<html><body><ul><li><a href="../">main page</a></li><li><a href="/data/file1.txt">file1.txt</a></li><li><a href="/data/file2.txt">file2.txt</a></li><li><a href="/data/upload_form.html">upload_form.html</a></li></ul></body></html>
 
 ===== Test: GET /assets autoindex not allowed, return 403 =====
 Raw request sent:
@@ -810,9 +803,9 @@ Content-Type: text/html
 </body>
 </html>
 
-===== Test: GET /getnotallowed, return default 405 =====
+===== Test: GET /upload, return default 405 =====
 Raw request sent:
-GET /getnotallowed HTTP/1.1
+GET /upload HTTP/1.1
 Host: localhost
 
 Response received:
@@ -822,9 +815,9 @@ Content-Length: 114
 Content-Type: text/html
 
 <html>
-<head><title>404 Not Found</title></head>
+<head><title>405 Method Not Allowed</title></head>
 <body>
-<h1>404 Not Found</h1>
+<h1>405 Method Not Allowed</h1>
 <hr>
 <p>webserv</p>
 </body>
@@ -841,7 +834,14 @@ Content-Type:
 Content-Length: 51
 Content-Type: text/html
 
-<html><body><h1>Element Removed!</h1></body></html>
+<html>
+<head><title>404 Not Found</title></head>
+<body>
+<h1>404 Not Found</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
 
 ===== Test: DELETE /assets, where DELETE not allowed, return default 405 =====
 Raw request sent:
@@ -854,7 +854,14 @@ Content-Type:
 Content-Length: 51
 Content-Type: text/html
 
-<html><body><h1>Element Removed!</h1></body></html>
+<html>
+<head><title>500 Internal Server Error</title></head>
+<body>
+<h1>500 Internal Server Error</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
 
 ===== Test: DELETE /assets/1.png, where DELETE not allowed, return default 405 =====
 Raw request sent:
@@ -867,7 +874,6 @@ Content-Type:
 Content-Length: 51
 Content-Type: text/html
 
-<html><body><h1>Element Removed!</h1></body></html>
 
 ===== Test: DELETE /hello.test, return 204 =====
 Raw request sent:
@@ -915,9 +921,9 @@ Content-Type: text/html
 </body>
 </html>
 
-===== Test: GET /redirexample, redirect to example.com, return 307 =====
+===== Test: DELETE /test/, return 204 =====
 Raw request sent:
-GET /redirexample HTTP/1.1
+DELETE /test/ HTTP/1.1
 Host: localhost
 
 Response received:
@@ -927,11 +933,49 @@ Content-Length: 114
 Content-Type: text/html
 
 <html>
-<head><title>404 Not Found</title></head>
+<head><title>500 Internal Server Error</title></head>
 <body>
-<h1>404 Not Found</h1>
+<h1>500 Internal Server Error</h1>
 <hr>
 <p>webserv</p>
+</body>
+</html>
+
+===== Test: GET /redir, redirect to /data, return 301 =====
+Raw request sent:
+GET /redir HTTP/1.1
+Host: localhost
+
+Response received:
+HTTP/1.1 301 Moved Permanently
+Content-Length: 170
+Content-Type: text/html
+Location: /index.html
+
+<html>
+<head><title>301 Moved Permanently</title></head>
+<body>
+<h1>301 Moved Permanently</h1>
+<p>Redirecting to <a href="/index.html">/index.html</a></p>
+</body>
+</html>
+
+===== Test: GET /redirexample, redirect to google, return 308 =====
+Raw request sent:
+GET /google HTTP/1.1
+Host: localhost
+
+Response received:
+HTTP/1.1 302 Found
+Content-Length: 168
+Content-Type: text/html
+Location: https://www.google.com
+
+<html>
+<head><title>302 Found</title></head>
+<body>
+<h1>302 Found</h1>
+<p>Redirecting to <a href="https://www.google.com">https://www.google.com</a></p>
 </body>
 </html>
 
@@ -947,9 +991,9 @@ Content-Length: 114
 Content-Type: text/html
 
 <html>
-<head><title>404 Not Found</title></head>
+<head><title>400 Bad Request</title></head>
 <body>
-<h1>404 Not Found</h1>
+<h1>400 Bad Request</h1>
 <hr>
 <p>webserv</p>
 </body>
@@ -989,7 +1033,14 @@ Content-Type:
 Content-Length: 61
 Content-Type: text/html
 
-<html><body><h1>File uploaded succesfully!</h1></body></html>
+<html>
+<head><title>400 Bad Request</title></head>
+<body>
+<h1>400 Bad Request</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
 
 ===== Test: POST, repeat content type., return 400 =====
 Raw request sent:
@@ -1006,7 +1057,14 @@ Content-Type:
 Content-Length: 61
 Content-Type: text/html
 
-<html><body><h1>File uploaded succesfully!</h1></body></html>
+<html>
+<head><title>400 Bad Request</title></head>
+<body>
+<h1>400 Bad Request</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
 
 ===== Test: POST script not exist, return 404 =====
 Raw request sent:

@@ -118,6 +118,26 @@ void parseRequestLine(std::string requestLine, HttpRequest &req)
 		req.errorCode = 400;
 		return ;
 	}
+	for (size_t i = 0; i < req.path.size(); i++)
+	{
+		unsigned char ch = req.path[i];
+
+		// forbidden control-symbols
+		if (ch <= 31 || ch == 127)
+		{
+			req.errorCode = 400;
+			return;
+		}
+		// only these symbols should be allowed
+		if (!(std::isalnum(ch) ||
+			ch == '-' || ch == '.' || ch == '_' ||
+			ch == '~' || ch == '/' || ch == '%' || ch == '?' || ch == '='))
+		{
+			std::cout << "[parseRequestLine] bad checking...\n";
+			req.errorCode = 400;
+			return;
+		}
+	}
 	if (req.method != "GET" && req.method != "POST" && req.method != "DELETE")
 	{
 		req.errorCode = 501;
@@ -150,6 +170,11 @@ void parseHttpHeaders(std::string header, HttpRequest &req)
 		{
 			std::string key = trim(lines[i].substr(0, colonPos));
 			std::string value = trim(lines[i].substr(colonPos + 1));
+			if (req.headers.find(toLower(key)) != req.headers.end()) // repeating of key in request
+			{
+				req.errorCode = 400;
+				return ;
+			}
 			if (toLower(key) == "content-length")
 			{
 				if (value[0] == '0' && value != "0")
@@ -216,6 +241,7 @@ void Server::handleGetRequest(HttpRequest &req, HttpResponce &resp, Client &clie
 	if (!isPathSafe(fullPath, root)) // here is used the macros
 		return buildError(resp, 403, server);
 
+	// parse: /cgi/python/showenv.py/data/comment?userinfo=hello if token has '?', than it's a query, not the part of path 
 	// CGI part
 	if (location->isCgi(fullPath))
 		return handleCGI(req, resp, client);
@@ -320,6 +346,50 @@ void Server::handlePostRequest(HttpRequest &req, HttpResponce &resp, Client &cli
 	// resp.setBody(body.str());
 }
 
+void Server::handleDeleteRequest(HttpRequest &req, HttpResponce &resp, Client &client)
+{
+	ServerConfig *server = client.getConfig();
+
+	// find location
+	const LocationConfig *location = matchLocation(req.path, server->getLocations());
+	if (!location)
+		return buildError(resp, 404, server);
+	
+	if (!isMethodAllowed(req.method, location))
+		return buildError(resp, 405, server);
+	
+	std::string fullPath = buildFullPath(location, server, req.path);
+	
+	std::string root = location->getRoot();
+	if (root.empty())
+		root = server->getRoot();
+	if (!isPathSafe(fullPath, root))
+		return buildError(resp, 403, server);
+	
+	if (!fileExists(fullPath))
+		return buildError(resp, 404, server);
+	
+	struct stat st;
+	std::cout << "Fullpath: " << fullPath << std::endl;
+	if (stat(fullPath.c_str(), &st) == -1)
+		return buildError(resp, 500, server);
+	
+	int status = 0;
+	if (S_ISDIR(st.st_mode))
+		status = rmdir(fullPath.c_str()); // remove only empty directory
+	else
+		status = remove(fullPath.c_str());
+	
+	if (status != 0)
+	{
+		std::cerr << "Failed to delete " << fullPath << ": " << strerror(errno) << std::endl;
+		return buildError(resp, 500, server);
+	}
+
+	resp.setStatus(204, "No Content");
+	resp.setBody("");
+}
+
 bool isErrorsHeaders(HttpResponce &resp, HttpRequest &req, Client &client)
 {
 	bool err = 0;
@@ -411,9 +481,10 @@ void Server::handleClient(Client &client)
 			}
 			else if (req.method == "DELETE" && !req.errorCode)
 			{
-				resp.setStatus(200, "OK");
-				resp.setBody("<html><body><h1>Element Removed!</h1></body></html>");
-				resp.setHeader("Content-Type", "text/html");
+				handleDeleteRequest(req, resp, client);
+				// resp.setStatus(200, "OK");
+				// resp.setBody("<html><body><h1>Element Removed!</h1></body></html>");
+				// resp.setHeader("Content-Type", "text/html");
 			}
 			else // error
 			{

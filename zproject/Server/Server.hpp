@@ -45,6 +45,7 @@ class Server
 			const LocationConfig& loc);
 		std::string  handleCGI(Client &client); // cgi
 		void handlePostRequest(HttpRequest &req, HttpResponce &resp, Client &client);
+		void handleDeleteRequest(HttpRequest &req, HttpResponce &resp, Client &client);
 		void handleCGI(HttpRequest &req, HttpResponce &resp, Client &client);
 		void shutdownServer();
 };
