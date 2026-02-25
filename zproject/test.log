@@ -1,4 +1,4 @@
-Webserv Test Report - Tue Feb 24 08:27:34 PM CET 2026
+Webserv Test Report - Wed Feb 25 03:03:50 PM CET 2026
 
 ===== Test: GET method =====
 CURL Command: curl -s -i http://localhost:8080/
@@ -31,19 +31,12 @@ Content-Type: text/html
 ===== Test: GET method fail =====
 CURL Command: curl -s -i http://localhost:8080/assets
 Response (exit code: 0):
-HTTP/1.1 404 Not Found
+HTTP/1.1 403 Forbidden
 Content-Type: 
-Content-Length: 114
+Content-Length: 22
 Content-Type: text/html
 
-<html>
-<head><title>404 Not Found</title></head>
-<body>
-<h1>404 Not Found</h1>
-<hr>
-<p>webserv</p>
-</body>
-</html>
+<h1>403 Forbidden</h1>
 
 ===== Test: PUT method =====
 CURL Command: curl -s -i -X PUT http://localhost:8080/putfile
@@ -65,12 +58,19 @@ Content-Type: text/html
 ===== Test: POST chunked upload (.txt file) =====
 CURL Command: curl -s -i -X POST -F file=@Makefile;type=text/plain -H Transfer-Encoding: chunked http://localhost:8080/upload
 Response (exit code: 0):
-HTTP/1.1 201 Created
+HTTP/1.1 400 Bad Request
 Content-Type: 
-Content-Length: 61
+Content-Length: 118
 Content-Type: text/html
 
-<html><body><h1>File uploaded succesfully!</h1></body></html>
+<html>
+<head><title>400 Bad Request</title></head>
+<body>
+<h1>400 Bad Request</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
 
 ===== Test: Same ip and port, different servername: webserv.com =====
 CURL Command: curl -s -i http://localhost:8080/ -H Host: webserv.com
@@ -485,10 +485,9 @@ shuai
 Response received:
 HTTP/1.1 200 OK
 Content-Type: 
-Content-Length: 18
-Content-Length: text/plain
+Content-Length: 0
+Content-Type: text/plain
 
-CGI stub responce
 
 ===== Test: POST without /upload =====
 Raw request sent:
@@ -522,10 +521,9 @@ shuai
 Response received:
 HTTP/1.1 200 OK
 Content-Type: 
-Content-Length: 18
-Content-Length: text/plain
+Content-Length: 0
+Content-Type: text/plain
 
-CGI stub responce
 
 ===== Test: POST with content-length larger than max size =====
 Raw request sent:
@@ -581,10 +579,9 @@ shuai
 Response received:
 HTTP/1.1 200 OK
 Content-Type: 
-Content-Length: 18
-Content-Length: text/plain
+Content-Length: 0
+Content-Type: text/plain
 
-CGI stub responce
 
 ===== Test: POST with content-length negative =====
 Raw request sent:
@@ -649,10 +646,9 @@ Network
 Response received:
 HTTP/1.1 200 OK
 Content-Type: 
-Content-Length: 18
-Content-Length: text/plain
+Content-Length: 0
+Content-Type: text/plain
 
-CGI stub responce
 
 ===== Test: POST with chunked 2 =====
 Raw request sent:
@@ -674,10 +670,9 @@ Network
 Response received:
 HTTP/1.1 200 OK
 Content-Type: 
-Content-Length: 18
-Content-Length: text/plain
+Content-Length: 0
+Content-Type: text/plain
 
-CGI stub responce
 
 ===== Test: GET /cgi/python/showenv.py, with pathinfo and querystring return autoindex =====
 Raw request sent:
@@ -736,9 +731,9 @@ GET /data HTTP/1.1
 Host: localhost
 
 Response received:
-HTTP/1.1 404 Not Found
+HTTP/1.1 200 OK
 Content-Type: 
-Content-Length: 114
+Content-Length: 229
 Content-Type: text/html
 
 <html><body><ul><li><a href="../">main page</a></li><li><a href="/data/file1.txt">file1.txt</a></li><li><a href="/data/file2.txt">file2.txt</a></li><li><a href="/data/upload_form.html">upload_form.html</a></li></ul></body></html>
@@ -749,19 +744,12 @@ GET /assets HTTP/1.1
 Host: localhost
 
 Response received:
-HTTP/1.1 404 Not Found
+HTTP/1.1 403 Forbidden
 Content-Type: 
-Content-Length: 114
+Content-Length: 22
 Content-Type: text/html
 
-<html>
-<head><title>404 Not Found</title></head>
-<body>
-<h1>404 Not Found</h1>
-<hr>
-<p>webserv</p>
-</body>
-</html>
+<h1>403 Forbidden</h1>
 
 ===== Test: GET /notexist, return 404 =====
 Raw request sent:
@@ -809,9 +797,9 @@ GET /upload HTTP/1.1
 Host: localhost
 
 Response received:
-HTTP/1.1 404 Not Found
+HTTP/1.1 405 Method Not Allowed
 Content-Type: 
-Content-Length: 114
+Content-Length: 132
 Content-Type: text/html
 
 <html>
@@ -829,9 +817,9 @@ DELETE /notexist HTTP/1.1
 Host: localhost
 
 Response received:
-HTTP/1.1 200 OK
+HTTP/1.1 404 Not Found
 Content-Type: 
-Content-Length: 51
+Content-Length: 114
 Content-Type: text/html
 
 <html>
@@ -849,19 +837,10 @@ DELETE /assets HTTP/1.1
 Host: localhost
 
 Response received:
-HTTP/1.1 200 OK
+HTTP/1.1 204 No Content
 Content-Type: 
-Content-Length: 51
-Content-Type: text/html
+Content-Length: 0
 
-<html>
-<head><title>500 Internal Server Error</title></head>
-<body>
-<h1>500 Internal Server Error</h1>
-<hr>
-<p>webserv</p>
-</body>
-</html>
 
 ===== Test: DELETE /assets/1.png, where DELETE not allowed, return default 405 =====
 Raw request sent:
@@ -869,41 +848,23 @@ DELETE /assets/1.png HTTP/1.1
 Host: localhost
 
 Response received:
-HTTP/1.1 200 OK
+HTTP/1.1 404 Not Found
 Content-Type: 
-Content-Length: 51
+Content-Length: 114
 Content-Type: text/html
 
+<html>
+<head><title>404 Not Found</title></head>
+<body>
+<h1>404 Not Found</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
 
 ===== Test: DELETE /hello.test, return 204 =====
 Raw request sent:
 DELETE /hello.test HTTP/1.1
-Host: localhost
-
-Response received:
-HTTP/1.1 200 OK
-Content-Type: 
-Content-Length: 51
-Content-Type: text/html
-
-<html><body><h1>Element Removed!</h1></body></html>
-
-===== Test: DELETE /test/, return 204 =====
-Raw request sent:
-DELETE /test/ HTTP/1.1
-Host: localhost
-
-Response received:
-HTTP/1.1 200 OK
-Content-Type: 
-Content-Length: 51
-Content-Type: text/html
-
-<html><body><h1>Element Removed!</h1></body></html>
-
-===== Test: GET /redir, redirect to /data, return 308 =====
-Raw request sent:
-GET /redir HTTP/1.1
 Host: localhost
 
 Response received:
@@ -923,13 +884,13 @@ Content-Type: text/html
 
 ===== Test: DELETE /test/, return 204 =====
 Raw request sent:
-DELETE /test/ HTTP/1.1
+DELETE /test HTTP/1.1
 Host: localhost
 
 Response received:
-HTTP/1.1 404 Not Found
+HTTP/1.1 500 Internal Server Error
 Content-Type: 
-Content-Length: 114
+Content-Length: 138
 Content-Type: text/html
 
 <html>
@@ -948,6 +909,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 301 Moved Permanently
+Content-Type: 
 Content-Length: 170
 Content-Type: text/html
 Location: /index.html
@@ -967,6 +929,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 302 Found
+Content-Type: 
 Content-Length: 168
 Content-Type: text/html
 Location: https://www.google.com
@@ -985,9 +948,9 @@ GET /a>{} HTTP/1.1
 Host: localhost
 
 Response received:
-HTTP/1.1 404 Not Found
+HTTP/1.1 400 Bad Request
 Content-Type: 
-Content-Length: 114
+Content-Length: 118
 Content-Type: text/html
 
 <html>
@@ -1028,9 +991,9 @@ Content-Length: 1
 
 
 Response received:
-HTTP/1.1 201 Created
+HTTP/1.1 400 Bad Request
 Content-Type: 
-Content-Length: 61
+Content-Length: 118
 Content-Type: text/html
 
 <html>
@@ -1052,9 +1015,9 @@ Content-Type: text/html
 
 
 Response received:
-HTTP/1.1 201 Created
+HTTP/1.1 400 Bad Request
 Content-Type: 
-Content-Length: 61
+Content-Length: 118
 Content-Type: text/html
 
 <html>

@@ -73,6 +73,7 @@ bool isPathSafe(const std::string &fullPath, const std::string &root)
 {
 	char resolvedRoot[PATH_MAX];
 	std::string fullRoot = PHYSICAL_ROOT + root;
+	// std::string fullRoot = root;
 
 	if (!realpath(fullRoot.c_str(), resolvedRoot))
 		return false;
@@ -187,6 +188,7 @@ std::string buildFullPath(const LocationConfig *loc, const ServerConfig *server,
 		relativePath = requestPath;
 	
 	std::string fullPath = PHYSICAL_ROOT + root;
+	// std::string fullPath = root;
 	if (!fullPath.empty() && fullPath.back() != '/')
 		fullPath += "/";
 
@@ -194,6 +196,8 @@ std::string buildFullPath(const LocationConfig *loc, const ServerConfig *server,
 		relativePath = relativePath.substr(1);
 	
 	fullPath += relativePath;
+
+	std::cerr << BLUE << "In BuildFullPath " << fullPath << DEFAULT << std::endl;
 	return fullPath;
 }
 

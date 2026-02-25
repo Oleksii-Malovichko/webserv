@@ -86,7 +86,6 @@ class CgiHandler
 		std::string buildCgiResponse(void);
 		void terminateChild(void);
 
-		//P
 		bool validateExecveArgs(char **argv, char **envp);
         bool createPipes();
         void closePipeFds(PipeCloseCall action);

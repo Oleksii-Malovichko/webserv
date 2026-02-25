@@ -8,6 +8,7 @@ LocationConfig::LocationConfig()
 	this->upload_dir = "";
 	this->auto_index = false;
 	this->index = "index.html";
+	this->redirect_enable = false;
 }
 
 void LocationConfig::setPath(const std::string &p)

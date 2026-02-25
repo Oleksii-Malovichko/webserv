@@ -227,7 +227,10 @@ void Server::handleGetRequest(HttpRequest &req, HttpResponce &resp, Client &clie
 
 	// redirect (if it's needed)
 	if (location->hasRedirect())
+	{
+		std::cerr << CYAN << "The redirection called."<< DEFAULT << std::endl;
 		return buildRedirect(resp, location);
+	}
 	
 	// figure out filesystem path
 	// std::cout << "req.path: " << req.path << std::endl;
@@ -239,12 +242,21 @@ void Server::handleGetRequest(HttpRequest &req, HttpResponce &resp, Client &clie
 	if (root.empty())
 		root = server->getRoot();
 	if (!isPathSafe(fullPath, root)) // here is used the macros
+	{
+		std::cerr << RED << "The Path not safe: " << YELLOW << fullPath << std::endl;
 		return buildError(resp, 403, server);
+	}
 
 	// parse: /cgi/python/showenv.py/data/comment?userinfo=hello if token has '?', than it's a query, not the part of path 
 	// CGI part
 	if (location->isCgi(fullPath))
+	{
+		std::cerr	<< CYAN << "The CGI called with path: "
+					<< YELLOW << fullPath << DEFAULT << std::endl;
+		
+		req.path = fullPath;
 		return handleCGI(req, resp, client);
+	}
 	
 	std::cout << "req.path: " << req.path << std::endl;
 	// proccessing file/directory
@@ -694,7 +706,11 @@ void Server::handleCGI(HttpRequest &req, HttpResponce &resp, Client &client)
 	resp.setStatus(200, "OK");
 	resp.setHeader("Content-Type", "text/plain");
 	// resp.setBody("CGI stub responce\n"); // need to discuss the CGI response will contains the header or not
+	// std::string Interpreter = client.getRequest().path;
+	std::string Interpreter = "/usr/bin/python3";
 
+	std::cerr << CYAN << "In handleCGI path: " << cgi_path 
+				<< "\n Interpreter: " << Interpreter << DEFAULT << std::endl;
 
 	try
 	{
