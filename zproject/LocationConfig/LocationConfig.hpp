@@ -25,6 +25,16 @@ class LocationConfig
 	int redirect_code;
 	std::string redirect_url;
 
+	// duplicates
+	bool hasPath;
+	bool hasRoot;
+	bool hasIndex;
+	bool hasUpload;
+	bool hasUploadDir;
+	bool hasAutoIndex;
+	bool hasRedirectBool;
+	bool hasMethods;
+
 	public:
 		LocationConfig();
 		void setPath(const std::string &p);
@@ -51,6 +61,6 @@ class LocationConfig
 		const std::unordered_map<std::string, std::string> &getCgi() const;
 
 		bool isCgi(const std::string &path) const;
-		bool isValid() const;
+		void isValid() const;
 		~LocationConfig() = default;
 };

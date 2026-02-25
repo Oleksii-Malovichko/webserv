@@ -82,6 +82,7 @@ void buildError(HttpResponce &resp, int statusCode, const ServerConfig *server)
 		body = getFileContent(errorPagePath);
 	else
 		body = generateDefaultErrorPage(statusCode, reason);
+	// resp.setHeader("Server", server->getServerName());
 	resp.setHeader("Content-Type", "text/html");
 	resp.setBody(body);
 }
@@ -208,6 +209,50 @@ void parseHttpHeaders(std::string header, HttpRequest &req)
 	req.headersParsed = true;
 }
 
+size_t resolveCgiExt(std::string target, const LocationConfig *loc)
+{
+	const std::unordered_map<std::string, std::string> cgi = loc->getCgi();
+	size_t extPos;
+	for (auto it = cgi.begin(); it != cgi.end(); it++)
+	{
+		extPos = target.find(it->first);
+		if (extPos != std::string::npos)
+			return extPos;
+		std::cout << "it->first: " << it->first << std::endl;
+		std::cout << "it->first: " << it->first << std::endl;
+	}
+	return std::string::npos;
+}
+
+void splitPathAndQuery(HttpRequest &req, std::string &fullPath, const LocationConfig *loc)
+{
+	std::string target = req.path;
+
+	size_t queryPos = target.find('?');
+	if (queryPos != std::string::npos)
+	{
+		req.query = target.substr(queryPos + 1);
+		target = target.substr(0, queryPos);
+	}
+	size_t extPos = resolveCgiExt(target, loc);
+	if (extPos != std::string::npos)
+	{
+		size_t pathInfoStart = target.find('/', extPos);
+		if (pathInfoStart != std::string::npos)
+		{
+			req.pathInfo = target.substr(pathInfoStart);
+			req.path = target.substr(0, pathInfoStart);
+			fullPath = req.path;
+			std::cout << "req.path: " << req.path << std::endl;
+			std::cout << "req.pathInfo: " << req.pathInfo << std::endl;
+			std::cout << "req.query: " << req.query << std::endl;
+			return ;
+		}
+	}
+	req.path = target;
+	// fullPath = req.path;
+}
+
 void Server::handleGetRequest(HttpRequest &req, HttpResponce &resp, Client &client)
 {
 	ServerConfig *server = client.getConfig();
@@ -218,10 +263,10 @@ void Server::handleGetRequest(HttpRequest &req, HttpResponce &resp, Client &clie
 		return buildError(resp, 404, server);
 
 	// check method
-	std::cout << "Location: " << location->getPath() << std::endl;
+	// std::cout << "Location: " << location->getPath() << std::endl;
 	if (!isMethodAllowed(req.method, location))
 	{
-		std::cout << "[handleGetRequest] method not allowed" << std::endl;
+		// std::cout << "[handleGetRequest] method not allowed" << std::endl;
 		return buildError(resp, 405, server);
 	}
 
@@ -232,7 +277,7 @@ void Server::handleGetRequest(HttpRequest &req, HttpResponce &resp, Client &clie
 	// figure out filesystem path
 	// std::cout << "req.path: " << req.path << std::endl;
 	std::string fullPath = buildFullPath(location, server, req.path); // MAKE IT CORRECTLY
-	std::cout << "[handleGetRequest] fullPath: " << fullPath << std::endl;
+	// std::cout << "[handleGetRequest] fullPath: " << fullPath << std::endl;
 
 	// get root path from location (if it's empty, get it from server)
 	std::string root = location->getRoot();
@@ -243,10 +288,11 @@ void Server::handleGetRequest(HttpRequest &req, HttpResponce &resp, Client &clie
 
 	// parse: /cgi/python/showenv.py/data/comment?userinfo=hello if token has '?', than it's a query, not the part of path 
 	// CGI part
+	splitPathAndQuery(req, fullPath, location);
 	if (location->isCgi(fullPath))
 		return handleCGI(req, resp, client);
-	
-	std::cout << "req.path: " << req.path << std::endl;
+	// std::cout << "fullPath: " << fullPath << std::endl;
+	// std::cout << "req.path: " << req.path << std::endl;
 	// proccessing file/directory
 	serveFileOrDirectory(fullPath, req, resp, location, server);
 }
@@ -283,8 +329,9 @@ void Server::handlePostRequest(HttpRequest &req, HttpResponce &resp, Client &cli
 	}
 	
 	// figure out filesystem path
+	// std::cout << "Location: " << location->getPath() << std::endl;
 	std::string fullPath = buildFullPath(location, server, req.path);
-	std::cout << "[handlePostRequest] fullPath: " << fullPath << std::endl;
+	// std::cout << "[handlePostRequest] fullPath: " << fullPath << std::endl;
 
 	std::string root = location->getRoot();
 	if (root.empty())
@@ -292,6 +339,7 @@ void Server::handlePostRequest(HttpRequest &req, HttpResponce &resp, Client &cli
 	if (!isPathSafe(fullPath, root))
 		return buildError(resp, 404, server);
 
+	// PARSE QUERY STRING
 	if (location->isCgi(fullPath))
 		return handleCGI(req, resp, client);
 
@@ -321,6 +369,7 @@ void Server::handlePostRequest(HttpRequest &req, HttpResponce &resp, Client &cli
 
 	// build the responce
 	resp.setStatus(201, "Created");
+	// resp.setHeader("Server", client.getConfig()->getServerName());
 	resp.setHeader("Content-Type", "text/html");
 	std::stringstream body;
 	body << "<html><body>"
@@ -340,7 +389,7 @@ void Server::handleDeleteRequest(HttpRequest &req, HttpResponce &resp, Client &c
 	
 	if (!isMethodAllowed(req.method, location))
 		return buildError(resp, 405, server);
-	
+	// std::cout << "Location: " << location->getPath() << std::endl;
 	std::string fullPath = buildFullPath(location, server, req.path);
 	
 	std::string root = location->getRoot();
@@ -348,12 +397,17 @@ void Server::handleDeleteRequest(HttpRequest &req, HttpResponce &resp, Client &c
 		root = server->getRoot();
 	if (!isPathSafe(fullPath, root))
 		return buildError(resp, 403, server);
+
+	std::cout << "Fullpath: " << fullPath << std::endl;
 	
+	// PARSE QUERY
+	if (location->isCgi(fullPath))
+		return handleCGI(req, resp, client);
+
 	if (!fileExists(fullPath))
 		return buildError(resp, 404, server);
 	
 	struct stat st;
-	std::cout << "Fullpath: " << fullPath << std::endl;
 	if (stat(fullPath.c_str(), &st) == -1)
 		return buildError(resp, 500, server);
 	
@@ -365,11 +419,14 @@ void Server::handleDeleteRequest(HttpRequest &req, HttpResponce &resp, Client &c
 	
 	if (status != 0)
 	{
+		if (errno == ENOTEMPTY || errno == EEXIST) // if dir is not empty
+			return buildError(resp, 403, server);
 		std::cerr << "Failed to delete " << fullPath << ": " << strerror(errno) << std::endl;
 		return buildError(resp, 500, server);
 	}
 
 	resp.setStatus(204, "No Content");
+	// resp.setHeader("Server", client.getConfig()->getServerName());
 	resp.setBody("");
 }
 
@@ -409,6 +466,8 @@ void Server::handleClient(Client &client)
 	HttpResponce resp;
 	std::string headerPart;
 
+	resp.setServerName(client.getConfig()->getServerName());
+
 	size_t pos = buf.find("\r\n\r\n");
 	if (pos != std::string::npos)
 	{
@@ -437,15 +496,12 @@ void Server::handleClient(Client &client)
 			else if (req.method == "DELETE" && !req.errorCode)
 			{
 				handleDeleteRequest(req, resp, client);
-				// resp.setStatus(200, "OK");
-				// resp.setBody("<html><body><h1>Element Removed!</h1></body></html>");
-				// resp.setHeader("Content-Type", "text/html");
 			}
 			else // error
 			{
 				resp.setStatus(405, "Method Not Allowed");
-				resp.setBody("<html><body><h1>Method Not Allowed</h1></body></html>");
 				resp.setHeader("Content-Type", "text/html");
+				resp.setBody("<html><body><h1>Method Not Allowed</h1></body></html>");
 			}
 			std::string responceMessage = resp.serialize(req);
 			client.appendToWriteBuffer(responceMessage);
@@ -472,7 +528,8 @@ void Server::handleCGI(HttpRequest &req, HttpResponce &resp, Client &client)
 	(void)req;
 	(void)client;
 	resp.setStatus(200, "OK");
-	resp.setHeader("Content-Length", "text/plain");
+	// resp.setHeader("Server", client.getConfig()->getServerName());
+	resp.setHeader("Content-Type", "text/plain");
 	resp.setBody("CGI stub responce\n");
 }
 

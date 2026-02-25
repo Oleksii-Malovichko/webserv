@@ -1,0 +1,1144 @@
+Webserv Test Report - Чт 26 фев 2026 00:44:44 CET
+
+===== Test: GET method =====
+CURL Command: curl -s -i http://localhost:8080/
+Response (exit code: 0):
+HTTP/1.1 200 OK
+Server: guuug.com
+Content-Length: 595
+Content-Type: text/html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>The Webserv</title>
+	<style>
+		body { font-family: Arial, Helvetica, sans-serif; text-align: center; margin-top: 50px; }
+		h1 { color: #2c3e50; }
+		p { color: #34495e; }
+	</style>
+</head>
+<body>
+	<h1>Welcome to The Webserv!</h1>
+	<p>This is the home page served by my C++ 11 HTTP server.</p>
+	<p>Try uploading files, accessing /cgi-bin, or visiting non-existent pages to test error handling :)</p>
+	<p><a href="/dir">Go to /dir</a></p>
+</body>
+</html>
+
+===== Test: GET method fail =====
+CURL Command: curl -s -i http://localhost:8080/assets
+Response (exit code: 0):
+HTTP/1.1 403 Forbidden
+Server: guuug.com
+Content-Length: 22
+Content-Type: text/html
+
+<h1>403 Forbidden</h1>
+
+===== Test: PUT method =====
+CURL Command: curl -s -i -X PUT http://localhost:8080/putfile
+Response (exit code: 0):
+HTTP/1.1 501 Error
+Server: guuug.com
+Content-Length: 106
+Content-Type: text/html
+
+<html>
+<head><title>501 Error</title></head>
+<body>
+<h1>501 Error</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: POST chunked upload (.txt file) =====
+CURL Command: curl -s -i -X POST -F file=@Makefile;type=text/plain -H Transfer-Encoding: chunked http://localhost:8080/upload
+Response (exit code: 0):
+HTTP/1.1 201 Created
+Server: guuug.com
+Content-Length: 61
+Content-Type: text/html
+
+<html><body><h1>File uploaded succesfully!</h1></body></html>
+
+===== Test: Same ip and port, different servername: webserv.com =====
+CURL Command: curl -s -i http://localhost:8080/ -H Host: webserv.com
+Response (exit code: 0):
+HTTP/1.1 200 OK
+Server: guuug.com
+Content-Length: 595
+Content-Type: text/html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>The Webserv</title>
+	<style>
+		body { font-family: Arial, Helvetica, sans-serif; text-align: center; margin-top: 50px; }
+		h1 { color: #2c3e50; }
+		p { color: #34495e; }
+	</style>
+</head>
+<body>
+	<h1>Welcome to The Webserv!</h1>
+	<p>This is the home page served by my C++ 11 HTTP server.</p>
+	<p>Try uploading files, accessing /cgi-bin, or visiting non-existent pages to test error handling :)</p>
+	<p><a href="/dir">Go to /dir</a></p>
+</body>
+</html>
+
+===== Test: Same ip and port, different servername: portfolio.com =====
+CURL Command: curl -s -i http://localhost:8080/ -H Host: portfolio.com
+Response (exit code: 0):
+HTTP/1.1 200 OK
+Server: guuug.com
+Content-Length: 595
+Content-Type: text/html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>The Webserv</title>
+	<style>
+		body { font-family: Arial, Helvetica, sans-serif; text-align: center; margin-top: 50px; }
+		h1 { color: #2c3e50; }
+		p { color: #34495e; }
+	</style>
+</head>
+<body>
+	<h1>Welcome to The Webserv!</h1>
+	<p>This is the home page served by my C++ 11 HTTP server.</p>
+	<p>Try uploading files, accessing /cgi-bin, or visiting non-existent pages to test error handling :)</p>
+	<p><a href="/dir">Go to /dir</a></p>
+</body>
+</html>
+
+===== Test: Missing Host Header =====
+Raw request sent:
+GET / HTTP/1.1
+
+
+Response received:
+HTTP/1.1 400 Bad Request
+Server: guuug.com
+Content-Length: 118
+Content-Type: text/html
+
+<html>
+<head><title>400 Bad Request</title></head>
+<body>
+<h1>400 Bad Request</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: Illegal HTTP Method =====
+Raw request sent:
+FORK / HTTP/1.1
+Host: localhost
+
+
+Response received:
+HTTP/1.1 501 Error
+Server: guuug.com
+Content-Length: 106
+Content-Type: text/html
+
+<html>
+<head><title>501 Error</title></head>
+<body>
+<h1>501 Error</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: Bad HTTP Version =====
+Raw request sent:
+GET / HTTP/2.0
+Host: localhost
+
+
+Response received:
+HTTP/2.0 505 HTTP Version Not Supported
+Server: guuug.com
+Content-Length: 148
+Content-Type: text/html
+
+<html>
+<head><title>505 HTTP Version Not Supported</title></head>
+<body>
+<h1>505 HTTP Version Not Supported</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: Missing CRLF =====
+Raw request sent:
+GET / HTTP/1.1Host: localhost
+
+
+Response received:
+HTTP/1.1 400 Bad Request
+Server: guuug.com
+Content-Length: 118
+Content-Type: text/html
+
+<html>
+<head><title>400 Bad Request</title></head>
+<body>
+<h1>400 Bad Request</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: Garbage Request =====
+Raw request sent:
+😈😈😈😈😈😈
+
+
+Response received:
+HTTP/1.1 400 Bad Request
+Server: guuug.com
+Content-Length: 118
+Content-Type: text/html
+
+<html>
+<head><title>400 Bad Request</title></head>
+<body>
+<h1>400 Bad Request</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: bad request uri . =====
+Raw request sent:
+GET . HTTP/1.1
+Host: localhost
+
+
+Response received:
+HTTP/1.1 400 Bad Request
+Server: guuug.com
+Content-Length: 118
+Content-Type: text/html
+
+<html>
+<head><title>400 Bad Request</title></head>
+<body>
+<h1>400 Bad Request</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: bad request uri not start with / =====
+Raw request sent:
+GET index.html HTTP/1.1
+Host: localhost
+
+
+Response received:
+HTTP/1.1 400 Bad Request
+Server: guuug.com
+Content-Length: 118
+Content-Type: text/html
+
+<html>
+<head><title>400 Bad Request</title></head>
+<body>
+<h1>400 Bad Request</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: bad HTTP first line =====
+Raw request sent:
+GET POST / HTTP/1.1
+Host: localhost
+
+
+Response received:
+HTTP/1.1 400 Bad Request
+Server: guuug.com
+Content-Length: 118
+Content-Type: text/html
+
+<html>
+<head><title>400 Bad Request</title></head>
+<body>
+<h1>400 Bad Request</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: HTTP full url without port =====
+Raw request sent:
+GET / HTTP/1.1
+Host: localhost
+
+
+Response received:
+HTTP/1.1 200 OK
+Server: guuug.com
+Content-Length: 595
+Content-Type: text/html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>The Webserv</title>
+	<style>
+		body { font-family: Arial, Helvetica, sans-serif; text-align: center; margin-top: 50px; }
+		h1 { color: #2c3e50; }
+		p { color: #34495e; }
+	</style>
+</head>
+<body>
+	<h1>Welcome to The Webserv!</h1>
+	<p>This is the home page served by my C++ 11 HTTP server.</p>
+	<p>Try uploading files, accessing /cgi-bin, or visiting non-existent pages to test error handling :)</p>
+	<p><a href="/dir">Go to /dir</a></p>
+</body>
+</html>
+
+===== Test: HTTP full url with port =====
+Raw request sent:
+GET / HTTP/1.1
+Host: localhost:8080
+
+
+Response received:
+HTTP/1.1 200 OK
+Server: guuug.com
+Content-Length: 595
+Content-Type: text/html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>The Webserv</title>
+	<style>
+		body { font-family: Arial, Helvetica, sans-serif; text-align: center; margin-top: 50px; }
+		h1 { color: #2c3e50; }
+		p { color: #34495e; }
+	</style>
+</head>
+<body>
+	<h1>Welcome to The Webserv!</h1>
+	<p>This is the home page served by my C++ 11 HTTP server.</p>
+	<p>Try uploading files, accessing /cgi-bin, or visiting non-existent pages to test error handling :)</p>
+	<p><a href="/dir">Go to /dir</a></p>
+</body>
+</html>
+
+===== Test: HTTP full url not patch =====
+Raw request sent:
+GET http://localhost:8080/ HTTP/1.1
+Host: localhost
+
+
+Response received:
+HTTP/1.1 400 Bad Request
+Server: guuug.com
+Content-Length: 118
+Content-Type: text/html
+
+<html>
+<head><title>400 Bad Request</title></head>
+<body>
+<h1>400 Bad Request</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: GET HTTP Method with body =====
+Raw request sent:
+GET / HTTP/1.1
+Host: localhost
+
+shuai
+Response received:
+HTTP/1.1 200 OK
+Server: guuug.com
+Content-Length: 595
+Content-Type: text/html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>The Webserv</title>
+	<style>
+		body { font-family: Arial, Helvetica, sans-serif; text-align: center; margin-top: 50px; }
+		h1 { color: #2c3e50; }
+		p { color: #34495e; }
+	</style>
+</head>
+<body>
+	<h1>Welcome to The Webserv!</h1>
+	<p>This is the home page served by my C++ 11 HTTP server.</p>
+	<p>Try uploading files, accessing /cgi-bin, or visiting non-existent pages to test error handling :)</p>
+	<p><a href="/dir">Go to /dir</a></p>
+</body>
+</html>
+
+===== Test: GET HTTP Method with invalid uri =====
+Raw request sent:
+GET /Hello World HTTP/1.1
+Host: localhost
+
+
+Response received:
+HTTP/1.1 400 Bad Request
+Server: guuug.com
+Content-Length: 118
+Content-Type: text/html
+
+<html>
+<head><title>400 Bad Request</title></head>
+<body>
+<h1>400 Bad Request</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: POST without content-length or chunked =====
+Raw request sent:
+POST /cgi-bin/showbody.php HTTP/1.1
+Host: localhost
+
+shuai
+Response received:
+HTTP/1.1 411 Error
+Server: guuug.com
+Content-Length: 106
+Content-Type: text/html
+
+<html>
+<head><title>411 Error</title></head>
+<body>
+<h1>411 Error</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: POST with both content-length and chunked =====
+Raw request sent:
+POST /cgi-bin/showbody.php HTTP/1.1
+Host: localhost
+Content-Length: 5
+Transfer-Encoding: chunked
+
+shuai
+Response received:
+HTTP/1.1 400 Bad Request
+Server: guuug.com
+Content-Length: 118
+Content-Type: text/html
+
+<html>
+<head><title>400 Bad Request</title></head>
+<body>
+<h1>400 Bad Request</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: POST with exact content-length =====
+Raw request sent:
+POST /cgi-bin/showbody.php HTTP/1.1
+Host: localhost
+Content-Length: 5
+
+shuai
+Response received:
+HTTP/1.1 200 OK
+Server: guuug.com
+Content-Length: 18
+Content-Type: text/plain
+
+CGI stub responce
+
+===== Test: POST without /upload =====
+Raw request sent:
+POST /check HTTP/1.1
+Host: localhost
+Content-Length: 5
+
+shuai
+Response received:
+HTTP/1.1 403 Forbidden
+Server: guuug.com
+Content-Length: 114
+Content-Type: text/html
+
+<html>
+<head><title>403 Forbidden</title></head>
+<body>
+<h1>403 Forbidden</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: POST with content-length too short =====
+Raw request sent:
+POST /cgi-bin/showbody.php HTTP/1.1
+Host: localhost
+Content-Length: 2
+
+shuai
+Response received:
+HTTP/1.1 200 OK
+Server: guuug.com
+Content-Length: 18
+Content-Type: text/plain
+
+CGI stub responce
+
+===== Test: POST with content-length larger than max size =====
+Raw request sent:
+POST /cgi-bin/showbody.php HTTP/1.1
+Host: localhost
+Content-Length: 2000000
+
+shuai
+Response received:
+HTTP/1.1 413 Payload Too Large
+Server: guuug.com
+Content-Length: 130
+Content-Type: text/html
+
+<html>
+<head><title>413 Payload Too Large</title></head>
+<body>
+<h1>413 Payload Too Large</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: POST with content-length larger than max size, overflow =====
+Raw request sent:
+POST /cgi-bin/showbody.php HTTP/1.1
+Host: localhost
+Content-Length: 2147483648
+
+shuai
+Response received:
+HTTP/1.1 400 Bad Request
+Server: guuug.com
+Content-Length: 118
+Content-Type: text/html
+
+<html>
+<head><title>400 Bad Request</title></head>
+<body>
+<h1>400 Bad Request</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: POST with content-length 0 =====
+Raw request sent:
+POST /cgi-bin/showbody.php HTTP/1.1
+Host: localhost
+Content-Length: 0
+
+shuai
+Response received:
+HTTP/1.1 200 OK
+Server: guuug.com
+Content-Length: 18
+Content-Type: text/plain
+
+CGI stub responce
+
+===== Test: POST with content-length negative =====
+Raw request sent:
+POST /cgi-bin/showbody.php HTTP/1.1
+Host: localhost
+Content-Length: -1
+
+shuai
+Response received:
+HTTP/1.1 400 Bad Request
+Server: guuug.com
+Content-Length: 118
+Content-Type: text/html
+
+<html>
+<head><title>400 Bad Request</title></head>
+<body>
+<h1>400 Bad Request</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: POST with content-length begin with 0 =====
+Raw request sent:
+POST /cgi-bin/showbody.php HTTP/1.1
+Host: localhost
+Content-Length: 005
+
+shuai
+Response received:
+HTTP/1.1 400 Bad Request
+Server: guuug.com
+Content-Length: 118
+Content-Type: text/html
+
+<html>
+<head><title>400 Bad Request</title></head>
+<body>
+<h1>400 Bad Request</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: POST with chunked 1 =====
+Raw request sent:
+POST /cgi-bin/showbody.php HTTP/1.1
+Host: localhost
+Transfer-Encoding: chunked
+Content-Type: text/plain
+
+7
+Mozilla
+9
+Developer
+7
+Network
+0
+
+
+Response received:
+HTTP/1.1 200 OK
+Server: guuug.com
+Content-Length: 18
+Content-Type: text/plain
+
+CGI stub responce
+
+===== Test: POST with chunked 2 =====
+Raw request sent:
+POST /cgi-bin/showbody.php HTTP/1.1
+Host: localhost
+Transfer-Encoding: chunked
+Content-Type: text/plain
+
+c
+Mozilla
+; ;
+9
+Developer
+7
+Network
+0
+
+
+Response received:
+HTTP/1.1 200 OK
+Server: guuug.com
+Content-Length: 18
+Content-Type: text/plain
+
+CGI stub responce
+
+===== Test: GET /cgi/python/showenv.py, with pathinfo and querystring return autoindex =====
+Raw request sent:
+GET /cgi-bin/showbody.php/data/comment?userinfo=hello HTTP/1.1
+Host: localhost
+
+Response received:
+HTTP/1.1 200 OK
+Server: guuug.com
+Content-Length: 18
+Content-Type: text/plain
+
+CGI stub responce
+
+===== Test: GET / =====
+Raw request sent:
+GET / HTTP/1.1
+Host: localhost
+
+Response received:
+HTTP/1.1 200 OK
+Server: guuug.com
+Content-Length: 595
+Content-Type: text/html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>The Webserv</title>
+	<style>
+		body { font-family: Arial, Helvetica, sans-serif; text-align: center; margin-top: 50px; }
+		h1 { color: #2c3e50; }
+		p { color: #34495e; }
+	</style>
+</head>
+<body>
+	<h1>Welcome to The Webserv!</h1>
+	<p>This is the home page served by my C++ 11 HTTP server.</p>
+	<p>Try uploading files, accessing /cgi-bin, or visiting non-existent pages to test error handling :)</p>
+	<p><a href="/dir">Go to /dir</a></p>
+</body>
+</html>
+
+===== Test: GET /data return autoindex =====
+Raw request sent:
+GET /data HTTP/1.1
+Host: localhost
+
+Response received:
+HTTP/1.1 200 OK
+Server: guuug.com
+Content-Length: 229
+Content-Type: text/html
+
+<html><body><ul><li><a href="../">main page</a></li><li><a href="/data/file1.txt">file1.txt</a></li><li><a href="/data/file2.txt">file2.txt</a></li><li><a href="/data/upload_form.html">upload_form.html</a></li></ul></body></html>
+
+===== Test: GET /assets autoindex not allowed, return 403 =====
+Raw request sent:
+GET /assets HTTP/1.1
+Host: localhost
+
+Response received:
+HTTP/1.1 403 Forbidden
+Server: guuug.com
+Content-Length: 22
+Content-Type: text/html
+
+<h1>403 Forbidden</h1>
+
+===== Test: GET /notexist, return 404 =====
+Raw request sent:
+GET /notexist HTTP/1.1
+Host: localhost
+
+Response received:
+HTTP/1.1 404 Not Found
+Server: guuug.com
+Content-Length: 114
+Content-Type: text/html
+
+<html>
+<head><title>404 Not Found</title></head>
+<body>
+<h1>404 Not Found</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: GET /assets/notexist, return default 404 =====
+Raw request sent:
+GET /assets/notexist HTTP/1.1
+Host: localhost
+
+Response received:
+HTTP/1.1 404 Not Found
+Server: guuug.com
+Content-Length: 114
+Content-Type: text/html
+
+<html>
+<head><title>404 Not Found</title></head>
+<body>
+<h1>404 Not Found</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: GET /upload, return default 405 =====
+Raw request sent:
+GET /upload HTTP/1.1
+Host: localhost
+
+Response received:
+HTTP/1.1 405 Method Not Allowed
+Server: guuug.com
+Content-Length: 132
+Content-Type: text/html
+
+<html>
+<head><title>405 Method Not Allowed</title></head>
+<body>
+<h1>405 Method Not Allowed</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: DELETE /notexist, return default 404 =====
+Raw request sent:
+DELETE /notexist HTTP/1.1
+Host: localhost
+
+Response received:
+HTTP/1.1 404 Not Found
+Server: guuug.com
+Content-Length: 114
+Content-Type: text/html
+
+<html>
+<head><title>404 Not Found</title></head>
+<body>
+<h1>404 Not Found</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: DELETE /assets, where DELETE not allowed, return default 405 =====
+Raw request sent:
+DELETE /upload HTTP/1.1
+Host: localhost
+
+Response received:
+HTTP/1.1 405 Method Not Allowed
+Server: guuug.com
+Content-Length: 132
+Content-Type: text/html
+
+<html>
+<head><title>405 Method Not Allowed</title></head>
+<body>
+<h1>405 Method Not Allowed</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: DELETE /cgi-bin/test.php, where DELETE not allowed, return default 405 =====
+Raw request sent:
+DELETE /cgi-bin/test.php HTTP/1.1
+Host: localhost
+
+Response received:
+HTTP/1.1 405 Method Not Allowed
+Server: guuug.com
+Content-Length: 132
+Content-Type: text/html
+
+<html>
+<head><title>405 Method Not Allowed</title></head>
+<body>
+<h1>405 Method Not Allowed</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: DELETE /hello.test, return 204 =====
+Raw request sent:
+DELETE /hello.test HTTP/1.1
+Host: localhost
+
+Response received:
+HTTP/1.1 204 No Content
+Server: guuug.com
+Content-Length: 0
+
+
+===== Test: DELETE /test/, return 204 =====
+Raw request sent:
+DELETE /test/ HTTP/1.1
+Host: localhost
+
+Response received:
+HTTP/1.1 204 No Content
+Server: guuug.com
+Content-Length: 0
+
+
+===== Test: GET /redir, redirect to /data, return 301 =====
+Raw request sent:
+GET /redir HTTP/1.1
+Host: localhost
+
+Response received:
+HTTP/1.1 301 Moved Permanently
+Server: guuug.com
+Content-Length: 170
+Content-Type: text/html
+Location: /index.html
+
+<html>
+<head><title>301 Moved Permanently</title></head>
+<body>
+<h1>301 Moved Permanently</h1>
+<p>Redirecting to <a href="/index.html">/index.html</a></p>
+</body>
+</html>
+
+===== Test: GET /redirexample, redirect to google, return 308 =====
+Raw request sent:
+GET /google HTTP/1.1
+Host: localhost
+
+Response received:
+HTTP/1.1 302 Found
+Server: guuug.com
+Content-Length: 168
+Content-Type: text/html
+Location: https://www.google.com
+
+<html>
+<head><title>302 Found</title></head>
+<body>
+<h1>302 Found</h1>
+<p>Redirecting to <a href="https://www.google.com">https://www.google.com</a></p>
+</body>
+</html>
+
+===== Test: GET /a>{}, invalid uri character, return 400 =====
+Raw request sent:
+GET /a>{} HTTP/1.1
+Host: localhost
+
+Response received:
+HTTP/1.1 400 Bad Request
+Server: guuug.com
+Content-Length: 118
+Content-Type: text/html
+
+<html>
+<head><title>400 Bad Request</title></head>
+<body>
+<h1>400 Bad Request</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: GET with .. in uri, return 403 =====
+Raw request sent:
+GET /.. HTTP/1.1
+Host: localhost
+
+Response received:
+HTTP/1.1 403 Forbidden
+Server: guuug.com
+Content-Length: 114
+Content-Type: text/html
+
+<html>
+<head><title>403 Forbidden</title></head>
+<body>
+<h1>403 Forbidden</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: POST, repeat content length., return 400 =====
+Raw request sent:
+POST /upload HTTP/1.1
+Host: localhost
+Content-Length: 0
+Content-Length: 1
+
+
+Response received:
+HTTP/1.1 400 Bad Request
+Server: guuug.com
+Content-Length: 118
+Content-Type: text/html
+
+<html>
+<head><title>400 Bad Request</title></head>
+<body>
+<h1>400 Bad Request</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: POST, repeat content type., return 400 =====
+Raw request sent:
+POST /upload HTTP/1.1
+Host: localhost
+Content-Length: 0
+Content-Type: text/html
+Content-Type: text/html
+
+
+Response received:
+HTTP/1.1 400 Bad Request
+Server: guuug.com
+Content-Length: 118
+Content-Type: text/html
+
+<html>
+<head><title>400 Bad Request</title></head>
+<body>
+<h1>400 Bad Request</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: POST script not exist, return 404 =====
+Raw request sent:
+POST /cgi/python/notexist.py HTTP/1.1
+Host: localhost
+Content-Length: 0
+
+
+Response received:
+HTTP/1.1 403 Forbidden
+Server: guuug.com
+Content-Length: 114
+Content-Type: text/html
+
+<html>
+<head><title>403 Forbidden</title></head>
+<body>
+<h1>403 Forbidden</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: POST script contain error in stderr =====
+Raw request sent:
+POST /cgi/python/error.py HTTP/1.1
+Host: localhost
+Content-Length: 0
+
+
+Response received:
+HTTP/1.1 403 Forbidden
+Server: guuug.com
+Content-Length: 114
+Content-Type: text/html
+
+<html>
+<head><title>403 Forbidden</title></head>
+<body>
+<h1>403 Forbidden</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: POST script contain segmentation fault =====
+Raw request sent:
+POST /cgi/python/crash.py HTTP/1.1
+Host: localhost
+Content-Length: 0
+
+
+Response received:
+HTTP/1.1 403 Forbidden
+Server: guuug.com
+Content-Length: 114
+Content-Type: text/html
+
+<html>
+<head><title>403 Forbidden</title></head>
+<body>
+<h1>403 Forbidden</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: POST script return nothing =====
+Raw request sent:
+POST /cgi/python/empty.py HTTP/1.1
+Host: localhost
+Content-Length: 0
+
+
+Response received:
+HTTP/1.1 403 Forbidden
+Server: guuug.com
+Content-Length: 114
+Content-Type: text/html
+
+<html>
+<head><title>403 Forbidden</title></head>
+<body>
+<h1>403 Forbidden</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: POST script doesn't have content type =====
+Raw request sent:
+POST /cgi/php/wrongCgiNoContentType.php HTTP/1.1
+Host: localhost
+Content-Length: 0
+
+
+Response received:
+HTTP/1.1 403 Forbidden
+Server: guuug.com
+Content-Length: 114
+Content-Type: text/html
+
+<html>
+<head><title>403 Forbidden</title></head>
+<body>
+<h1>403 Forbidden</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
+
+===== Test: POST script have invalid head =====
+Raw request sent:
+POST /cgi/php/wrongCgiInvalidHead.php HTTP/1.1
+Host: localhost
+Content-Length: 0
+
+
+Response received:
+HTTP/1.1 403 Forbidden
+Server: guuug.com
+Content-Length: 114
+Content-Type: text/html
+
+<html>
+<head><title>403 Forbidden</title></head>
+<body>
+<h1>403 Forbidden</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>

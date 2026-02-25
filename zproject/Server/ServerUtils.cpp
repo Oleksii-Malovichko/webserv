@@ -168,17 +168,8 @@ std::string buildFullPath(const LocationConfig *loc, const ServerConfig *server,
 	std::string locationPath = loc->getPath(); // / or /upload etc.
 	std::string relativePath;
 
-	// remove prefix location from the path of request
-	// std::cout << "requestPath: " << requestPath << std::endl;
-	// if (requestPath.back() == '/')
-	// 	locationPath += '/';
-	// std::cout << "locationPath: " << locationPath << std::endl;
-	// if (loc->getMethods)
-	// if (locationPath != "/" && requestPath == locationPath)
-	// {
-	// 	size_t pos = locationPath.find_first_of('/');
-	// 	relativePath = (pos == std::string::npos) ? locationPath : locationPath.substr(pos + 1);
-	// }
+	std::cout << "requestPath: " << requestPath << std::endl;
+	std::cout << "locationPath: " << locationPath << std::endl;
 	if (requestPath.find(locationPath) == 0)
 		relativePath = requestPath.substr(locationPath.length());
 	else
@@ -282,6 +273,18 @@ void serveFileOrDirectory(const std::string& path, const HttpRequest &req, HttpR
 		serveFile(path, resp);
 	}
 }
+
+	// remove prefix location from the path of request
+	// std::cout << "requestPath: " << requestPath << std::endl;
+	// if (requestPath.back() == '/')
+	// 	locationPath += '/';
+	// std::cout << "locationPath: " << locationPath << std::endl;
+	// if (loc->getMethods)
+	// if (locationPath != "/" && requestPath == locationPath)
+	// {
+	// 	size_t pos = locationPath.find_first_of('/');
+	// 	relativePath = (pos == std::string::npos) ? locationPath : locationPath.substr(pos + 1);
+	// }
 
 
 // if (!isPathSafe(fullPath, location->getRoot()))
