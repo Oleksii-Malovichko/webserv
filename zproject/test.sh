@@ -333,18 +333,18 @@ run_nc_test "DELETE /assets, where DELETE not allowed, return default 405" \
 "DELETE /upload HTTP/1.1\r\nHost: localhost\r\n\r" \
 "405"
 
-run_nc_test "DELETE /assets/1.png, where DELETE not allowed, return default 405" \
-"DELETE /assets/1.png HTTP/1.1\r\nHost: localhost\r\n\r" \
+run_nc_test "DELETE /cgi-bin/test.php, where DELETE not allowed, return default 405" \
+"DELETE /cgi-bin/test.php HTTP/1.1\r\nHost: localhost\r\n\r" \
 "405"
 
-mkdir -p ./site/web1/
-touch ./site/web1/hello.test
+# mkdir -p ./site/web1/
+touch ./resources/www/hello.test
 run_nc_test "DELETE /hello.test, return 204" \
 "DELETE /hello.test HTTP/1.1\r\nHost: localhost\r\n\r" \
 "204"
 
 mkdir -p ./resources/www/test/
-touch ./resources/www/test/hello2.test
+# touch ./resources/www/test/hello2.test
 run_nc_test "DELETE /test/, return 204" \
 "DELETE /test HTTP/1.1\r\nHost: localhost\r\n\r" \
 "204"

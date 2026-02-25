@@ -173,6 +173,7 @@ std::string buildFullPath(const LocationConfig *loc, const ServerConfig *server,
 	// if (requestPath.back() == '/')
 	// 	locationPath += '/';
 	// std::cout << "locationPath: " << locationPath << std::endl;
+	// if (loc->getMethods)
 	// if (locationPath != "/" && requestPath == locationPath)
 	// {
 	// 	size_t pos = locationPath.find_first_of('/');

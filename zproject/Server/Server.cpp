@@ -231,8 +231,8 @@ void Server::handleGetRequest(HttpRequest &req, HttpResponce &resp, Client &clie
 	
 	// figure out filesystem path
 	// std::cout << "req.path: " << req.path << std::endl;
-	std::string fullPath = buildFullPath(location, server, req.path); // here is used the macros
-	// std::cout << "[handleGetRequest] fullPath: " << fullPath << std::endl;
+	std::string fullPath = buildFullPath(location, server, req.path); // MAKE IT CORRECTLY
+	std::cout << "[handleGetRequest] fullPath: " << fullPath << std::endl;
 
 	// get root path from location (if it's empty, get it from server)
 	std::string root = location->getRoot();
@@ -284,7 +284,7 @@ void Server::handlePostRequest(HttpRequest &req, HttpResponce &resp, Client &cli
 	
 	// figure out filesystem path
 	std::string fullPath = buildFullPath(location, server, req.path);
-	// std::cout << "[handlePostRequest] fullPath: " << fullPath << std::endl;
+	std::cout << "[handlePostRequest] fullPath: " << fullPath << std::endl;
 
 	std::string root = location->getRoot();
 	if (root.empty())
