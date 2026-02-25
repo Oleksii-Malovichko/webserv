@@ -330,7 +330,7 @@ run_nc_test "DELETE /notexist, return default 404" \
 "404"
 
 run_nc_test "DELETE /assets, where DELETE not allowed, return default 405" \
-"DELETE /assets HTTP/1.1\r\nHost: localhost\r\n\r" \
+"DELETE /upload HTTP/1.1\r\nHost: localhost\r\n\r" \
 "405"
 
 run_nc_test "DELETE /assets/1.png, where DELETE not allowed, return default 405" \
