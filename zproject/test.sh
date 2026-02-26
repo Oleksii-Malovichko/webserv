@@ -124,6 +124,8 @@ run_test "GET method" \
   "$(cat resources/www/index.html)"
 
 # test 2: simple GET method without index, autoindex
+touch ./resources/www/assets 
+chmod -r resources/www/assets
 run_test "GET method fail" \
   -s -i \
   "http://$HOST:$PORT/assets" \
@@ -298,7 +300,7 @@ c\r\nMozilla\r\n; ;\r\n9\r\nDeveloper\r\n7\r\nNetwork\r\n0\r\n\r\n" \
 echo -e "${YELLOW}\n>>>>>>>>>>>> SITE TEST <<<<<<<<<<<\n${NC}"
 
 run_nc_test "GET /cgi/python/showenv.py, with pathinfo and querystring return autoindex" \
-"GET /cgi/python/showenv.py/data/comment?userinfo=hello HTTP/1.1\r\nHost: localhost\r\n\r" \
+"GET /cgi-bin/showbody.php/data/comment?userinfo=hello HTTP/1.1\r\nHost: localhost\r\n\r" \
 "200"
 
 run_nc_test "GET /" \
@@ -309,9 +311,12 @@ run_nc_test "GET /data return autoindex" \
 "GET /data HTTP/1.1\r\nHost: localhost\r\n\r" \
 "200"
 
+# touch ./resources/www/assets
+# chmod -r ./resources/www/assets
 run_nc_test "GET /assets autoindex not allowed, return 403" \
 "GET /assets HTTP/1.1\r\nHost: localhost\r\n\r" \
 "403"
+rm -f ./resources/www/assets
 
 run_nc_test "GET /notexist, return 404" \
 "GET /notexist HTTP/1.1\r\nHost: localhost\r\n\r" \
@@ -330,23 +335,23 @@ run_nc_test "DELETE /notexist, return default 404" \
 "404"
 
 run_nc_test "DELETE /assets, where DELETE not allowed, return default 405" \
-"DELETE /assets HTTP/1.1\r\nHost: localhost\r\n\r" \
+"DELETE /upload HTTP/1.1\r\nHost: localhost\r\n\r" \
 "405"
 
-run_nc_test "DELETE /assets/1.png, where DELETE not allowed, return default 405" \
-"DELETE /assets/1.png HTTP/1.1\r\nHost: localhost\r\n\r" \
+run_nc_test "DELETE /cgi-bin/test.php, where DELETE not allowed, return default 405" \
+"DELETE /cgi-bin/test.php HTTP/1.1\r\nHost: localhost\r\n\r" \
 "405"
 
-mkdir -p ./site/web1/
-touch ./site/web1/hello.test
+# mkdir -p ./site/web1/
+touch ./resources/www/hello.test
 run_nc_test "DELETE /hello.test, return 204" \
 "DELETE /hello.test HTTP/1.1\r\nHost: localhost\r\n\r" \
 "204"
 
 mkdir -p ./resources/www/test/
-touch ./resources/www/test/hello2.test
+# touch ./resources/www/test/hello2.test
 run_nc_test "DELETE /test/, return 204" \
-"DELETE /test HTTP/1.1\r\nHost: localhost\r\n\r" \
+"DELETE /test/ HTTP/1.1\r\nHost: localhost\r\n\r" \
 "204"
 
 run_nc_test "GET /redir, redirect to /data, return 301" \

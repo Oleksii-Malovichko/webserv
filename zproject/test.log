@@ -1,10 +1,10 @@
-Webserv Test Report - Tue Feb 24 08:27:34 PM CET 2026
+Webserv Test Report - Чт 26 фев 2026 00:44:44 CET
 
 ===== Test: GET method =====
 CURL Command: curl -s -i http://localhost:8080/
 Response (exit code: 0):
 HTTP/1.1 200 OK
-Content-Type: 
+Server: guuug.com
 Content-Length: 595
 Content-Type: text/html
 
@@ -31,25 +31,18 @@ Content-Type: text/html
 ===== Test: GET method fail =====
 CURL Command: curl -s -i http://localhost:8080/assets
 Response (exit code: 0):
-HTTP/1.1 404 Not Found
-Content-Type: 
-Content-Length: 114
+HTTP/1.1 403 Forbidden
+Server: guuug.com
+Content-Length: 22
 Content-Type: text/html
 
-<html>
-<head><title>404 Not Found</title></head>
-<body>
-<h1>404 Not Found</h1>
-<hr>
-<p>webserv</p>
-</body>
-</html>
+<h1>403 Forbidden</h1>
 
 ===== Test: PUT method =====
 CURL Command: curl -s -i -X PUT http://localhost:8080/putfile
 Response (exit code: 0):
 HTTP/1.1 501 Error
-Content-Type: 
+Server: guuug.com
 Content-Length: 106
 Content-Type: text/html
 
@@ -66,7 +59,7 @@ Content-Type: text/html
 CURL Command: curl -s -i -X POST -F file=@Makefile;type=text/plain -H Transfer-Encoding: chunked http://localhost:8080/upload
 Response (exit code: 0):
 HTTP/1.1 201 Created
-Content-Type: 
+Server: guuug.com
 Content-Length: 61
 Content-Type: text/html
 
@@ -76,7 +69,7 @@ Content-Type: text/html
 CURL Command: curl -s -i http://localhost:8080/ -H Host: webserv.com
 Response (exit code: 0):
 HTTP/1.1 200 OK
-Content-Type: 
+Server: guuug.com
 Content-Length: 595
 Content-Type: text/html
 
@@ -104,7 +97,7 @@ Content-Type: text/html
 CURL Command: curl -s -i http://localhost:8080/ -H Host: portfolio.com
 Response (exit code: 0):
 HTTP/1.1 200 OK
-Content-Type: 
+Server: guuug.com
 Content-Length: 595
 Content-Type: text/html
 
@@ -135,7 +128,7 @@ GET / HTTP/1.1
 
 Response received:
 HTTP/1.1 400 Bad Request
-Content-Type: 
+Server: guuug.com
 Content-Length: 118
 Content-Type: text/html
 
@@ -156,7 +149,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 501 Error
-Content-Type: 
+Server: guuug.com
 Content-Length: 106
 Content-Type: text/html
 
@@ -177,7 +170,7 @@ Host: localhost
 
 Response received:
 HTTP/2.0 505 HTTP Version Not Supported
-Content-Type: 
+Server: guuug.com
 Content-Length: 148
 Content-Type: text/html
 
@@ -197,7 +190,7 @@ GET / HTTP/1.1Host: localhost
 
 Response received:
 HTTP/1.1 400 Bad Request
-Content-Type: 
+Server: guuug.com
 Content-Length: 118
 Content-Type: text/html
 
@@ -217,7 +210,7 @@ Raw request sent:
 
 Response received:
 HTTP/1.1 400 Bad Request
-Content-Type: 
+Server: guuug.com
 Content-Length: 118
 Content-Type: text/html
 
@@ -238,7 +231,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 400 Bad Request
-Content-Type: 
+Server: guuug.com
 Content-Length: 118
 Content-Type: text/html
 
@@ -259,7 +252,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 400 Bad Request
-Content-Type: 
+Server: guuug.com
 Content-Length: 118
 Content-Type: text/html
 
@@ -280,7 +273,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 400 Bad Request
-Content-Type: 
+Server: guuug.com
 Content-Length: 118
 Content-Type: text/html
 
@@ -301,7 +294,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 200 OK
-Content-Type: 
+Server: guuug.com
 Content-Length: 595
 Content-Type: text/html
 
@@ -333,7 +326,7 @@ Host: localhost:8080
 
 Response received:
 HTTP/1.1 200 OK
-Content-Type: 
+Server: guuug.com
 Content-Length: 595
 Content-Type: text/html
 
@@ -365,7 +358,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 400 Bad Request
-Content-Type: 
+Server: guuug.com
 Content-Length: 118
 Content-Type: text/html
 
@@ -386,7 +379,7 @@ Host: localhost
 shuai
 Response received:
 HTTP/1.1 200 OK
-Content-Type: 
+Server: guuug.com
 Content-Length: 595
 Content-Type: text/html
 
@@ -418,7 +411,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 400 Bad Request
-Content-Type: 
+Server: guuug.com
 Content-Length: 118
 Content-Type: text/html
 
@@ -439,7 +432,7 @@ Host: localhost
 shuai
 Response received:
 HTTP/1.1 411 Error
-Content-Type: 
+Server: guuug.com
 Content-Length: 106
 Content-Type: text/html
 
@@ -462,7 +455,7 @@ Transfer-Encoding: chunked
 shuai
 Response received:
 HTTP/1.1 400 Bad Request
-Content-Type: 
+Server: guuug.com
 Content-Length: 118
 Content-Type: text/html
 
@@ -484,9 +477,9 @@ Content-Length: 5
 shuai
 Response received:
 HTTP/1.1 200 OK
-Content-Type: 
+Server: guuug.com
 Content-Length: 18
-Content-Length: text/plain
+Content-Type: text/plain
 
 CGI stub responce
 
@@ -499,7 +492,7 @@ Content-Length: 5
 shuai
 Response received:
 HTTP/1.1 403 Forbidden
-Content-Type: 
+Server: guuug.com
 Content-Length: 114
 Content-Type: text/html
 
@@ -521,9 +514,9 @@ Content-Length: 2
 shuai
 Response received:
 HTTP/1.1 200 OK
-Content-Type: 
+Server: guuug.com
 Content-Length: 18
-Content-Length: text/plain
+Content-Type: text/plain
 
 CGI stub responce
 
@@ -536,7 +529,7 @@ Content-Length: 2000000
 shuai
 Response received:
 HTTP/1.1 413 Payload Too Large
-Content-Type: 
+Server: guuug.com
 Content-Length: 130
 Content-Type: text/html
 
@@ -558,7 +551,7 @@ Content-Length: 2147483648
 shuai
 Response received:
 HTTP/1.1 400 Bad Request
-Content-Type: 
+Server: guuug.com
 Content-Length: 118
 Content-Type: text/html
 
@@ -580,9 +573,9 @@ Content-Length: 0
 shuai
 Response received:
 HTTP/1.1 200 OK
-Content-Type: 
+Server: guuug.com
 Content-Length: 18
-Content-Length: text/plain
+Content-Type: text/plain
 
 CGI stub responce
 
@@ -595,7 +588,7 @@ Content-Length: -1
 shuai
 Response received:
 HTTP/1.1 400 Bad Request
-Content-Type: 
+Server: guuug.com
 Content-Length: 118
 Content-Type: text/html
 
@@ -617,7 +610,7 @@ Content-Length: 005
 shuai
 Response received:
 HTTP/1.1 400 Bad Request
-Content-Type: 
+Server: guuug.com
 Content-Length: 118
 Content-Type: text/html
 
@@ -648,9 +641,9 @@ Network
 
 Response received:
 HTTP/1.1 200 OK
-Content-Type: 
+Server: guuug.com
 Content-Length: 18
-Content-Length: text/plain
+Content-Type: text/plain
 
 CGI stub responce
 
@@ -673,31 +666,24 @@ Network
 
 Response received:
 HTTP/1.1 200 OK
-Content-Type: 
+Server: guuug.com
 Content-Length: 18
-Content-Length: text/plain
+Content-Type: text/plain
 
 CGI stub responce
 
 ===== Test: GET /cgi/python/showenv.py, with pathinfo and querystring return autoindex =====
 Raw request sent:
-GET /cgi/python/showenv.py/data/comment?userinfo=hello HTTP/1.1
+GET /cgi-bin/showbody.php/data/comment?userinfo=hello HTTP/1.1
 Host: localhost
 
 Response received:
-HTTP/1.1 404 Not Found
-Content-Type: 
-Content-Length: 114
-Content-Type: text/html
+HTTP/1.1 200 OK
+Server: guuug.com
+Content-Length: 18
+Content-Type: text/plain
 
-<html>
-<head><title>404 Not Found</title></head>
-<body>
-<h1>404 Not Found</h1>
-<hr>
-<p>webserv</p>
-</body>
-</html>
+CGI stub responce
 
 ===== Test: GET / =====
 Raw request sent:
@@ -706,7 +692,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 200 OK
-Content-Type: 
+Server: guuug.com
 Content-Length: 595
 Content-Type: text/html
 
@@ -736,9 +722,9 @@ GET /data HTTP/1.1
 Host: localhost
 
 Response received:
-HTTP/1.1 404 Not Found
-Content-Type: 
-Content-Length: 114
+HTTP/1.1 200 OK
+Server: guuug.com
+Content-Length: 229
 Content-Type: text/html
 
 <html><body><ul><li><a href="../">main page</a></li><li><a href="/data/file1.txt">file1.txt</a></li><li><a href="/data/file2.txt">file2.txt</a></li><li><a href="/data/upload_form.html">upload_form.html</a></li></ul></body></html>
@@ -749,19 +735,12 @@ GET /assets HTTP/1.1
 Host: localhost
 
 Response received:
-HTTP/1.1 404 Not Found
-Content-Type: 
-Content-Length: 114
+HTTP/1.1 403 Forbidden
+Server: guuug.com
+Content-Length: 22
 Content-Type: text/html
 
-<html>
-<head><title>404 Not Found</title></head>
-<body>
-<h1>404 Not Found</h1>
-<hr>
-<p>webserv</p>
-</body>
-</html>
+<h1>403 Forbidden</h1>
 
 ===== Test: GET /notexist, return 404 =====
 Raw request sent:
@@ -770,7 +749,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 404 Not Found
-Content-Type: 
+Server: guuug.com
 Content-Length: 114
 Content-Type: text/html
 
@@ -790,7 +769,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 404 Not Found
-Content-Type: 
+Server: guuug.com
 Content-Length: 114
 Content-Type: text/html
 
@@ -809,9 +788,9 @@ GET /upload HTTP/1.1
 Host: localhost
 
 Response received:
-HTTP/1.1 404 Not Found
-Content-Type: 
-Content-Length: 114
+HTTP/1.1 405 Method Not Allowed
+Server: guuug.com
+Content-Length: 132
 Content-Type: text/html
 
 <html>
@@ -829,9 +808,9 @@ DELETE /notexist HTTP/1.1
 Host: localhost
 
 Response received:
-HTTP/1.1 200 OK
-Content-Type: 
-Content-Length: 51
+HTTP/1.1 404 Not Found
+Server: guuug.com
+Content-Length: 114
 Content-Type: text/html
 
 <html>
@@ -845,35 +824,43 @@ Content-Type: text/html
 
 ===== Test: DELETE /assets, where DELETE not allowed, return default 405 =====
 Raw request sent:
-DELETE /assets HTTP/1.1
+DELETE /upload HTTP/1.1
 Host: localhost
 
 Response received:
-HTTP/1.1 200 OK
-Content-Type: 
-Content-Length: 51
+HTTP/1.1 405 Method Not Allowed
+Server: guuug.com
+Content-Length: 132
 Content-Type: text/html
 
 <html>
-<head><title>500 Internal Server Error</title></head>
+<head><title>405 Method Not Allowed</title></head>
 <body>
-<h1>500 Internal Server Error</h1>
+<h1>405 Method Not Allowed</h1>
 <hr>
 <p>webserv</p>
 </body>
 </html>
 
-===== Test: DELETE /assets/1.png, where DELETE not allowed, return default 405 =====
+===== Test: DELETE /cgi-bin/test.php, where DELETE not allowed, return default 405 =====
 Raw request sent:
-DELETE /assets/1.png HTTP/1.1
+DELETE /cgi-bin/test.php HTTP/1.1
 Host: localhost
 
 Response received:
-HTTP/1.1 200 OK
-Content-Type: 
-Content-Length: 51
+HTTP/1.1 405 Method Not Allowed
+Server: guuug.com
+Content-Length: 132
 Content-Type: text/html
 
+<html>
+<head><title>405 Method Not Allowed</title></head>
+<body>
+<h1>405 Method Not Allowed</h1>
+<hr>
+<p>webserv</p>
+</body>
+</html>
 
 ===== Test: DELETE /hello.test, return 204 =====
 Raw request sent:
@@ -907,19 +894,10 @@ GET /redir HTTP/1.1
 Host: localhost
 
 Response received:
-HTTP/1.1 404 Not Found
-Content-Type: 
-Content-Length: 114
-Content-Type: text/html
+HTTP/1.1 204 No Content
+Server: guuug.com
+Content-Length: 0
 
-<html>
-<head><title>404 Not Found</title></head>
-<body>
-<h1>404 Not Found</h1>
-<hr>
-<p>webserv</p>
-</body>
-</html>
 
 ===== Test: DELETE /test/, return 204 =====
 Raw request sent:
@@ -927,19 +905,10 @@ DELETE /test/ HTTP/1.1
 Host: localhost
 
 Response received:
-HTTP/1.1 404 Not Found
-Content-Type: 
-Content-Length: 114
-Content-Type: text/html
+HTTP/1.1 204 No Content
+Server: guuug.com
+Content-Length: 0
 
-<html>
-<head><title>500 Internal Server Error</title></head>
-<body>
-<h1>500 Internal Server Error</h1>
-<hr>
-<p>webserv</p>
-</body>
-</html>
 
 ===== Test: GET /redir, redirect to /data, return 301 =====
 Raw request sent:
@@ -948,6 +917,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 301 Moved Permanently
+Server: guuug.com
 Content-Length: 170
 Content-Type: text/html
 Location: /index.html
@@ -967,6 +937,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 302 Found
+Server: guuug.com
 Content-Length: 168
 Content-Type: text/html
 Location: https://www.google.com
@@ -985,9 +956,9 @@ GET /a>{} HTTP/1.1
 Host: localhost
 
 Response received:
-HTTP/1.1 404 Not Found
-Content-Type: 
-Content-Length: 114
+HTTP/1.1 400 Bad Request
+Server: guuug.com
+Content-Length: 118
 Content-Type: text/html
 
 <html>
@@ -1006,7 +977,7 @@ Host: localhost
 
 Response received:
 HTTP/1.1 403 Forbidden
-Content-Type: 
+Server: guuug.com
 Content-Length: 114
 Content-Type: text/html
 
@@ -1028,9 +999,9 @@ Content-Length: 1
 
 
 Response received:
-HTTP/1.1 201 Created
-Content-Type: 
-Content-Length: 61
+HTTP/1.1 400 Bad Request
+Server: guuug.com
+Content-Length: 118
 Content-Type: text/html
 
 <html>
@@ -1052,9 +1023,9 @@ Content-Type: text/html
 
 
 Response received:
-HTTP/1.1 201 Created
-Content-Type: 
-Content-Length: 61
+HTTP/1.1 400 Bad Request
+Server: guuug.com
+Content-Length: 118
 Content-Type: text/html
 
 <html>
@@ -1075,7 +1046,7 @@ Content-Length: 0
 
 Response received:
 HTTP/1.1 403 Forbidden
-Content-Type: 
+Server: guuug.com
 Content-Length: 114
 Content-Type: text/html
 
@@ -1097,7 +1068,7 @@ Content-Length: 0
 
 Response received:
 HTTP/1.1 403 Forbidden
-Content-Type: 
+Server: guuug.com
 Content-Length: 114
 Content-Type: text/html
 
@@ -1119,7 +1090,7 @@ Content-Length: 0
 
 Response received:
 HTTP/1.1 403 Forbidden
-Content-Type: 
+Server: guuug.com
 Content-Length: 114
 Content-Type: text/html
 
@@ -1141,7 +1112,7 @@ Content-Length: 0
 
 Response received:
 HTTP/1.1 403 Forbidden
-Content-Type: 
+Server: guuug.com
 Content-Length: 114
 Content-Type: text/html
 
@@ -1163,7 +1134,7 @@ Content-Length: 0
 
 Response received:
 HTTP/1.1 403 Forbidden
-Content-Type: 
+Server: guuug.com
 Content-Length: 114
 Content-Type: text/html
 
@@ -1185,7 +1156,7 @@ Content-Length: 0
 
 Response received:
 HTTP/1.1 403 Forbidden
-Content-Type: 
+Server: guuug.com
 Content-Length: 114
 Content-Type: text/html
 

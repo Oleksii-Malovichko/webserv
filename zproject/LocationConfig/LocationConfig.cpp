@@ -8,41 +8,74 @@ LocationConfig::LocationConfig()
 	this->upload_dir = "";
 	this->auto_index = false;
 	this->index = "index.html";
+	this->redirect_enable = 0;
+	this->redirect_code = 0;
+	this->redirect_url = "";
+
+	this->hasPath = 0;
+	this->hasRoot = 0;
+	this->hasIndex = 0;
+	this->hasUpload = 0;
+	this->hasUploadDir = 0;
+	this->hasAutoIndex = 0;
+	this->hasRedirectBool = 0;
+	this->hasMethods = 0;
 }
 
 void LocationConfig::setPath(const std::string &p)
 {
+	if (hasPath)
+		throw std::runtime_error("Duplicate path directive in location");
 	this->path = p;
+	hasPath = 1;
 }
 
 void LocationConfig::setRoot(const std::string &r)
 {
+	if (hasRoot)
+		throw std::runtime_error("Duplicate root directive in location");
 	this->root = r;
+	hasRoot = 1;
 }
 
 void LocationConfig::setMethods(const std::vector<std::string> &m)
 {
+	if (hasMethods)
+		throw std::runtime_error("Duplicate methods directive in location");
 	this->methods = m;
+	hasMethods = 1;
 }
 
 void LocationConfig::setUploadDir(const std::string &dir)
 {
+	if (hasUploadDir)
+		throw std::runtime_error("Duplicate upload_dir directive in location");
 	this->upload_dir = dir;
+	hasUploadDir = 1;
 }
 
 void LocationConfig::setUpload(bool on)
 {
+	if (hasUpload)
+		throw std::runtime_error("Duplicate upload directive in location");
 	this->upload = on;
+	hasUpload = 1;
 }
 
 void LocationConfig::setAutoIndex(bool on)
 {
+	if (hasAutoIndex)
+		throw std::runtime_error("Duplicate autoindex directive in location");
 	this->auto_index = on;
+	hasAutoIndex = 1;
 }
 
 void LocationConfig::setIndex(const std::string &file)
 {
+	if (hasIndex)
+		throw std::runtime_error("Duplicate index directive in location");
 	this->index = file;
+	hasIndex = 1;
 }
 
 void LocationConfig::addCgi(const std::string &ext, const std::string &bin)
@@ -53,9 +86,12 @@ void LocationConfig::addCgi(const std::string &ext, const std::string &bin)
 
 void LocationConfig::setRedirect(int code, const std::string &url)
 {
+	if (hasRedirectBool)
+		throw std::runtime_error("Duplicate redirect directive in location");
 	redirect_enable = true;
 	redirect_code = code;
 	redirect_url = url;
+	hasRedirectBool = 1;
 }
 
 bool LocationConfig::hasRedirect() const
@@ -124,28 +160,18 @@ bool LocationConfig::isCgi(const std::string &path) const
 	return 0;
 }
 
-bool LocationConfig::isValid() const
+void LocationConfig::isValid() const
 {
 	if (path.empty())
-	{
-		std::cerr << "Location path is missing" << std::endl;
-		return false;
-	}
+		throw std::runtime_error("Location path is missing");
 	if (path[0] != '/')
-	{
-		std::cerr << "Invalid location path" << std::endl;
-		return false;
-	}
+		throw std::runtime_error("Invalid location path");
 	// check CGI: keys and values must not be empty
 	for (std::unordered_map<std::string, std::string>::const_iterator it = cgi.begin(); it != cgi.end(); ++it)
 	{
 		if (it->first.empty() || it->second.empty())
-		{
-			std::cerr << "Invalid CGI configuration: extension or binary is empty" << std::endl;
-			return false;
-		}
+			throw std::runtime_error("Invalid CGI configuration: extension or binary is empty");
 	}
-	return true;
 }
 
 void LocationConfig::printLocationConfig(void) const

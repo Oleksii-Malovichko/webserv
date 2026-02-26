@@ -13,6 +13,7 @@
 #include <string>
 #include <vector>
 #include <arpa/inet.h>
+#include <sstream>
 
 #include "../LocationConfig/LocationConfig.hpp"
 
@@ -24,9 +25,18 @@ class ServerConfig
 	
 	// Необязательные параметры с дефолтами
 	std::string index; // default: "index.html"
-	std::unordered_map<int, std::string> error_pages;
 	size_t client_max_body_size; // default: "10 MB"
+	std::string serverName;
+
+	std::unordered_map<int, std::string> error_pages;
 	std::vector<LocationConfig> locations; // default: empty
+	
+	// check duplicates
+	bool hasListen;
+	bool hasRoot;
+	bool hasServerName;
+	bool hasIndex;
+	bool hasMaxBody;
 
 	public:
 		ServerConfig();
@@ -48,7 +58,10 @@ class ServerConfig
 		std::vector<LocationConfig> &getLocations();
 		const std::vector<LocationConfig> &getLocations() const;
 
-		bool isValid() const;
+		void setServerName(const std::string &serverName);
+		const std::string &getServerName() const;
+
+		void isValid() const;
 		~ServerConfig() = default;
 		void printServerConfig(void) const;
 };
