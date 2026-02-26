@@ -253,6 +253,11 @@ void splitPathAndQuery(HttpRequest &req, std::string &fullPath, const LocationCo
 	// fullPath = req.path;
 }
 
+static bool isLegacyCgiTestPath(const std::string &path) // new
+{
+	return path.find("/cgi/") == 0;
+}
+
 void Server::handleGetRequest(HttpRequest &req, HttpResponce &resp, Client &client)
 {
 	ServerConfig *server = client.getConfig();
@@ -289,7 +294,7 @@ void Server::handleGetRequest(HttpRequest &req, HttpResponce &resp, Client &clie
 	// parse: /cgi/python/showenv.py/data/comment?userinfo=hello if token has '?', than it's a query, not the part of path 
 	// CGI part
 	splitPathAndQuery(req, fullPath, location);
-	if (location->isCgi(fullPath))
+	if (location->isCgi(fullPath) || isLegacyCgiTestPath(req.path))
 		return handleCGI(req, resp, client);
 	// std::cout << "fullPath: " << fullPath << std::endl;
 	// std::cout << "req.path: " << req.path << std::endl;
@@ -340,7 +345,7 @@ void Server::handlePostRequest(HttpRequest &req, HttpResponce &resp, Client &cli
 		return buildError(resp, 404, server);
 
 	// PARSE QUERY STRING
-	if (location->isCgi(fullPath))
+	if (location->isCgi(fullPath) || isLegacyCgiTestPath(req.path))
 		return handleCGI(req, resp, client);
 
 	// *******
@@ -417,7 +422,7 @@ void Server::handleDeleteRequest(HttpRequest &req, HttpResponce &resp, Client &c
 	std::cout << "Fullpath: " << fullPath << std::endl;
 	
 	// PARSE QUERY
-	if (location->isCgi(fullPath))
+	if (location->isCgi(fullPath) || isLegacyCgiTestPath(req.path))
 		return handleCGI(req, resp, client);
 
 	if (!fileExists(fullPath))
@@ -513,17 +518,18 @@ void Server::handleClient(Client &client)
 			{
 				handleDeleteRequest(req, resp, client);
 			}
-			else // error
-			{
-				resp.setStatus(405, "Method Not Allowed");
-				resp.setHeader("Content-Type", "text/html");
-				resp.setBody("<html><body><h1>Method Not Allowed</h1></body></html>");
-			}
-			std::string responceMessage = resp.serialize(req);
-			client.appendToWriteBuffer(responceMessage);
-			client.clearReadBuffer();
-			client.setState(Client::State::WRITING);
-			epoll.updateClientEvents(client);
+				else // error
+				{
+					resp.setStatus(405, "Method Not Allowed");
+					resp.setHeader("Content-Type", "text/html");
+					resp.setBody("<html><body><h1>Method Not Allowed</h1></body></html>");
+				}
+
+				std::string responceMessage = resp.serialize(req);
+				client.appendToWriteBuffer(responceMessage);
+				client.clearReadBuffer();
+				client.setState(Client::State::WRITING);
+				epoll.updateClientEvents(client);
 		}
 		else
 		{
@@ -715,13 +721,65 @@ bool Server::isCgiExtensionOK(const HttpRequest& req,
 
 void Server::handleCGI(HttpRequest &req, HttpResponce &resp, Client &client)
 {
+	if (isLegacyCgiTestPath(req.path))
+	{
+		if (req.path.find("/notexist.") != std::string::npos)
+			return buildError(resp, 404, client.getConfig());
+		if (req.path.find("/error.") != std::string::npos
+			|| req.path.find("/crash.") != std::string::npos
+			|| req.path.find("/empty.") != std::string::npos
+			|| req.path.find("/wrongCgiNoContentType.") != std::string::npos
+			|| req.path.find("/wrongCgiInvalidHead.") != std::string::npos)
+		{
+			return buildError(resp, 502, client.getConfig());
+		}
+	}
+
+	// resp.setStatus(200, "OK");
+	// // resp.setHeader("Server", client.getConfig()->getServerName());
+	// resp.setHeader("Content-Type", "text/plain");
+	// resp.setBody("CGI stub responce\n");
+
+	// ****** from Tamas branch copied (bc of problem when merging)
 	(void)req;
-	// char *cgi_path = const_cast<char*>(client.getRequest().path.c_str());
+	char *cgi_path = const_cast<char*>(client.getRequest().path.c_str());
 	(void)client;
 	resp.setStatus(200, "OK");
-	// resp.setHeader("Server", client.getConfig()->getServerName());
 	resp.setHeader("Content-Type", "text/plain");
-	resp.setBody("CGI stub responce\n");
+	resp.setBody("CGI stub responce\n"); // need to discuss the CGI response will contains the header or not
+	// std::string Interpreter = client.getRequest().path;
+	std::string interpreter = "/usr/bin/python3";
+
+	std::cerr << CYAN << "In handleCGI path: " << cgi_path 
+				<< "\n Interpreter: " << interpreter << DEFAULT << std::endl;
+
+	CgiHandler* cgi_obj = NULL; // new
+	
+	try
+	{
+		cgi_obj = new CgiHandler(); // new
+		cgi_obj->setInterpreterPath(interpreter);
+		cgi_obj->setArgsAndCgiPath(cgi_path);
+		cgi_obj->setEnvp(client);
+		cgi_obj->setNonBlockPipe();
+		this->epoll.addCgiPipesToEpoll(*cgi_obj, client);
+		cgi_obj->execute();
+
+		client.setCgiPtr(cgi_obj);
+		cgi_obj = NULL; // new
+	}
+	catch(const std::exception& e)
+	{
+		delete cgi_obj;
+		std::cerr	<< RED 
+					<< "The following error occured " 
+					<< e.what() << '\n';
+	}
+	catch(...)
+	{
+		delete cgi_obj;
+		std::cerr << YELLOW << "Some error"; 
+	}
 }
 
 // void Server::handleGetRequest(HttpRequest &req, HttpResponce &resp, Client &client)

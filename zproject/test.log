@@ -1,4 +1,4 @@
-Webserv Test Report - Чт 26 фев 2026 00:44:44 CET
+Webserv Test Report - Thu Feb 26 09:14:59 PM CET 2026
 
 ===== Test: GET method =====
 CURL Command: curl -s -i http://localhost:8080/
@@ -868,32 +868,6 @@ DELETE /hello.test HTTP/1.1
 Host: localhost
 
 Response received:
-HTTP/1.1 200 OK
-Content-Type: 
-Content-Length: 51
-Content-Type: text/html
-
-<html><body><h1>Element Removed!</h1></body></html>
-
-===== Test: DELETE /test/, return 204 =====
-Raw request sent:
-DELETE /test/ HTTP/1.1
-Host: localhost
-
-Response received:
-HTTP/1.1 200 OK
-Content-Type: 
-Content-Length: 51
-Content-Type: text/html
-
-<html><body><h1>Element Removed!</h1></body></html>
-
-===== Test: GET /redir, redirect to /data, return 308 =====
-Raw request sent:
-GET /redir HTTP/1.1
-Host: localhost
-
-Response received:
 HTTP/1.1 204 No Content
 Server: guuug.com
 Content-Length: 0
@@ -1045,15 +1019,15 @@ Content-Length: 0
 
 
 Response received:
-HTTP/1.1 403 Forbidden
+HTTP/1.1 404 Not Found
 Server: guuug.com
 Content-Length: 114
 Content-Type: text/html
 
 <html>
-<head><title>403 Forbidden</title></head>
+<head><title>404 Not Found</title></head>
 <body>
-<h1>403 Forbidden</h1>
+<h1>404 Not Found</h1>
 <hr>
 <p>webserv</p>
 </body>
@@ -1067,15 +1041,15 @@ Content-Length: 0
 
 
 Response received:
-HTTP/1.1 403 Forbidden
+HTTP/1.1 502 Bad Gateway
 Server: guuug.com
-Content-Length: 114
+Content-Length: 118
 Content-Type: text/html
 
 <html>
-<head><title>403 Forbidden</title></head>
+<head><title>502 Bad Gateway</title></head>
 <body>
-<h1>403 Forbidden</h1>
+<h1>502 Bad Gateway</h1>
 <hr>
 <p>webserv</p>
 </body>
@@ -1089,15 +1063,15 @@ Content-Length: 0
 
 
 Response received:
-HTTP/1.1 403 Forbidden
+HTTP/1.1 502 Bad Gateway
 Server: guuug.com
-Content-Length: 114
+Content-Length: 118
 Content-Type: text/html
 
 <html>
-<head><title>403 Forbidden</title></head>
+<head><title>502 Bad Gateway</title></head>
 <body>
-<h1>403 Forbidden</h1>
+<h1>502 Bad Gateway</h1>
 <hr>
 <p>webserv</p>
 </body>
@@ -1111,15 +1085,15 @@ Content-Length: 0
 
 
 Response received:
-HTTP/1.1 403 Forbidden
+HTTP/1.1 502 Bad Gateway
 Server: guuug.com
-Content-Length: 114
+Content-Length: 118
 Content-Type: text/html
 
 <html>
-<head><title>403 Forbidden</title></head>
+<head><title>502 Bad Gateway</title></head>
 <body>
-<h1>403 Forbidden</h1>
+<h1>502 Bad Gateway</h1>
 <hr>
 <p>webserv</p>
 </body>
@@ -1133,15 +1107,15 @@ Content-Length: 0
 
 
 Response received:
-HTTP/1.1 403 Forbidden
+HTTP/1.1 502 Bad Gateway
 Server: guuug.com
-Content-Length: 114
+Content-Length: 118
 Content-Type: text/html
 
 <html>
-<head><title>403 Forbidden</title></head>
+<head><title>502 Bad Gateway</title></head>
 <body>
-<h1>403 Forbidden</h1>
+<h1>502 Bad Gateway</h1>
 <hr>
 <p>webserv</p>
 </body>
@@ -1155,15 +1129,15 @@ Content-Length: 0
 
 
 Response received:
-HTTP/1.1 403 Forbidden
+HTTP/1.1 502 Bad Gateway
 Server: guuug.com
-Content-Length: 114
+Content-Length: 118
 Content-Type: text/html
 
 <html>
-<head><title>403 Forbidden</title></head>
+<head><title>502 Bad Gateway</title></head>
 <body>
-<h1>403 Forbidden</h1>
+<h1>502 Bad Gateway</h1>
 <hr>
 <p>webserv</p>
 </body>

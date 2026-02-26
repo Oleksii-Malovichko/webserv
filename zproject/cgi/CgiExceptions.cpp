@@ -56,8 +56,12 @@ execveError::execveError(CgiHandler& cgi_hand)
 {
 	std::stringstream ss;
 
-	ss	<< "The execve with the following inputs failed:\n"
-		<< "The cgi path: " << cgi_hand.getCgiPath();
+	// ss	<< "The execve with the following inputs failed:\n"
+	// 	<< "The cgi path: " << cgi_hand.getCgiPath();
+	
+	const char* p = cgi_hand.getCgiPath(); // new
+	ss  << "The execve with the following inputs failed:\n"
+    << "The cgi path: " << (p ? p : "(null)");
 		
 	cgi_hand.printArgs(ss);
 	cgi_hand.printEnvp(ss);
