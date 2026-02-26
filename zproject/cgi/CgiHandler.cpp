@@ -527,70 +527,70 @@ bool CgiHandler::redirectIO()
 }
 
 // ft: write POST(full) & GET(empty) request body to the first pipe shared w CGI (server -> CGI)
-// bool CgiHandler::writeRequestBodyToPipe()
-// {
-//     if (!this->_requestBody.empty())
-//     {
-//         if (write(this->_srv_to_cgi[1], this->_requestBody.c_str(), this->_requestBody.size()) == -1) // fd to pipe, pointer to data/bytes, number of bytes to write
-//         {
-//             std::cerr << "CGI Error: write() failed." << std::endl;
-//             return false;
-//         }
-//     }
-//     close(this->_srv_to_cgi[1]); // signals end of input to CGI to avoid waiting/blocking, TODO: replace w closepipe ft later
-//     return true;
-// }
+bool CgiHandler::writeRequestBodyToPipe()
+{
+    if (!this->_requestBody.empty())
+    {
+        if (write(this->_srv_to_cgi[1], this->_requestBody.c_str(), this->_requestBody.size()) == -1) // fd to pipe, pointer to data/bytes, number of bytes to write
+        {
+            std::cerr << "CGI Error: write() failed." << std::endl;
+            return false;
+        }
+    }
+    close(this->_srv_to_cgi[1]); // signals end of input to CGI to avoid waiting/blocking, TODO: replace w closepipe ft later
+    return true;
+}
 
 // ft: read the CGI output (from the child process that executed the file script) from the second pipe (cgi to srv[0]) (CGI -> server)
 // added: pipe needs to be non-blocking bc an infinite loop will keep read() forever and pipe wont be closed
-// bool CgiHandler::readCgiOutputFromPipe()
-// {
-//     int bytesRead = 1;
-//     char buffer[4096];
+bool CgiHandler::readCgiOutputFromPipe()
+{
+    int bytesRead = 1;
+    char buffer[4096];
     
-//     while (bytesRead > 0)
-//     {
-//         bytesRead = read(this->_cgi_to_srv[0], buffer, sizeof(buffer));
-//         _cgiOutput.append(buffer, bytesRead);
-//     }
-//     if (bytesRead == -1) // error check for read ft
-//         return false;
-//     close (this->_cgi_to_srv[0]); // close bc done using, TODO: replace w closepipe ft later
+    while (bytesRead > 0)
+    {
+        bytesRead = read(this->_cgi_to_srv[0], buffer, sizeof(buffer));
+        _cgiOutput.append(buffer, bytesRead);
+    }
+    if (bytesRead == -1) // error check for read ft
+        return false;
+    close (this->_cgi_to_srv[0]); // close bc done using, TODO: replace w closepipe ft later
     
-//     std::cout << "CGI OUTPUT: " << std::endl << this->_cgiOutput << std::endl; // TODO: delete after testing
-//     return true;
-// }
+    std::cout << "CGI OUTPUT: " << std::endl << this->_cgiOutput << std::endl; // TODO: delete after testing
+    return true;
+}
 
 // ft: waits for child to finish or kill child if stuck too long (ex. infinite loop) and captures the exit code 
 // added: add non-blocking (ex. infinite loop script) by doing a timeout
-// void CgiHandler::waitAndGetExitCode()
-// {
-//     int status = 0;
-//     time_t start = time(NULL); // ex. start 4:10:00 pm 
+void CgiHandler::waitAndGetExitCode()
+{
+    int status = 0;
+    time_t start = time(NULL); // ex. start 4:10:00 pm 
     
-//     while (1) // loop needed to continously recheck the ongoing time that has passed until x seconds reached to kill
-//     {
-//         pid_t result = waitpid(this->_pid, &status, WNOHANG); // checks if child exited (WNOHANG: checks without blocking)
-//         if (result > 0) // if child exited
-//         {
-//             if (WIFEXITED(status)) // exited normally
-//                 this->_exitCode = WEXITSTATUS(status);
-//             else if (WIFSIGNALED(status)) // killed by signal 
-//                 this->_exitCode = 1;
-//             break;
-//         }
-//         if (difftime(time(NULL), start) >= 5) // compares btw beginning time and now how much has passed
-//         {
-//             kill(this->_pid, SIGKILL); // kill process
-//             waitpid(this->_pid, &status, 0); // cleanup, no zombies
-//             this->_exitCode = 124;
-//             std::cerr << "CGI Error: timeout reached." << std::endl;
-//             break;
-//         }
-//         usleep(100000); // sleep 100ms to avoid busy waiting / burning CPU
-//     }
-//     std::cout << "Exit Code: " << this->_exitCode << std::endl; // TODO: delete after testing
-// }
+    while (1) // loop needed to continously recheck the ongoing time that has passed until x seconds reached to kill
+    {
+        pid_t result = waitpid(this->_pid, &status, WNOHANG); // checks if child exited (WNOHANG: checks without blocking)
+        if (result > 0) // if child exited
+        {
+            if (WIFEXITED(status)) // exited normally
+                this->_exitCode = WEXITSTATUS(status);
+            else if (WIFSIGNALED(status)) // killed by signal 
+                this->_exitCode = 1;
+            break;
+        }
+        if (difftime(time(NULL), start) >= 5) // compares btw beginning time and now how much has passed
+        {
+            kill(this->_pid, SIGKILL); // kill process
+            waitpid(this->_pid, &status, 0); // cleanup, no zombies
+            this->_exitCode = 124;
+            std::cerr << "CGI Error: timeout reached." << std::endl;
+            break;
+        }
+        usleep(100000); // sleep 100ms to avoid busy waiting / burning CPU
+    }
+    std::cout << "Exit Code: " << this->_exitCode << std::endl; // TODO: delete after testing
+}
 
 /*
 MAIN execution function (will be called in handleCGI ft)
@@ -605,6 +605,7 @@ NEXT STEPS TODO:
 - rearrange/rename closing fds w function based on parent-only & child-only logic
 - recheck error handling (messages, etc) (possibly instead of exit)
 */
+
 bool CgiHandler::execute()
 {
     this->_pid = fork();
@@ -627,13 +628,13 @@ bool CgiHandler::execute()
         this->closePipeFds(CLOSE_READ_SRV_TO_CGI); // parent does not read CGI stdin
         this->closePipeFds(CLOSE_WRITE_CGI_TO_SRV); // parent does not write CGI stdout
         
-        // if (!this->writeRequestBodyToPipe())
-        //     return false;
+        if (!this->writeRequestBodyToPipe())
+            return false;
             
-        // this->waitAndGetExitCode();
+        this->waitAndGetExitCode();
             
-        // if (!this->readCgiOutputFromPipe())
-        //     return false;
+        if (!this->readCgiOutputFromPipe())
+            return false;
 
     }
     return true;

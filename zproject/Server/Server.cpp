@@ -702,8 +702,8 @@ void Server::handleCGI(HttpRequest &req, HttpResponce &resp, Client &client)
 		cgi_obj.setInterpreterPath(client.getRequest().path);
 		cgi_obj.setArgsAndCgiPath(cgi_path);
 		cgi_obj.setEnvp(client);
-		cgi_obj.setNonBlockPipe();
-		this->epoll.addCgiPipesToEpoll(cgi_obj, client);
+		// cgi_obj.setNonBlockPipe();
+		// this->epoll.addCgiPipesToEpoll(cgi_obj, client);
 		cgi_obj.execute();
 	}
 	catch(const std::exception& e)

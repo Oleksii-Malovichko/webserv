@@ -46,21 +46,22 @@ void Epoll::addListeningSocket(ListeningSocket &&sock, ServerConfig *config)
 		
 	struct epoll_event ev;
 
-	EventData* data = new EventData;
-	data->type = EventData::Type::LISTEN_SOCKET;
-	data->fd = serverFD;
+	// EventData* data = new EventData;
+	// data->type = EventData::Type::LISTEN_SOCKET;
+	// data->fd = serverFD;
 	
 	ev.events = EPOLLIN;
 
-	listeningSockets.push_back(std::move(sock));
-	data->owner = &listeningSockets.back();
-	ev.data.ptr = data;
+	// listeningSockets.push_back(std::move(sock));
+	// data->owner = &listeningSockets.back();
+	// ev.data.ptr = data;
+	ev.data.fd = serverFD;
 
 	if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, serverFD, &ev) == -1)
 		throw std::runtime_error(std::string("epoll_ctl ADD(server): ") + strerror(errno));
 	
 
-	fdEventMap[serverFD] = data;
+	// fdEventMap[serverFD] = data;
 
 	listeningSockets.push_back(std::move(sock));
 	listeningFDs[serverFD] = config;
@@ -111,19 +112,19 @@ void Epoll::updateClientEvents(Client &client)
 	ev.data.fd = fd;
 	ev.events = 0;
 
-	auto it_event = fdEventMap.find(fd);
-	if (it_event != fdEventMap.end())
-	{
-		delete it_event->second;
-		fdEventMap.erase(it_event);
-	}
+	// auto it_event = fdEventMap.find(fd);
+	// if (it_event != fdEventMap.end())
+	// {
+	// 	delete it_event->second;
+	// 	fdEventMap.erase(it_event);
+	// }
 
-	EventData* data = new EventData;
-	data->type = EventData::Type::CLIENT_SOCKET;
-	data->fd = fd;
-	data->owner = &client;
+	// EventData* data = new EventData;
+	// data->type = EventData::Type::CLIENT_SOCKET;
+	// data->fd = fd;
+	// data->owner = &client;
 
-	ev.data.ptr = data;
+	// ev.data.ptr = data;
 
 	std::cerr	<< YELLOW << "The update client event function called for client"
 				<< fd << DEFAULT << std::endl;
@@ -144,7 +145,7 @@ void Epoll::updateClientEvents(Client &client)
 	if (epoll_ctl(epfd, EPOLL_CTL_MOD, fd, &ev) == -1)
 		throw std::runtime_error(std::string("epoll_ctl MOD: ") + strerror(errno));
 
-	fdEventMap[fd] = data;
+	// fdEventMap[fd] = data;
 }
 
 bool Epoll::handleClient(int fd, uint32_t ev)
@@ -314,47 +315,58 @@ void Epoll::handleEvents(int defaultTimeoutMs)
 		throw std::runtime_error(std::string("epoll_wait: ") + strerror(errno));
 	}
 
-	std::cerr << YELLOW << "n = " << n << "\n EventMap elements: "
-				<< fdEventMap.size() << DEFAULT << std::endl;  
+	// std::cerr << YELLOW << "n = " << n << "\n EventMap elements: "
+	// 			<< fdEventMap.size() << DEFAULT << std::endl;  
 
 	for (int i = 0; i < n; i++)
 	{
 		this->printEvenMap();
 
-		EventData* data = static_cast<EventData*>(
-			events[i].data.ptr);
-		uint32_t ev = events[i].events;
+		// EventData* data = static_cast<EventData*>(
+		// 	events[i].data.ptr);
+		// uint32_t ev = events[i].events;
 
-		dataEventCheck(data);
+		// dataEventCheck(data);
 
-		switch (data->type)
-		{
-			case EventData::Type::LISTEN_SOCKET:
-				std::cerr << MAGENTA << "AcceptClient" << DEFAULT << std::endl;
-				acceptClient(data->fd);
-				break ;
+		// switch (data->type)
+		// {
+		// 	case EventData::Type::LISTEN_SOCKET:
+		// 		std::cerr << MAGENTA << "AcceptClient" << DEFAULT << std::endl;
+		// 		acceptClient(data->fd);
+		// 		break ;
 
-			case EventData::Type::CLIENT_SOCKET:
-				std::cerr << MAGENTA << "HandleClient" << DEFAULT << std::endl;
-				handleClient(data->fd, ev);
-				break ;
+		// 	case EventData::Type::CLIENT_SOCKET:
+		// 		std::cerr << MAGENTA << "HandleClient" << DEFAULT << std::endl;
+		// 		handleClient(data->fd, ev);
+		// 		break ;
 
-			case EventData::Type::CGI_STDIN:
-				std::cerr << MAGENTA << "CGI_STDIN" << DEFAULT << std::endl;
-				handleCgiEvent(data, ev); // this is still not correct function call
-				break ;
+		// 	case EventData::Type::CGI_STDIN:
+		// 		std::cerr << MAGENTA << "CGI_STDIN" << DEFAULT << std::endl;
+		// 		handleCgiEvent(data, ev); // this is still not correct function call
+		// 		break ;
 
-			case EventData::Type::CGI_STDOUT:
-				std::cerr << MAGENTA << "CGI_STDOUT" << DEFAULT << std::endl;
-				handleCgiEvent(data, ev); // this is still not correct function call
-				break ;
+		// 	case EventData::Type::CGI_STDOUT:
+		// 		std::cerr << MAGENTA << "CGI_STDOUT" << DEFAULT << std::endl;
+		// 		handleCgiEvent(data, ev); // this is still not correct function call
+		// 		break ;
 			
-			default:
-				std::cerr	<< RED << "The data type not in"
-							<< " the possible list" << DEFAULT << std::endl;
-				break;
-		}
+		// 	default:
+		// 		std::cerr	<< RED << "The data type not in"
+		// 					<< " the possible list" << DEFAULT << std::endl;
+		// 		break;
+		// }
+
+		int fd = events[i].data.fd;
+		uint32_t ev = events[i].events;
 		
+		bool isListening = checkListeningSockets(fd);
+		if (isListening)
+			acceptClient(fd); // accept для всех клиентов, пока accept не вернет -1 и errno = EAGAIN/EWOULDBLOCK
+		else
+		{
+			if (!handleClient(fd, ev))
+				continue;
+		}
 	}
 	removeClientVec();
 }
@@ -448,22 +460,23 @@ void Epoll::addClient(Client &&client)
 	if (!result.second)
 		throw std::runtime_error("Client already exists");
 
-	Client* stored_client = &result.first->second;
+	// Client* stored_client = &result.first->second;
 	
-	EventData* data = new EventData;
-	data->type = EventData::Type::CLIENT_SOCKET;
-	data->fd = clientFD;
-	data->owner = stored_client;
+	// EventData* data = new EventData;
+	// data->type = EventData::Type::CLIENT_SOCKET;
+	// data->fd = clientFD;
+	// data->owner = stored_client;
 	
 	struct epoll_event cev;
 	cev.events = EPOLLIN;
 
-	cev.data.ptr = data;
+	// cev.data.ptr = data;
+	cev.data.fd = clientFD;
 	if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, clientFD, &cev) == -1)
 		throw std::runtime_error(std::string("epoll_ctl ADD(client): ") + strerror(errno));
 
 	// cev.data.ptr = data;
-	fdEventMap[clientFD] = data;
+	// fdEventMap[clientFD] = data;
 
 	// DEBUG
 
@@ -490,12 +503,12 @@ void Epoll::removeClient(int clientFD)
 	{
 		epoll_ctl(epfd, EPOLL_CTL_DEL, clientFD, nullptr);
 
-		auto it_event = fdEventMap.find(clientFD);
-		if (it_event != fdEventMap.end())
-		{
-			delete it_event->second;
-			fdEventMap.erase(it_event);
-		}
+		// auto it_event = fdEventMap.find(clientFD);
+		// if (it_event != fdEventMap.end())
+		// {
+		// 	delete it_event->second;
+		// 	fdEventMap.erase(it_event);
+		// }
 
 		it->second.close(); // так как мы переместили client уже в этот класс, то и закрываем его здесь
 		clients.erase(it); // удалить из map
@@ -599,28 +612,28 @@ void Epoll::removeCgiPipesFromEpoll(const CgiHandler& cgi_obj)
 	}
 }
 
-	void Epoll::removeCgiFd(int fd)
+void Epoll::removeCgiFd(int fd)
+{
+	if (epoll_ctl(epfd, EPOLL_CTL_DEL, fd, nullptr) == -1)
 	{
-		if (epoll_ctl(epfd, EPOLL_CTL_DEL, fd, nullptr) == -1)
-		{
-			throw std::runtime_error(std::string("Epoll could not remove the"
-				" given " + std::to_string(fd) + " filedescriptor: ") 
-				+ strerror(errno));
-		}
-
-		auto it_event_in = fdEventMap.find(fd);
-		if (it_event_in != fdEventMap.end())
-		{
-			delete it_event_in->second;
-			fdEventMap.erase(it_event_in);
-		}
-
-		if(PRINT_MSG)
-		{
-			std::cout	<< "Remove the following fd to epoll events:\n"
-						<< "filedescriptor: " << fd << std::endl;
-		}
+		throw std::runtime_error(std::string("Epoll could not remove the"
+			" given " + std::to_string(fd) + " filedescriptor: ") 
+			+ strerror(errno));
 	}
+
+	auto it_event_in = fdEventMap.find(fd);
+	if (it_event_in != fdEventMap.end())
+	{
+		delete it_event_in->second;
+		fdEventMap.erase(it_event_in);
+	}
+
+	if(PRINT_MSG)
+	{
+		std::cout	<< "Remove the following fd to epoll events:\n"
+					<< "filedescriptor: " << fd << std::endl;
+	}
+}
 
 void Epoll::printEvenMap(void)
 {
