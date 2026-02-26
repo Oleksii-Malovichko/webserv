@@ -355,32 +355,31 @@ void Server::handlePostRequest(HttpRequest &req, HttpResponce &resp, Client &cli
 		return buildError(resp, 403, server); // file not exist
 
 	// *********** alex beginning
-	// // generate the name of file
-	// std::string filename = "upload_" + std::to_string(time(NULL));
-	// if (fullPath.back() != '/')
-	// 	fullPath += "/";
-	// fullPath += filename;
+	// generate the name of file
+	std::string filename = "upload_" + std::to_string(time(NULL));
+	if (fullPath.back() != '/')
+		fullPath += "/";
+	fullPath += filename;
 
-	// // here should be code of Paula with parsing of boundary
-	// std::ofstream ofs(fullPath.c_str(), std::ios::binary);
-	// if (!ofs)
-	// {
-	// 	std::cerr << "Error with opening file: " << fullPath << std::endl;
-	// 	return buildError(resp, 500, server);
-	// }
-	// // write the body to the file (must be realised the multipart)
-	// ofs << req.body;
-	// ofs.close();
+	// here should be code of Paula with parsing of boundary
+	std::ofstream ofs(fullPath.c_str(), std::ios::binary);
+	if (!ofs)
+	{
+		std::cerr << "Error with opening file: " << fullPath << std::endl;
+		return buildError(resp, 500, server);
+	}
+	// write the body to the file (must be realised the multipart)
+	ofs << req.body;
+	ofs.close();
 	// *********** alex end
 
 	// *********** HTTP FILE UPLOAD HANDLER (beginning) Paula*****************************************************
-
-	if (contentType.find("multipart/form-data") != std::string::npos)
-	{
-		int status = handleHttpFileUpload(contentType, req.body, resp);
-		if (status == -1)
-			return buildError(resp, 400, server); // new
-	}
+	// if (contentType.find("multipart/form-data") != std::string::npos)
+	// {
+	// 	int status = handleHttpFileUpload(contentType, req.body, resp);
+	// 	if (status == -1)
+	// 		return buildError(resp, 400, server); // new
+	// }
 // *************** HTTP FILE UPLOAD HANDLER (end) Paula*****************************************************
 
 
@@ -717,7 +716,7 @@ bool Server::isCgiExtensionOK(const HttpRequest& req,
 void Server::handleCGI(HttpRequest &req, HttpResponce &resp, Client &client)
 {
 	(void)req;
-	char *cgi_path = const_cast<char*>(client.getRequest().path.c_str());
+	// char *cgi_path = const_cast<char*>(client.getRequest().path.c_str());
 	(void)client;
 	resp.setStatus(200, "OK");
 	// resp.setHeader("Server", client.getConfig()->getServerName());

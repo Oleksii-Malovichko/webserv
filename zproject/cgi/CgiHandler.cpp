@@ -293,7 +293,7 @@ void CgiHandler::setEnvp(Client& client_obj)
 	this->addEnvpElement("REQUEST_METHOD", client_obj.getRequest().method);
 	this->addEnvpElement("SCRIPT_NAME", client_obj.getRequest().path);
 	this->addEnvpElement("PATH_INFO", "");
-	this->addEnvpElement("QUERY_STRING", client_obj.getRequest().query_string);
+	this->addEnvpElement("QUERY_STRING", client_obj.getRequest().query);
 	this->addEnvpElement("CONTENT_LENGTH", std::to_string(client_obj.getRequest().contentLength));
 	this->addEnvpElement("CONTENT_TYPE", "");
 	this->addEnvpElement("SERVER_PROTOCOL", client_obj.getRequest().version);

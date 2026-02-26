@@ -126,123 +126,315 @@ void ConfigParser::parseServerLine(const std::string &line, ServerConfig &curren
 	}
 }
 
+// tamas latest version of parseLocation, feb 26
 void ConfigParser::parseLocationLine(const std::string &line, LocationConfig &currentLocation)
 {
 	std::vector<std::string> tokens;
-	std::stringstream error;
+	std::string extenstion = "";
+	std::string bin = "";
 
 	tokens = splitString(line);
 	if (tokens.size() == 1)
 	{
-		error.clear();
-		error << "Invalid " << tokens[0] << " in location directive";
-		throw std::runtime_error(error.str());
+		std::cerr << "Invalid " << tokens[0] << " in location directive" << std::endl;
+		exit(1);
 	}
 	if (tokens[0] == "root")
 	{
 		if (tokens.size() != 2 || tokens[1].back() != ';')
-			throw std::runtime_error("Invalid root directive");
+		{
+			std::cerr << "Invalid root directive" << std::endl;
+			exit(1);
+		}
 		std::string path = tokens[1];
 		path.pop_back();
 		if (path.empty())
-			throw std::runtime_error("Empty root path");
+		{
+			std::cerr << "Empty root path" << std::endl;
+			exit(1);
+		}
 		currentLocation.setRoot(path);
 	}
 	else if (tokens[0] == "methods")
 	{
 		if (tokens.empty())
-			throw std::runtime_error("Invalid methods directive: empty tokens");
+		{
+			std::cerr << "Invalid methods directive: empty tokens" << std::endl;
+			exit(1);
+		}
 		tokens.erase(tokens.begin()); // remove 'methods'
 		std::string &lastToken = tokens.back();
 		if (!lastToken.empty() && lastToken.back() == ';')
 			lastToken.pop_back();
 		else
-			throw std::runtime_error("Invalid methods directive: missing ';'");
+		{
+			std::cerr << "Invalid methods directive: missing ';'" << std::endl;
+			exit(1);
+		}
 		currentLocation.setMethods(tokens);
 	}
 	else if (tokens[0] == "index")
 	{
 		if (tokens.size() != 2 || tokens[1].back() != ';')
-			throw std::runtime_error("Invalid index directive");
+		{
+			std::cerr << "Invalid index directive" << std::endl;
+			exit(1);
+		}
 		std::string path = tokens[1];
 		path.pop_back();
 		if (path.empty())
-			throw std::runtime_error("Empty index path");
+		{
+			std::cerr << "Empty index path" << std::endl;
+			exit(1);
+		}
 		currentLocation.setIndex(path);
 	}
 	else if (tokens[0] == "upload")
 	{
 		if (tokens.size() != 2 || tokens[1].back() != ';')
-			throw std::runtime_error("Invalid upload directive");
+		{
+			std::cerr << "Invalid upload directive" << std::endl;
+			exit(1);
+		}
 		std::string upload = tokens[1];
 		upload.pop_back();
 		if (upload.empty())
-			throw std::runtime_error("Empty upload");
+		{
+			std::cerr << "Empty upload" << std::endl;
+			exit(1);
+		}
 		if (upload != "on" && upload != "off")
-			throw std::runtime_error("Incorrect value for upload");
+		{
+			std::cerr << "Incorrect value for upload" << std::endl;
+			exit(1);
+		}
 		currentLocation.setUpload(upload == "on");
 	}
 	else if (tokens[0] == "autoindex")
 	{
 		if (tokens.size() != 2 || tokens[1].back() != ';')
-			throw std::runtime_error("Invalid autoindex directive");
+		{
+			std::cerr << "Invalid autoindex directive" << std::endl;
+			exit(1);
+		}
 		std::string autoindex = tokens[1];
 		autoindex.pop_back();
 		if (autoindex.empty())
-			throw std::runtime_error("Empty autoindex");
+		{
+			std::cerr << "Empty autoindex" << std::endl;
+			exit(1);
+		}
 		if (autoindex != "on" && autoindex != "off")
-			throw std::runtime_error("Incorrect value for autoindex");
+		{
+			std::cerr << "Incorrect value for autoindex" << std::endl;
+			exit(1);
+		}
 		currentLocation.setAutoIndex(autoindex == "on");
+	}
+		else if (tokens[0] == "cgi_pass")
+	{
+		if (tokens.size() != 2 || tokens[1].back() != ';')
+		{
+			std::cerr << "Invalid cgi_pass directive. Format: cgi_pass <bin>;" << std::endl;
+			exit(1);
+		}
+		bin = tokens[1];
+		bin.pop_back();
+		if (bin.empty())
+		{
+			std::cerr << "Cgi binary path is empty" << std::endl;
+			exit(1);
+		}
+	}
+	else if (tokens[0] == "cgi_extension")
+	{
+		if (tokens.size() != 2 || tokens[1].back() != ';')
+		{
+			std::cerr	<< "Invalid cgi_extenstion directive. "
+						<<	" Format: cgi_extension <extension>;" 
+						<< std::endl;
+			exit(1);
+		}
+		extenstion = tokens[1];
+		extenstion.pop_back();
+		if (extenstion.empty())
+		{
+			std::cerr << "Cgi extension is empty" << std::endl;
+			exit(1);
+		}
 	}
 	else if (tokens[0] == "cgi") // not correct
 	{
 		if (tokens.size() != 3 || tokens[2].back() != ';')
-			throw std::runtime_error("Invalid cgi directive. Format: cgi <extension> <bin>;");
-		std::string extenstion = tokens[1];
-		std::string bin = tokens[2];
+		{
+			std::cerr << "Invalid cgi directive. Format: cgi <extension> <bin>;" << std::endl;
+			exit(1);
+		}
+		extenstion = tokens[1];
+		bin = tokens[2];
 		bin.pop_back(); // ';'
 		if (extenstion.empty() || bin.empty())
-			throw std::runtime_error("Cgi extension or binary path is empty");
+		{
+			std::cerr << "Cgi extension or binary path is empty" << std::endl;
+			exit(1);
+		}
 		currentLocation.addCgi(extenstion, bin);
-		// std::cout << "extenstion: " << extenstion << std::endl;
-		// std::cout << "bin: " << bin << std::endl;
 	}
 	else if (tokens[0] == "redirect") // redirect
 	{
 		if (tokens.size() != 3 || tokens[2].back() != ';')
+		{
 			throw std::runtime_error("Invalid redirect directive");
+		}
 		int code;
 		try
 		{
 			code = std::stoi(tokens[1]);
 			if (code < 300 || code > 308)
 			{
-				error.clear();
-				error << "Invalid error code in redirect " << code;
-				throw std::runtime_error(error.str());
+				std::cerr << "Invalid error code in redirect " << code << std::endl;
+				exit(1);
 			}
 		}
-		catch (const std::invalid_argument &)
+		catch (...)
 		{
-			throw std::runtime_error("Redirect code is not a number");
-		}
-		catch (const std::out_of_range &)
-		{
-			throw std::runtime_error("Redirect code out of range");
+			std::cerr << "Invalid redirect" << std::endl;
+			exit(1);
 		}
 		std::string url = tokens[2];
 		url.pop_back();
 		if (url.empty())
-			throw std::runtime_error("Empty url in redirect directive");
+		{
+			std::cerr << "Empty url in redirect directive" << std::endl;
+			exit(1);
+		}
 		currentLocation.setRedirect(code, url);	
 	}
 	else
 	{
-		error.clear();
-		error << "Uknown directive in location block: " << line;
-		throw std::runtime_error(error.str());
+		std::cerr << "Uknown directive in location block: " << line << std::endl;
+		exit(1);
 	}
 }
+
+// alex version of parseLocationLine after merge, feb 26
+// void ConfigParser::parseLocationLine(const std::string &line, LocationConfig &currentLocation)
+// {
+// 	std::vector<std::string> tokens;
+// 	std::stringstream error;
+
+// 	tokens = splitString(line);
+// 	if (tokens.size() == 1)
+// 	{
+// 		error.clear();
+// 		error << "Invalid " << tokens[0] << " in location directive";
+// 		throw std::runtime_error(error.str());
+// 	}
+// 	if (tokens[0] == "root")
+// 	{
+// 		if (tokens.size() != 2 || tokens[1].back() != ';')
+// 			throw std::runtime_error("Invalid root directive");
+// 		std::string path = tokens[1];
+// 		path.pop_back();
+// 		if (path.empty())
+// 			throw std::runtime_error("Empty root path");
+// 		currentLocation.setRoot(path);
+// 	}
+// 	else if (tokens[0] == "methods")
+// 	{
+// 		if (tokens.empty())
+// 			throw std::runtime_error("Invalid methods directive: empty tokens");
+// 		tokens.erase(tokens.begin()); // remove 'methods'
+// 		std::string &lastToken = tokens.back();
+// 		if (!lastToken.empty() && lastToken.back() == ';')
+// 			lastToken.pop_back();
+// 		else
+// 			throw std::runtime_error("Invalid methods directive: missing ';'");
+// 		currentLocation.setMethods(tokens);
+// 	}
+// 	else if (tokens[0] == "index")
+// 	{
+// 		if (tokens.size() != 2 || tokens[1].back() != ';')
+// 			throw std::runtime_error("Invalid index directive");
+// 		std::string path = tokens[1];
+// 		path.pop_back();
+// 		if (path.empty())
+// 			throw std::runtime_error("Empty index path");
+// 		currentLocation.setIndex(path);
+// 	}
+// 	else if (tokens[0] == "upload")
+// 	{
+// 		if (tokens.size() != 2 || tokens[1].back() != ';')
+// 			throw std::runtime_error("Invalid upload directive");
+// 		std::string upload = tokens[1];
+// 		upload.pop_back();
+// 		if (upload.empty())
+// 			throw std::runtime_error("Empty upload");
+// 		if (upload != "on" && upload != "off")
+// 			throw std::runtime_error("Incorrect value for upload");
+// 		currentLocation.setUpload(upload == "on");
+// 	}
+// 	else if (tokens[0] == "autoindex")
+// 	{
+// 		if (tokens.size() != 2 || tokens[1].back() != ';')
+// 			throw std::runtime_error("Invalid autoindex directive");
+// 		std::string autoindex = tokens[1];
+// 		autoindex.pop_back();
+// 		if (autoindex.empty())
+// 			throw std::runtime_error("Empty autoindex");
+// 		if (autoindex != "on" && autoindex != "off")
+// 			throw std::runtime_error("Incorrect value for autoindex");
+// 		currentLocation.setAutoIndex(autoindex == "on");
+// 	}
+// 	else if (tokens[0] == "cgi") // not correct
+// 	{
+// 		if (tokens.size() != 3 || tokens[2].back() != ';')
+// 			throw std::runtime_error("Invalid cgi directive. Format: cgi <extension> <bin>;");
+// 		std::string extenstion = tokens[1];
+// 		std::string bin = tokens[2];
+// 		bin.pop_back(); // ';'
+// 		if (extenstion.empty() || bin.empty())
+// 			throw std::runtime_error("Cgi extension or binary path is empty");
+// 		currentLocation.addCgi(extenstion, bin);
+// 		// std::cout << "extenstion: " << extenstion << std::endl;
+// 		// std::cout << "bin: " << bin << std::endl;
+// 	}
+// 	else if (tokens[0] == "redirect") // redirect
+// 	{
+// 		if (tokens.size() != 3 || tokens[2].back() != ';')
+// 			throw std::runtime_error("Invalid redirect directive");
+// 		int code;
+// 		try
+// 		{
+// 			code = std::stoi(tokens[1]);
+// 			if (code < 300 || code > 308)
+// 			{
+// 				error.clear();
+// 				error << "Invalid error code in redirect " << code;
+// 				throw std::runtime_error(error.str());
+// 			}
+// 		}
+// 		catch (const std::invalid_argument &)
+// 		{
+// 			throw std::runtime_error("Redirect code is not a number");
+// 		}
+// 		catch (const std::out_of_range &)
+// 		{
+// 			throw std::runtime_error("Redirect code out of range");
+// 		}
+// 		std::string url = tokens[2];
+// 		url.pop_back();
+// 		if (url.empty())
+// 			throw std::runtime_error("Empty url in redirect directive");
+// 		currentLocation.setRedirect(code, url);	
+// 	}
+// 	else
+// 	{
+// 		error.clear();
+// 		error << "Uknown directive in location block: " << line;
+// 		throw std::runtime_error(error.str());
+// 	}
+// }
 
 ConfigParser::ConfigParser(const std::string &configFile)
 {

@@ -171,7 +171,7 @@ void Client::printHttpRequest(void)
 	std::cout << "\n\nHttpRequest Information:" << std::endl;
 	std::cout << "Method: " << req.method << std::endl;
 	std::cout << "Path: " << req.path << std::endl;
-	std::cout << "Query string: " << req.query_string << std::endl;
+	std::cout << "Query string: " << req.query << std::endl;
 	std::cout << "Version: " << req.version << std::endl;
 	for (auto it = req.headers.begin(); it != req.headers.end(); it++)
 	{
