@@ -234,6 +234,7 @@ void Server::handleGetRequest(HttpRequest &req, HttpResponce &resp, Client &clie
 	std::string fullPath = buildFullPath(location, server, req.path); // here is used the macros
 	// std::cout << "[handleGetRequest] fullPath: " << fullPath << std::endl;
 
+	req.path = fullPath;
 	// get root path from location (if it's empty, get it from server)
 	std::string root = location->getRoot();
 	if (root.empty())
@@ -695,11 +696,15 @@ void Server::handleCGI(HttpRequest &req, HttpResponce &resp, Client &client)
 	resp.setHeader("Content-Type", "text/plain");
 	// resp.setBody("CGI stub responce\n"); // need to discuss the CGI response will contains the header or not
 
+	std::string Interpreter = "/usr/bin/python3";
+
+	std::cerr << CYAN << "In handleCGI path: " << cgi_path 
+				<< "\n Interpreter: " << Interpreter << DEFAULT << std::endl;
 
 	try
 	{
 		CgiHandler cgi_obj;
-		cgi_obj.setInterpreterPath(client.getRequest().path);
+		cgi_obj.setInterpreterPath(Interpreter);
 		cgi_obj.setArgsAndCgiPath(cgi_path);
 		cgi_obj.setEnvp(client);
 		// cgi_obj.setNonBlockPipe();

@@ -619,6 +619,10 @@ bool CgiHandler::execute()
     {
         if (!this->redirectIO())
             exit(1);
+		std::cerr << YELLOW << "The cgi interpreterpath: "
+					<< this->_interpreterPath.c_str() 
+					<< DEFAULT << std::endl;
+
         execve(this->_interpreterPath.c_str(), this->_args, this->_envp);
         std::cerr << "CGI Error: execve() failed." << std::endl;
         exit(1);
