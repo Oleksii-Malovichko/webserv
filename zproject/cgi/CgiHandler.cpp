@@ -13,6 +13,8 @@ CgiHandler::CgiHandler(void)
 	this->_stdin_closed = false;
 	this->_stdout_closed = false;
 	this->_child_exited = false;
+	this->cgi_path = NULL;
+	this->_pid = -1;
 	
 	// if (pipe(this->_infd) == -1)
 	// 	throw pipeError("Failed to create input pipe");
@@ -32,6 +34,8 @@ CgiHandler::~CgiHandler(void)
 	this->freeEnvp();
 	this->_envp_num = 0;
 	this->_sent_bytes = 0;
+	std::cerr << CYAN << "Deleting CgiHandler this=" // new
+				<< this << DEFAULT << std::endl;
 }
 
 void CgiHandler::freeEnvp(void)
@@ -219,6 +223,16 @@ void CgiHandler::readFromCgi(Epoll& epoll_obj)
 void CgiHandler::writeToCgi(Epoll& epoll_obj,
 	const std::string& request_body)
 {
+	if (request_body.size() == 0)
+	{
+		std::cerr << RED << "The request body empty"
+					<< DEFAULT << std::endl;
+		epoll_obj.removeCgiFd(this->_srv_to_cgi[1]);
+		close(this->_srv_to_cgi[1]);
+		this->_stdin_closed = true;
+		return ;
+	}
+	
 	ssize_t bytes = write(this->_srv_to_cgi[1], 
 		request_body.c_str() + this->_sent_bytes,
 		request_body.length() - this->_sent_bytes);
@@ -293,7 +307,7 @@ void CgiHandler::setEnvp(Client& client_obj)
 	this->addEnvpElement("REQUEST_METHOD", client_obj.getRequest().method);
 	this->addEnvpElement("SCRIPT_NAME", client_obj.getRequest().path);
 	this->addEnvpElement("PATH_INFO", "");
-	this->addEnvpElement("QUERY_STRING", client_obj.getRequest().query_string);
+	this->addEnvpElement("QUERY_STRING", client_obj.getRequest().query);
 	this->addEnvpElement("CONTENT_LENGTH", std::to_string(client_obj.getRequest().contentLength));
 	this->addEnvpElement("CONTENT_TYPE", "");
 	this->addEnvpElement("SERVER_PROTOCOL", client_obj.getRequest().version);
@@ -311,7 +325,7 @@ void CgiHandler::setArgsAndCgiPath(char* in_cgi_path)
 	this->cgi_path = in_cgi_path;
 	std::string cgi_interpreter = "/usr/bin/python3";
 
-	if (access(this->cgi_path, X_OK) == -1)
+	if (access(this->cgi_path, R_OK) == -1) // new: should only need readable script. X_OK fails for .py files
 	{
 		throw fileAccessError(this->cgi_path);
 	}
@@ -329,7 +343,7 @@ void CgiHandler::printArgs(std::ostream& out) const
 	
 	out	<< "The number of arguments: " 
 				<< this->_args_num << "\n";
-	while (this->_args[i] != NULL)
+	while (this->_args && this->_args[i] != NULL) // new
 	{
 		out	<< "The args[" << i << "]: "
 					<< this->_args[i] << std::endl;
@@ -343,7 +357,7 @@ void CgiHandler::printEnvp(std::ostream& out) const
 	
 	out	<< "The number of environment elements: " 
 				<< this->_envp_num << "\n";
-	while (this->_envp[i] != NULL)
+	while (this->_envp && this->_envp[i] != NULL) // new
 	{
 		out	<< "The envp[" << i << "]: "
 			<< this->_envp[i] << std::endl;
@@ -405,6 +419,8 @@ int CgiHandler::getCgiOutReadFD(void) const
 
 bool CgiHandler::IsCgiFinished(void)
 {
+	std::cerr << YELLOW << "CgiHandler this = " << this // new
+				<< DEFAULT << std::endl;
 	if (this->_stdin_closed == true &&
 		this->_stdout_closed == true &&
 		this->_child_exited == true)
@@ -619,7 +635,10 @@ bool CgiHandler::execute()
         if (!this->redirectIO())
             exit(1);
         execve(this->_interpreterPath.c_str(), this->_args, this->_envp);
-        std::cerr << "CGI Error: execve() failed." << std::endl;
+        std::cerr << RED << "CGI Error: execve() failed: " // new
+					<< YELLOW << strerror(errno) 
+					<< RED << "\nInterpreter path: " << this->_interpreterPath
+					<< DEFAULT << std::endl;
         exit(1);
     }
     else // parent process ("server")
@@ -643,4 +662,3 @@ void CgiHandler::setInterpreterPath(const std::string& i_path)
 {
 	this->_interpreterPath = i_path; 
 }
-

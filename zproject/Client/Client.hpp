@@ -12,7 +12,8 @@ struct HttpRequest
 {
 	std::string method;
 	std::string path;
-	std::string query_string;
+	std::string query;
+	std::string pathInfo;
 	std::string version = "HTTP/1.1";
 	std::unordered_map<std::string, std::string> headers;
 	std::string body;
@@ -62,6 +63,7 @@ class Client
 		// разрешить перемещение
 		Client(Client &&other) noexcept;
 		Client& operator=(Client &&other) noexcept;
+		~Client(void);
 
 		std::string _http_response;
 
@@ -83,6 +85,8 @@ class Client
 		void clearReadBuffer();
 
 		void printHttpRequest(void);
+
+		void setCgiPtr(CgiHandler* ptr);
 
 		CgiHandler* getCgiPtr(void);
 		ServerConfig *getConfig() const;

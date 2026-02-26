@@ -1,4 +1,5 @@
 #include "Client.hpp"
+#include "../../cgi/CgiHandler.hpp"
 
 // move передает управление сокетом из ClientSocket в Client (после этого в ClientSocket fd == -1, Client имеет уже этот fd)
 
@@ -20,8 +21,11 @@ Client::Client(Client &&other) noexcept : socket(std::move(other.socket)), confi
 	this->writeBuffer = std::move(other.writeBuffer);
 	this->state = other.state;
 	this->lastActivity = other.lastActivity;
+	this->request = std::move(other.request); // new
+	this->_cgi_obj = other._cgi_obj; // new
 
 	other.state = State::CLOSED; // старая копия больше не активна
+	other._cgi_obj = nullptr;
 	// other.config = nullptr;
 }
 
@@ -29,15 +33,29 @@ Client& Client::operator=(Client &&other) noexcept
 {
 	if (this != &other)
 	{
+		delete this->_cgi_obj;
+		this->_cgi_obj = nullptr;
+
 		this->socket = std::move(other.socket);
 		this->readBuffer = std::move(other.readBuffer);
 		this->writeBuffer = std::move(other.writeBuffer);
 		this->state = other.state;
 		this->lastActivity = other.lastActivity;
 		this->config = other.config;
+		this->request = std::move(other.request); // new
+		this->_cgi_obj = other._cgi_obj; // new
+
+		other._cgi_obj = nullptr; // new
+		other.state = State::CLOSED; // new
 		// other.config = nullptr;
 	}
 	return *this;
+}
+
+Client::~Client(void)
+{
+	delete this->_cgi_obj;
+	this->setCgiPtr(NULL);
 }
 
 // errno запрещено использовать после read/write, потому неблокирующие сокеты и epoll гарантируют что ошибок не будет
@@ -159,6 +177,11 @@ void Client::clearReadBuffer()
 	this->readBuffer.clear();
 }
 
+void Client::setCgiPtr(CgiHandler* ptr)
+{
+	this->_cgi_obj = ptr;
+}
+
 CgiHandler* Client::getCgiPtr(void)
 {
 	return (this->_cgi_obj);
@@ -171,7 +194,7 @@ void Client::printHttpRequest(void)
 	std::cout << "\n\nHttpRequest Information:" << std::endl;
 	std::cout << "Method: " << req.method << std::endl;
 	std::cout << "Path: " << req.path << std::endl;
-	std::cout << "Query string: " << req.query_string << std::endl;
+	std::cout << "Query string: " << req.query << std::endl;
 	std::cout << "Version: " << req.version << std::endl;
 	for (auto it = req.headers.begin(); it != req.headers.end(); it++)
 	{
