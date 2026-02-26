@@ -84,6 +84,7 @@ class CgiHandler
 		void finishChildProcess(void);
 		bool IsCgiFinished(void);
 		std::string buildCgiResponse(void);
+		std::string getCgiResponse(void);
 		void terminateChild(void);
 
 		//P

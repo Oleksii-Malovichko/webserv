@@ -422,6 +422,11 @@ std::string CgiHandler::buildCgiResponse(void)
 	return (this->_cgi_response);
 }
 
+std::string CgiHandler::getCgiResponse(void)
+{
+	return (this->_cgiOutput);
+}
+
 // void CgiHandler::terminateChild(void)
 // {
 // 	if (this->_execution_child > 0)

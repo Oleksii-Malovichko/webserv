@@ -710,6 +710,7 @@ void Server::handleCGI(HttpRequest &req, HttpResponce &resp, Client &client)
 		// cgi_obj.setNonBlockPipe();
 		// this->epoll.addCgiPipesToEpoll(cgi_obj, client);
 		cgi_obj.execute();
+		resp.setBody(cgi_obj.getCgiResponse());
 	}
 	catch(const std::exception& e)
 	{
@@ -722,6 +723,7 @@ void Server::handleCGI(HttpRequest &req, HttpResponce &resp, Client &client)
 		std::cerr << YELLOW << "Some error"; 
 	}
 
+	resp.serialize(req);
 }
 
 void ServerConfig::printServerConfig(void) const
