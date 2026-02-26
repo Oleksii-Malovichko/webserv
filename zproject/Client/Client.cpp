@@ -62,7 +62,7 @@ ssize_t Client::readFromSocket()
 	else if (bytes == 0)
 	{
 		close();
-		std::cout << "Client closed connection" << std::endl;
+		std::cout << "In readFromSocket Client closed connection" << std::endl;
 	}
 	else // should never happend! (epoll гарантирует, что ошибок с read НЕ будет)
 	{
@@ -92,7 +92,7 @@ ssize_t Client::writeToSocket()
 	else if (bytes == 0)
 	{
 		close();
-		std::cout << "Client closed connection" << std::endl;
+		std::cout << "In writeToSocket Client closed connection" << std::endl;
 	}
 	else
 	{

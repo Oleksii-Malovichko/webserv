@@ -164,7 +164,6 @@ bool Epoll::handleClient(int fd, uint32_t ev)
 		if (bytes == 0) // клиент отключился
 		{
 			removeClient(fd);
-			std::cerr << RED << "Error occured handleClient EPOLLIN" << DEFAULT << std::endl; 
 			return false;
 		}
 		else
@@ -196,6 +195,106 @@ bool Epoll::handleClient(int fd, uint32_t ev)
 }
 
 bool Epoll::handleCgiEvent(EventData* data, uint32_t ev)
+{
+	if (!data)
+	{
+		std::cerr << YELLOW << "The data is NULL in handleCGI" 
+					<< DEFAULT << std::endl;
+		return (false);
+	}
+	
+	Client*  client = static_cast<Client*>(data->owner);
+	if (!client)
+	{
+		std::cerr	<< RED << "client doesn't exist"
+					<< " in handleCGIevent" << DEFAULT << std::endl;
+		return(false);
+	}
+
+	CgiHandler* cgi_ptr = client->getCgiPtr();
+	if (!cgi_ptr)
+	{
+		std::cerr	<< RED << "cgi_ptr doesn't exist"
+					<< " in handleCGIevent" << DEFAULT << std::endl;
+		return (false);
+	}
+
+	if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
+	{
+		cgi_ptr->terminateChild();
+		//it should later send 500 error message
+		removeClient(client->getFD());
+		return (false);
+	}
+
+	if (data->type == EventData::Type::CGI_STDIN)
+	{
+		if (ev & EPOLLOUT )
+		{
+			if (client->getRequest().body.size() > 0)
+			{
+				cgi_ptr->writeToCgi(*this, client->getRequest().body);
+			}
+			else
+			{
+				this->removeCgiFd(cgi_ptr->getCgiInWriteFD());
+				return (false);
+			}
+		}
+	}
+
+	if (data->type == EventData::Type::CGI_STDOUT)
+	{
+		if (ev & EPOLLIN)
+			cgi_ptr->readFromCgi(*this);
+	}
+
+	if (cgi_ptr->IsCgiFinished() == true)
+	{
+		std::cerr << YELLOW << "CGI finished in handleCgiEvent" 
+					<< DEFAULT << std::endl;
+		client->_http_response = cgi_ptr->buildCgiResponse();
+		client->appendToWriteBuffer(client->_http_response);
+		client->clearReadBuffer();
+		client->setState(Client::State::WRITING);
+		delete cgi_ptr;
+		client->setCgiPtr(NULL);
+		updateClientEvents(*client);
+	}
+
+	return (true);
+}
+
+// сердце управления epoll
+/*
+	This handleEvents function made before CGI fds added to the fds list
+	During the test it worked properly 
+
+void Epoll::handleEvents(int defaultTimeoutMs) // epoll.handleEvents(CLIENT_TIMEOUT_MS); то есть, каждые 60 секунд проверять проверять активность клиентов
+{
+	int timeout = getMinTimeout(defaultTimeoutMs);
+
+	int n = epoll_wait(epfd, events.data(), events.size(), timeout);
+	if (n == -1)
+	{
+		if (errno == EINTR)
+			return ;
+		throw std::runtime_error(std::string("epoll_wait: ") + strerror(errno));
+	}
+
+	// перебираем все события
+	for (int i = 0; i < n; i++)
+	{
+		int fd = events[i].data.fd;
+		uint32_t ev = events[i].events;
+
+		// если это listen-socket -> accept клиентов
+		bool isListening = checkListeningSockets(fd);
+		if (isListening)
+			acceptClient(fd); // accept для всех клиентов, пока accept не вернет -1 и errno = EAGAIN/EWOULDBLOCK
+		else
+		{
+			if (!handleCliebool Epoll::handleCgiEvent(EventData* data, uint32_t ev)
 {
 	Client*  client = static_cast<Client*>(data->owner);
 	if (!client)
@@ -251,41 +350,7 @@ bool Epoll::handleCgiEvent(EventData* data, uint32_t ev)
 		delete cgi_ptr;
 		client->setCgiPtr(NULL);
 		updateClientEvents(*client);
-	}
-
-	return (true);
-}
-
-// сердце управления epoll
-/*
-	This handleEvents function made before CGI fds added to the fds list
-	During the test it worked properly 
-
-void Epoll::handleEvents(int defaultTimeoutMs) // epoll.handleEvents(CLIENT_TIMEOUT_MS); то есть, каждые 60 секунд проверять проверять активность клиентов
-{
-	int timeout = getMinTimeout(defaultTimeoutMs);
-
-	int n = epoll_wait(epfd, events.data(), events.size(), timeout);
-	if (n == -1)
-	{
-		if (errno == EINTR)
-			return ;
-		throw std::runtime_error(std::string("epoll_wait: ") + strerror(errno));
-	}
-
-	// перебираем все события
-	for (int i = 0; i < n; i++)
-	{
-		int fd = events[i].data.fd;
-		uint32_t ev = events[i].events;
-
-		// если это listen-socket -> accept клиентов
-		bool isListening = checkListeningSockets(fd);
-		if (isListening)
-			acceptClient(fd); // accept для всех клиентов, пока accept не вернет -1 и errno = EAGAIN/EWOULDBLOCK
-		else
-		{
-			if (!handleClient(fd, ev))
+	}nt(fd, ev))
 				continue;
 		}
 	}
@@ -611,28 +676,28 @@ void Epoll::removeCgiPipesFromEpoll(const CgiHandler& cgi_obj)
 	}
 }
 
-	void Epoll::removeCgiFd(int fd)
+void Epoll::removeCgiFd(int fd)
+{
+	if (epoll_ctl(epfd, EPOLL_CTL_DEL, fd, nullptr) == -1)
 	{
-		if (epoll_ctl(epfd, EPOLL_CTL_DEL, fd, nullptr) == -1)
-		{
-			throw std::runtime_error(std::string("Epoll could not remove the"
-				" given " + std::to_string(fd) + " filedescriptor: ") 
-				+ strerror(errno));
-		}
-
-		auto it_event_in = fdEventMap.find(fd);
-		if (it_event_in != fdEventMap.end())
-		{
-			delete it_event_in->second;
-			fdEventMap.erase(it_event_in);
-		}
-
-		if(PRINT_MSG)
-		{
-			std::cout	<< "Remove the following fd to epoll events:\n"
-						<< "filedescriptor: " << fd << std::endl;
-		}
+		throw std::runtime_error(std::string("Epoll could not remove the"
+			" given " + std::to_string(fd) + " filedescriptor: ") 
+			+ strerror(errno));
 	}
+
+	auto it_event_in = fdEventMap.find(fd);
+	if (it_event_in != fdEventMap.end())
+	{
+		delete it_event_in->second;
+		fdEventMap.erase(it_event_in);
+	}
+
+	if(PRINT_MSG)
+	{
+		std::cout	<< "Remove the following fd to epoll events:\n"
+					<< "filedescriptor: " << fd << std::endl;
+	}
+}
 
 void Epoll::printEvenMap(void)
 {

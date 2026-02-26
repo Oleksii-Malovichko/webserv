@@ -47,7 +47,6 @@ CXXFLAGS = -Wall -Wextra -Werror \
 	-IConfigParser \
 	-IHttpResponce \
 	-Icgi \
-	-Icgi_bin \
 	-Ierror_handler \
 	-Idirectory_listing \
 	-IServer 

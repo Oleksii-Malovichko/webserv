@@ -718,6 +718,9 @@ void Server::handleCGI(HttpRequest &req, HttpResponce &resp, Client &client)
 				<< "\n Interpreter: " << interpreter << DEFAULT << std::endl;
 
 	CgiHandler* cgi_obj = new CgiHandler();
+
+	std::cerr << CYAN << "The cgi object address: " << cgi_obj
+				<< DEFAULT << std::endl;
 	
 	try
 	{

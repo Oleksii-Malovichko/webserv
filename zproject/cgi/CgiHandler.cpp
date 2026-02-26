@@ -162,6 +162,7 @@ void CgiHandler::readFromCgi(Epoll& epoll_obj)
 	char buffer[CGI_BUFFER_SIZE + 1];
 	int readbyte = 0;
 	
+	std::cerr << YELLOW << "In read from cgi" << DEFAULT << std::endl;
 	while (true)
 	{
 		readbyte = read(this->_cgi_to_srv[0], buffer, CGI_BUFFER_SIZE);
@@ -423,6 +424,8 @@ bool CgiHandler::IsCgiFinished(void)
 		this->_stdout_closed == true &&
 		this->_child_exited == true)
 	{
+		std::cerr << BLUE << "CGI FINISHED" 
+				<< DEFAULT << std::endl;
 		return (true);
 	}
 
