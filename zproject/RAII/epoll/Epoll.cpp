@@ -314,8 +314,8 @@ void Epoll::handleEvents(int defaultTimeoutMs)
 		throw std::runtime_error(std::string("epoll_wait: ") + strerror(errno));
 	}
 
-	std::cerr << YELLOW << "n = " << n << "\n EventMap elements: "
-				<< fdEventMap.size() << DEFAULT << std::endl;  
+	// std::cerr << YELLOW << "n = " << n << "\n EventMap elements: "
+	// 			<< fdEventMap.size() << DEFAULT << std::endl;  
 
 	for (int i = 0; i < n; i++)
 	{
@@ -325,7 +325,7 @@ void Epoll::handleEvents(int defaultTimeoutMs)
 			events[i].data.ptr);
 		uint32_t ev = events[i].events;
 
-		dataEventCheck(data);
+		// dataEventCheck(data);
 
 		switch (data->type)
 		{
