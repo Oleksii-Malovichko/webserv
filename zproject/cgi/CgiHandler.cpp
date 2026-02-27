@@ -320,7 +320,9 @@ void CgiHandler::setEnvp(Client& client_obj)
 		contentType = it->second;
 	this->addEnvpElement("CONTENT_TYPE", contentType);
 	this->addEnvpElement("SERVER_PROTOCOL", client_obj.getRequest().version);
-
+	this->addEnvpElement("REDIRECT_STATUS", "200"); // request thru cgi flow
+	if (this->cgi_path)
+		this->addEnvpElement("SCRIPT_FILENAME", this->cgi_path); // added for php bc stricter than py
 	this->addEnvpElement("GATEWAY_INTERFACE", "CGI/1.1");
 	this->addEnvpElement("SERVER_SOFTWARE", "webserv/1.0");
 	this->addEnvpElement("HTTP_HOST", "localhost");

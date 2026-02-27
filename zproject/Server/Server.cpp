@@ -841,23 +841,46 @@ void Server::handleCGI(HttpRequest &req, HttpResponce &resp, Client &client)
 
 	// STEP 4 (check which CGI interpreter (python, php, ...) & verify executable permission to run)
 	// python-only CGI: reject non-.py scripts
-	if (!hasSuffix(fullFilePath, ".py"))
-		return buildError(resp, 502, server);
+	// if (!hasSuffix(fullFilePath, ".py"))
+	// 	return buildError(resp, 502, server);
 
-	// try location cgi map (.py -> /path/to/python)
+	// // try location cgi map (.py -> /path/to/python)
+	// std::string interpreter = "/usr/bin/python3";
+	// const std::unordered_map<std::string, std::string> &cgiMap = location->getCgi(); // !
+	// std::unordered_map<std::string, std::string>::const_iterator it = cgiMap.find(".py"); // !
+	// if (it != cgiMap.end())
+	// 	interpreter = it->second;
+
+	// // if configured interpreter is not executable, fallback to default
+	// if (access(interpreter.c_str(), X_OK) != 0)
+	// 	interpreter = "/usr/bin/python3";
+
+	// // final check
+	// if (access(interpreter.c_str(), X_OK) != 0)
+	// 	return buildError(resp, 502, server);
+
+	
 	std::string interpreter = "/usr/bin/python3";
-	const std::unordered_map<std::string, std::string> &cgiMap = location->getCgi(); // !
-	std::unordered_map<std::string, std::string>::const_iterator it = cgiMap.find(".py"); // !
-	if (it != cgiMap.end())
-		interpreter = it->second;
-
-	// if configured interpreter is not executable, fallback to default
+	const std::unordered_map<std::string, std::string> &cgiMap = location->getCgi();
+	for (std::unordered_map<std::string, std::string>::const_iterator it = cgiMap.begin(); it != cgiMap.end(); ++it)
+	{
+		if (fullFilePath.size() >= it->first.size() &&
+			fullFilePath.compare(fullFilePath.size() - it->first.size(), it->first.size(), it->first) == 0)
+		{
+			interpreter = it->second;
+			break;
+		}
+	}
 	if (access(interpreter.c_str(), X_OK) != 0)
-		interpreter = "/usr/bin/python3";
-
-	// final check
+	{
+		if (hasSuffix(fullFilePath, ".py"))
+			interpreter = "/usr/bin/python3";
+		else if (hasSuffix(fullFilePath, ".php"))
+			interpreter = "/usr/bin/php-cgi";
+	}
 	if (access(interpreter.c_str(), X_OK) != 0)
 		return buildError(resp, 502, server);
+
 
 	// STEP 5 (execute CGI: set interpreter path, pass script path as cgi argument, build cgi envp, execute)
 	try
@@ -865,9 +888,7 @@ void Server::handleCGI(HttpRequest &req, HttpResponce &resp, Client &client)
 		CgiHandler cgi_obj;
 		cgi_obj.setInterpreterPath(interpreter);
 		char *cgi_path = const_cast<char *>(fullFilePath.c_str());
-		std::cout << "cgi path" <<  cgi_path << std::endl;
-		char *cgi_path2 = const_cast<char*>(client.getRequest().path.c_str());
-		std::cout << "cgi path2" <<  cgi_path2 << std::endl;
+		// std::cout << "cgi path" <<  cgi_path << std::endl;
 		cgi_obj.setArgsAndCgiPath(cgi_path);
 		cgi_obj.setEnvp(client);
 		if (!cgi_obj.execute())
