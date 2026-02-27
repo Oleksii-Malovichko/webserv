@@ -730,12 +730,13 @@ bool CgiHandler::execute()
 
 	this->closePipeFds(CLOSE_READ_SRV_TO_CGI);
 	this->closePipeFds(CLOSE_WRITE_CGI_TO_SRV);
-	int flags = fcntl(this->_cgi_to_srv[0], F_GETFL, 0); // ex. for infinite loop stop: make cgi stdout pipe non-blocking
-	if (flags == -1 || fcntl(this->_cgi_to_srv[0], F_SETFL, flags | O_NONBLOCK) == -1)
-	{
-		this->terminateChild(); // for infinite loop stop: if fcntl fails, terminate child
-		return false;
-	}
+	setNonBlockPipe();
+	// int flags = fcntl(this->_cgi_to_srv[0], F_GETFL, 0); // ex. for infinite loop stop: make cgi stdout pipe non-blocking
+	// if (fcntl(this->_cgi_to_srv[0], F_SETFL, flags | O_NONBLOCK) == -1)
+	// {
+	// 	this->terminateChild(); // for infinite loop stop: if fcntl fails, terminate child
+	// 	return false;
+	// }
 	if (!this->writeRequestBodyToPipe())
 	{
 		this->terminateChild();
