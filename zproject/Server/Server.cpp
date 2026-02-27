@@ -258,6 +258,79 @@ static bool isLegacyCgiTestPath(const std::string &path) // new
 	return path.find("/cgi/") == 0;
 }
 
+static bool hasSuffix(const std::string &value, const std::string &suffix)
+{
+	return value.size() >= suffix.size()
+		&& value.compare(value.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
+
+static void applyCgiOutputToResponse(const std::string &cgiRaw, HttpResponce &resp)
+{
+	size_t headerEnd = cgiRaw.find("\r\n\r\n");
+	size_t delimSize = 4;
+	if (headerEnd == std::string::npos)
+	{
+		headerEnd = cgiRaw.find("\n\n");
+		delimSize = 2;
+	}
+
+	if (headerEnd == std::string::npos)
+	{
+		resp.setStatus(200, "OK");
+		resp.setHeader("Content-Type", "text/plain");
+		resp.setBody(cgiRaw);
+		return;
+	}
+
+	std::string headers = cgiRaw.substr(0, headerEnd);
+	std::string body = cgiRaw.substr(headerEnd + delimSize);
+	std::stringstream ss(headers);
+	std::string line;
+	bool hasContentType = false;
+
+	resp.setStatus(200, "OK");
+	while (std::getline(ss, line))
+	{
+		if (!line.empty() && line[line.size() - 1] == '\r')
+			line.erase(line.size() - 1);
+		if (line.empty())
+			continue;
+
+		size_t colon = line.find(':');
+		if (colon == std::string::npos)
+			continue;
+
+		std::string key = trim(line.substr(0, colon));
+		std::string value = trim(line.substr(colon + 1));
+		std::string lowKey = toLower(key);
+
+		if (lowKey == "status")
+		{
+			std::stringstream statusStream(value);
+			int statusCode = 0;
+			statusStream >> statusCode;
+			std::string statusMessage;
+			std::getline(statusStream, statusMessage);
+			statusMessage = trim(statusMessage);
+			if (statusCode > 0)
+			{
+				if (statusMessage.empty())
+					statusMessage = getReasonPhrase(statusCode);
+				resp.setStatus(statusCode, statusMessage);
+			}
+			continue;
+		}
+
+		if (lowKey == "content-type")
+			hasContentType = true;
+		resp.setHeader(key, value);
+	}
+
+	if (!hasContentType)
+		resp.setHeader("Content-Type", "text/html");
+	resp.setBody(body);
+}
+
 void Server::handleGetRequest(HttpRequest &req, HttpResponce &resp, Client &client)
 {
 	ServerConfig *server = client.getConfig();
@@ -719,8 +792,29 @@ bool Server::isCgiExtensionOK(const HttpRequest& req,
 // 	return (cgi_http_response);
 // }
 
+
+
+/*
+STEPS
+1. validate everything first (1-4)
+-- 1. get config context & location to match request path
+-- 2. error immediately specific path cases
+-- 3. build and validate script filesystem path
+-- 4. choose interpreter (python, php, ...)
+2. run CGI (5)
+3. convert CGI output to HTTP response (6-7)
+*/
 void Server::handleCGI(HttpRequest &req, HttpResponce &resp, Client &client)
 {
+	// STEP 1 (get config context: "how this server should handle it") & (get location: "the matched path" with configured location paths /cgi-bin /upload)
+	ServerConfig *server = client.getConfig(); // contains what root folder, error pages, etc.
+	LocationConfig *location = matchLocation(req.path, server->getLocations());
+	if (!location)
+		return buildError(resp, 404, server);
+	std::cout << "config context: " << server << std::endl;
+	std::cout << "location: " << location << std::endl;
+
+	// STEP 2 (special legacy test behavior: for the quotes below, send errors quickly bc bad CGI URLs) (error immediately specific path cases)
 	if (isLegacyCgiTestPath(req.path))
 	{
 		if (req.path.find("/notexist.") != std::string::npos)
@@ -735,52 +829,68 @@ void Server::handleCGI(HttpRequest &req, HttpResponce &resp, Client &client)
 		}
 	}
 
-	// resp.setStatus(200, "OK");
-	// // resp.setHeader("Server", client.getConfig()->getServerName());
-	// resp.setHeader("Content-Type", "text/plain");
-	// resp.setBody("CGI stub responce\n");
+	// STEP 3 (build & validate script filesystem path: root & security/access checks)
+	std::string fullFilePath = buildFullPath(location, server, req.path);
+	std::cout << "fullFilePath: " << fullFilePath << std::endl;
+	std::string root = location->getRoot().empty() ? server->getRoot() : location->getRoot(); // !
+	std::cout<< "root: " << root << std::endl;
+	if (!isPathSafe(fullFilePath, root))
+		return buildError(resp, 403, server);
+	if (!fileExists(fullFilePath))
+		return buildError(resp, 404, server);
+	if (access(fullFilePath.c_str(), R_OK) != 0)
+		return buildError(resp, 403, server);
 
-	// ****** from Tamas branch copied (bc of problem when merging)
-	(void)req;
-	char *cgi_path = const_cast<char*>(client.getRequest().path.c_str());
-	(void)client;
-	resp.setStatus(200, "OK");
-	resp.setHeader("Content-Type", "text/plain");
-	resp.setBody("CGI stub responce\n"); // need to discuss the CGI response will contains the header or not
-	// std::string Interpreter = client.getRequest().path;
+	// STEP 4 (check which CGI interpreter (python, php, ...) & verify executable permission to run)
+	// python-only CGI: reject non-.py scripts
+	if (!hasSuffix(fullFilePath, ".py"))
+		return buildError(resp, 502, server);
+
+	// try location cgi map (.py -> /path/to/python)
 	std::string interpreter = "/usr/bin/python3";
+	const std::unordered_map<std::string, std::string> &cgiMap = location->getCgi(); // !
+	std::unordered_map<std::string, std::string>::const_iterator it = cgiMap.find(".py"); // !
+	if (it != cgiMap.end())
+		interpreter = it->second;
 
-	std::cerr << CYAN << "In handleCGI path: " << cgi_path 
-				<< "\n Interpreter: " << interpreter << DEFAULT << std::endl;
+	// if configured interpreter is not executable, fallback to default
+	if (access(interpreter.c_str(), X_OK) != 0)
+		interpreter = "/usr/bin/python3";
 
-	CgiHandler* cgi_obj = NULL; // new
-	
+	// final check
+	if (access(interpreter.c_str(), X_OK) != 0)
+		return buildError(resp, 502, server);
+
+	// STEP 5 (execute CGI: set interpreter path, pass script path as cgi argument, build cgi envp, execute)
 	try
 	{
-		cgi_obj = new CgiHandler(); // new
-		cgi_obj->setInterpreterPath(interpreter);
-		cgi_obj->setArgsAndCgiPath(cgi_path);
-		cgi_obj->setEnvp(client);
-		cgi_obj->setNonBlockPipe();
-		this->epoll.addCgiPipesToEpoll(*cgi_obj, client);
-		cgi_obj->execute();
-
-		client.setCgiPtr(cgi_obj);
-		cgi_obj = NULL; // new
+		CgiHandler cgi_obj;
+		cgi_obj.setInterpreterPath(interpreter);
+		char *cgi_path = const_cast<char *>(fullFilePath.c_str());
+		std::cout << "cgi path" <<  cgi_path << std::endl;
+		char *cgi_path2 = const_cast<char*>(client.getRequest().path.c_str());
+		std::cout << "cgi path2" <<  cgi_path2 << std::endl;
+		cgi_obj.setArgsAndCgiPath(cgi_path);
+		cgi_obj.setEnvp(client);
+		if (!cgi_obj.execute())
+			return buildError(resp, 502, server);
+	// STEP 6 (build HTTP response from CGI output)
+		applyCgiOutputToResponse(cgi_obj.buildCgiResponse(), resp);
 	}
+	// StEP 7 (error handling)
 	catch(const std::exception& e)
 	{
-		delete cgi_obj;
 		std::cerr	<< RED 
 					<< "The following error occured " 
 					<< e.what() << '\n';
+		buildError(resp, 502, server);
 	}
 	catch(...)
 	{
-		delete cgi_obj;
-		std::cerr << YELLOW << "Some error"; 
+		std::cerr << YELLOW << "Some error";
+		buildError(resp, 502, server);
 	}
-}
+} 
 
 // void Server::handleGetRequest(HttpRequest &req, HttpResponce &resp, Client &client)
 // {
