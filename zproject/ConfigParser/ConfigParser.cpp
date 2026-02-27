@@ -53,6 +53,7 @@ void ConfigParser::parseServerLine(const std::string &line, ServerConfig &curren
 	}
 	else if (tokens[0] == "root")
 	{
+		std::cout << "Port: " << currentServer.getPort() << std::endl;
 		if (tokens.size() != 2 || tokens[1].back() != ';')
 			throw std::runtime_error("Invalid root directive");
 		std::string path = tokens[1];
