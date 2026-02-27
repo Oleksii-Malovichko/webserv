@@ -829,9 +829,9 @@ void Server::handleCGI(HttpRequest &req, HttpResponce &resp, Client &client)
 
 	// STEP 3 (build & validate script filesystem path: root & security/access checks)
 	std::string fullFilePath = buildFullPath(location, server, req.path);
-	std::cout << "fullFilePath: " << fullFilePath << std::endl;
+	// std::cout << "fullFilePath: " << fullFilePath << std::endl;
 	std::string root = location->getRoot().empty() ? server->getRoot() : location->getRoot(); // !
-	std::cout<< "root: " << root << std::endl;
+	// std::cout<< "root: " << root << std::endl;
 	if (!isPathSafe(fullFilePath, root))
 		return buildError(resp, 403, server);
 	if (!fileExists(fullFilePath))

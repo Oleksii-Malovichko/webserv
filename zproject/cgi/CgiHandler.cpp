@@ -473,11 +473,13 @@ std::string CgiHandler::buildCgiResponse(void)
 
 void CgiHandler::terminateChild(void)
 {
-	if (this->_pid > 0)
+	if (this->_pid > 0) // if child process
 	{
-		kill(this->_pid, SIGTERM);
-		this->closePipeFds(CLOSE_ALL);
+		kill(this->_pid, SIGKILL); // for infinite loop: force kill cgi child
+		waitpid(this->_pid, NULL, 0); // no zombies
+		this->_child_exited = true;
 	}
+	this->closePipeFds(CLOSE_ALL);
 }
 
 
@@ -619,6 +621,7 @@ bool CgiHandler::writeRequestBodyToPipe()
 bool CgiHandler::readCgiOutputFromPipe()
 {
     char buffer[4096];
+	const time_t deadline = time(NULL) + CGI_MAX_TIME; // for infinite loop stop: timeout deadline
     while (true)
     {
         ssize_t bytesRead = read(this->_cgi_to_srv[0], buffer, sizeof(buffer));
@@ -634,10 +637,20 @@ bool CgiHandler::readCgiOutputFromPipe()
 			this->_stdout_closed = true;
 			return true;
 		}
-		if (errno == EINTR) // try again, else fail
+		if (errno == EINTR) // retry
 			continue;
-		std::cerr << "CGI Error: read() failed." << std::endl;
-		return false;
+		if (errno != EAGAIN && errno != EWOULDBLOCK) // for infinite loop stop: handle non-blocking read (can fail shortly, when data not ready yet, therefore retry), if enter then read is actual failure
+		{
+			std::cerr << "CGI Error: read() failed." << std::endl;
+			return false;
+		}
+		if (time(NULL) >= deadline) // for infinite loop stop: exit for timeout
+		{
+			std::cerr << "CGI Error: timeout reached while reading output." << std::endl;
+			this->_exitCode = 124;
+			return false;
+		}
+		usleep(10000);
     }
 }
 
@@ -717,6 +730,12 @@ bool CgiHandler::execute()
 
 	this->closePipeFds(CLOSE_READ_SRV_TO_CGI);
 	this->closePipeFds(CLOSE_WRITE_CGI_TO_SRV);
+	int flags = fcntl(this->_cgi_to_srv[0], F_GETFL, 0); // ex. for infinite loop stop: make cgi stdout pipe non-blocking
+	if (flags == -1 || fcntl(this->_cgi_to_srv[0], F_SETFL, flags | O_NONBLOCK) == -1)
+	{
+		this->terminateChild(); // for infinite loop stop: if fcntl fails, terminate child
+		return false;
+	}
 	if (!this->writeRequestBodyToPipe())
 	{
 		this->terminateChild();
