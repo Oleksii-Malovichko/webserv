@@ -4,10 +4,18 @@
 
 CgiHandler::CgiHandler(void)
 {
+	this->_srv_to_cgi[0] = -1;
+	this->_srv_to_cgi[1] = -1;
+	this->_cgi_to_srv[0] = -1;
+	this->_cgi_to_srv[1] = -1;
 	this->_args_num = 0;
 	this->_envp_num = 0;
 	this->_envp = NULL;
 	this->_args = NULL;
+	this->_requestBody.clear(); // setting to empty ""
+	this->_interpreterPath.clear();
+	this->_exitCode = 0;
+	this->_cgiOutput.clear();
 	this->_sent_bytes = 0;
 	this->_cgi_response = "";
 	this->_stdin_closed = false;
@@ -15,12 +23,6 @@ CgiHandler::CgiHandler(void)
 	this->_child_exited = false;
 	this->cgi_path = NULL;
 	this->_pid = -1;
-	
-	// if (pipe(this->_infd) == -1)
-	// 	throw pipeError("Failed to create input pipe");
-
-	// if (pipe(this->_outfd) == -1)
-	// 	throw pipeError("Failed to create output pipe");
 
 	if (!createPipes())
         throw pipeError("Failed to create output pipe");
@@ -302,14 +304,21 @@ void CgiHandler::finishChildProcess(void)
 	this->_child_exited = true;
 }
 
+// note: tries to get content-type form request headers. if exists, use its value, otherwise keep empty
 void CgiHandler::setEnvp(Client& client_obj)
 {
+	const HttpRequest &req = client_obj.getRequest();
+	this->_requestBody = req.body;
 	this->addEnvpElement("REQUEST_METHOD", client_obj.getRequest().method);
 	this->addEnvpElement("SCRIPT_NAME", client_obj.getRequest().path);
-	this->addEnvpElement("PATH_INFO", "");
+	this->addEnvpElement("PATH_INFO", client_obj.getRequest().pathInfo);
 	this->addEnvpElement("QUERY_STRING", client_obj.getRequest().query);
 	this->addEnvpElement("CONTENT_LENGTH", std::to_string(client_obj.getRequest().contentLength));
-	this->addEnvpElement("CONTENT_TYPE", "");
+	std::string contentType = "";
+	std::unordered_map<std::string, std::string>::const_iterator it = req.headers.find("content-type");
+	if (it != req.headers.end())
+		contentType = it->second;
+	this->addEnvpElement("CONTENT_TYPE", contentType);
 	this->addEnvpElement("SERVER_PROTOCOL", client_obj.getRequest().version);
 
 	this->addEnvpElement("GATEWAY_INTERFACE", "CGI/1.1");
@@ -320,10 +329,9 @@ void CgiHandler::setEnvp(Client& client_obj)
 
 void CgiHandler::setArgsAndCgiPath(char* in_cgi_path)
 {
-	//later the following strings need to change the 
-	// info which came from the request
+	// if interpreterPath is empty / not set, use python path as default interpreter
 	this->cgi_path = in_cgi_path;
-	std::string cgi_interpreter = "/usr/bin/python3";
+	std::string cgi_interpreter = this->_interpreterPath.empty() ? "/usr/bin/python3" : this->_interpreterPath;
 
 	if (access(this->cgi_path, R_OK) == -1) // new: should only need readable script. X_OK fails for .py files
 	{
@@ -343,7 +351,7 @@ void CgiHandler::printArgs(std::ostream& out) const
 	
 	out	<< "The number of arguments: " 
 				<< this->_args_num << "\n";
-	while (this->_args && this->_args[i] != NULL) // new
+	while (this->_args && this->_args[i] != NULL)
 	{
 		out	<< "The args[" << i << "]: "
 					<< this->_args[i] << std::endl;
@@ -357,7 +365,7 @@ void CgiHandler::printEnvp(std::ostream& out) const
 	
 	out	<< "The number of environment elements: " 
 				<< this->_envp_num << "\n";
-	while (this->_envp && this->_envp[i] != NULL) // new
+	while (this->_envp && this->_envp[i] != NULL)
 	{
 		out	<< "The envp[" << i << "]: "
 			<< this->_envp[i] << std::endl;
@@ -417,10 +425,24 @@ int CgiHandler::getCgiOutReadFD(void) const
 	return (this->_cgi_to_srv[0]);
 }
 
+/*
+- checks if CGI request is fully done
+1. updates child process status if needed (to avoid getting stuck)
+2. checks completion conditions
+*/
 bool CgiHandler::IsCgiFinished(void)
 {
-	std::cerr << YELLOW << "CgiHandler this = " << this // new
-				<< DEFAULT << std::endl;
+	if (!this->_child_exited && this->_pid > 0) // to update child exited
+	{
+		try
+		{
+			this->finishChildProcess(); 
+		}
+		catch (...)
+		{
+			this->_child_exited = true; // avoids infinite wait loop
+		}
+	}
 	if (this->_stdin_closed == true &&
 		this->_stdout_closed == true &&
 		this->_child_exited == true)
@@ -461,7 +483,7 @@ void CgiHandler::terminateChild(void)
 // check if input from server is valid (ex. file accessible) before moving on to executing (argv, envp)
 bool CgiHandler::validateExecveArgs(char **argv, char **envp)
 {
-    if (!envp || !argv || !argv[0])
+    if (!envp || !argv || !argv[0] || !argv[1])
     {
         std::cerr << "CGI Error: one of the execve arguments is NULL." << std::endl;
         return false;
@@ -484,39 +506,60 @@ bool CgiHandler::validateExecveArgs(char **argv, char **envp)
 
 /*
 Pipe 1: for server to write the request body to CGI
-Pipe 2: for server to read output from CGI
+Pipe 2: for server to read output from CGI (if fail, close first pipe for safety)
 */
 bool CgiHandler::createPipes()
 {
-    if ((pipe(_srv_to_cgi) == -1) || (pipe(_cgi_to_srv) == -1))
+    if (pipe(_srv_to_cgi) == -1)
     {
+        std::cerr << "CGI Error: pipe could not be created." << std::endl;
+        return false;
+    }
+    if (pipe(_cgi_to_srv) == -1)
+    {
+		close(this->_srv_to_cgi[0]);
+		close(this->_srv_to_cgi[1]);
+		this->_srv_to_cgi[0] = -1;
+		this->_srv_to_cgi[1] = -1;
         std::cerr << "CGI Error: pipe could not be created." << std::endl;
         return false;
     }
     return true;
 }
 
-// ft: close file descriptors of pipes accordingly
+// ft: close file descriptors of pipes accordingly (-1 for safety & prevent double-closing)
 void CgiHandler::closePipeFds(PipeCloseCall action)
 {
-    if (action == CLOSE_ALL || action == CLOSE_SRV_TO_CGI)
-    {
-        close(this->_srv_to_cgi[0]);
-        close(this->_srv_to_cgi[1]);
-    }
-    if (action == CLOSE_ALL || action == CLOSE_CGI_TO_SRV)
-    {
-        close(this->_cgi_to_srv[0]);
-        close(this->_cgi_to_srv[1]);
-    }
-    if (action == CLOSE_READ_SRV_TO_CGI)
-    {
-        close(_srv_to_cgi[0]);
-    }
-    if (action == CLOSE_WRITE_CGI_TO_SRV)
-    {
-        close(_cgi_to_srv[1]);
-    }
+	if ((action == CLOSE_ALL || action == CLOSE_SRV_TO_CGI) && this->_srv_to_cgi[0] != -1)
+	{
+		close(this->_srv_to_cgi[0]);
+		this->_srv_to_cgi[0] = -1;
+	}
+	if ((action == CLOSE_ALL || action == CLOSE_SRV_TO_CGI) && this->_srv_to_cgi[1] != -1)
+	{
+		close(this->_srv_to_cgi[1]);
+		this->_srv_to_cgi[1] = -1;
+	}
+	if ((action == CLOSE_ALL || action == CLOSE_CGI_TO_SRV) && this->_cgi_to_srv[0] != -1)
+	{
+		close(this->_cgi_to_srv[0]);
+		this->_cgi_to_srv[0] = -1;
+	}
+	if ((action == CLOSE_ALL || action == CLOSE_CGI_TO_SRV) && this->_cgi_to_srv[1] != -1)
+	{
+		close(this->_cgi_to_srv[1]);
+		this->_cgi_to_srv[1] = -1;
+	}
+	if (action == CLOSE_READ_SRV_TO_CGI && this->_srv_to_cgi[0] != -1)
+	{
+		close(this->_srv_to_cgi[0]);
+		this->_srv_to_cgi[0] = -1;
+	}
+	if (action == CLOSE_WRITE_CGI_TO_SRV && this->_cgi_to_srv[1] != -1)
+	{
+		close(this->_cgi_to_srv[1]);
+		this->_cgi_to_srv[1] = -1;
+	}
 }
 
 // ft: redirection
@@ -529,7 +572,6 @@ bool CgiHandler::redirectIO()
         this->closePipeFds(CLOSE_ALL);
         return false;
     }
-    this->closePipeFds(CLOSE_SRV_TO_CGI);
     
     // redirect output: CGI writes to second pipe
     if (dup2(this->_cgi_to_srv[1], STDOUT_FILENO) == -1)
@@ -538,91 +580,120 @@ bool CgiHandler::redirectIO()
         this->closePipeFds(CLOSE_ALL);
         return false;
     }
-    this->closePipeFds(CLOSE_CGI_TO_SRV);
+	this->closePipeFds(CLOSE_ALL);
     return true;
 }
 
 // ft: write POST(full) & GET(empty) request body to the first pipe shared w CGI (server -> CGI)
-// bool CgiHandler::writeRequestBodyToPipe()
-// {
-//     if (!this->_requestBody.empty())
-//     {
-//         if (write(this->_srv_to_cgi[1], this->_requestBody.c_str(), this->_requestBody.size()) == -1) // fd to pipe, pointer to data/bytes, number of bytes to write
-//         {
-//             std::cerr << "CGI Error: write() failed." << std::endl;
-//             return false;
-//         }
-//     }
-//     close(this->_srv_to_cgi[1]); // signals end of input to CGI to avoid waiting/blocking, TODO: replace w closepipe ft later
-//     return true;
-// }
+// ssize_t is signed (good for return values), size_t is unsigned
+bool CgiHandler::writeRequestBodyToPipe()
+{
+	size_t writtenTotal = 0;
+	while (writtenTotal < this->_requestBody.size())
+	{
+		ssize_t written = write(this->_srv_to_cgi[1],
+			this->_requestBody.c_str() + writtenTotal,
+			this->_requestBody.size() - writtenTotal);
+		if (written < 0)
+		{
+			if (errno == EINTR) // if interrupted by signal, then retry, no failing
+				continue;
+			std::cerr << "CGI Error: write() failed." << std::endl;
+			return false;
+		}
+		writtenTotal += static_cast<size_t>(written);
+	}
 
-// ft: read the CGI output (from the child process that executed the file script) from the second pipe (cgi to srv[0]) (CGI -> server)
-// added: pipe needs to be non-blocking bc an infinite loop will keep read() forever and pipe wont be closed
-// bool CgiHandler::readCgiOutputFromPipe()
-// {
-//     int bytesRead = 1;
-//     char buffer[4096];
-    
-//     while (bytesRead > 0)
-//     {
-//         bytesRead = read(this->_cgi_to_srv[0], buffer, sizeof(buffer));
-//         _cgiOutput.append(buffer, bytesRead);
-//     }
-//     if (bytesRead == -1) // error check for read ft
-//         return false;
-//     close (this->_cgi_to_srv[0]); // close bc done using, TODO: replace w closepipe ft later
-    
-//     std::cout << "CGI OUTPUT: " << std::endl << this->_cgiOutput << std::endl; // TODO: delete after testing
-//     return true;
-// }
+    if (this->_srv_to_cgi[1] != -1) // states EOF (no waiting for more input)
+	{
+		close(this->_srv_to_cgi[1]);
+		this->_srv_to_cgi[1] = -1;
+	}
+	this->_stdin_closed = true; // important for isCGIfinished ft
+    return true;
+}
 
-// ft: waits for child to finish or kill child if stuck too long (ex. infinite loop) and captures the exit code 
-// added: add non-blocking (ex. infinite loop script) by doing a timeout
-// void CgiHandler::waitAndGetExitCode()
-// {
-//     int status = 0;
-//     time_t start = time(NULL); // ex. start 4:10:00 pm 
+// ft: read the CGI output (from the child process that executed the file script) from the second pipe (CGI -> server)
+bool CgiHandler::readCgiOutputFromPipe()
+{
+    char buffer[4096];
+    while (true)
+    {
+        ssize_t bytesRead = read(this->_cgi_to_srv[0], buffer, sizeof(buffer));
+		if (bytesRead > 0)
+		{
+        	this->_cgiOutput.append(buffer, static_cast<size_t>(bytesRead));
+			continue;
+		}
+		if (bytesRead == 0) // implies EOF
+		{
+			close(this->_cgi_to_srv[0]);
+			this->_cgi_to_srv[0] = -1;
+			this->_stdout_closed = true;
+			return true;
+		}
+		if (errno == EINTR) // try again, else fail
+			continue;
+		std::cerr << "CGI Error: read() failed." << std::endl;
+		return false;
+    }
+}
+
+// ft: waits for child to finish or kill child if stuck too long 
+// and captures the exit code, without blocking forever
+// note: controlled waiting & timeout protection & final exit status
+void CgiHandler::waitAndGetExitCode()
+{
+    int status = 0;
+    time_t start = time(NULL);
     
-//     while (1) // loop needed to continously recheck the ongoing time that has passed until x seconds reached to kill
-//     {
-//         pid_t result = waitpid(this->_pid, &status, WNOHANG); // checks if child exited (WNOHANG: checks without blocking)
-//         if (result > 0) // if child exited
-//         {
-//             if (WIFEXITED(status)) // exited normally
-//                 this->_exitCode = WEXITSTATUS(status);
-//             else if (WIFSIGNALED(status)) // killed by signal 
-//                 this->_exitCode = 1;
-//             break;
-//         }
-//         if (difftime(time(NULL), start) >= 5) // compares btw beginning time and now how much has passed
-//         {
-//             kill(this->_pid, SIGKILL); // kill process
-//             waitpid(this->_pid, &status, 0); // cleanup, no zombies
-//             this->_exitCode = 124;
-//             std::cerr << "CGI Error: timeout reached." << std::endl;
-//             break;
-//         }
-//         usleep(100000); // sleep 100ms to avoid busy waiting / burning CPU
-//     }
-//     std::cout << "Exit Code: " << this->_exitCode << std::endl; // TODO: delete after testing
-// }
+    while (1)
+    {
+        pid_t result = waitpid(this->_pid, &status, WNOHANG);
+        if (result > 0)
+        {
+            if (WIFEXITED(status))
+                this->_exitCode = WEXITSTATUS(status);
+            else if (WIFSIGNALED(status))
+                this->_exitCode = 128 + WTERMSIG(status);
+            this->_child_exited = true;
+            break;
+        }
+		if (result == -1) // waitpid error
+		{
+			this->_exitCode = 1;
+			this->_child_exited = true;
+			break;
+		}
+        if (difftime(time(NULL), start) >= CGI_MAX_TIME)
+        {
+            kill(this->_pid, SIGKILL);
+            waitpid(this->_pid, &status, 0);
+            this->_exitCode = 124;
+			this->_child_exited = true;
+            std::cerr << "CGI Error: timeout reached." << std::endl;
+            break;
+        }
+        usleep(100000); // sleeps to avoid busy CPU spin
+    }
+}
 
 /*
-MAIN execution function (will be called in handleCGI ft)
-NEXT STEPS TODO:
-1. translate CGI output -> HTTP response
-2. add more testing scripts (python, golang, c/c++ if wanted)
-3. **DONE waitpid and check exit code/status as well (idk: change from 0 to WOHANG)
-4. limit cgi execution time: add timeout protection (w alarm(30) ex. kill after 30 seconds)
-5. error handling: add more descriptive error messages (for debugging) (ex. "fork failed")
-6. handle large outputs ?
-
-- rearrange/rename closing fds w function based on parent-only & child-only logic
-- recheck error handling (messages, etc) (possibly instead of exit)
+MAIN execution function (called in handleCGI)
+1. validate inputs (argv, envp)
+2. fork () child
+3. parent process (close unused pipes, write request body to child stdin, read full cgi output,
+	from child stdout, wait for child/timemout, and get exit code
+4. store result (output to response)
 */
 bool CgiHandler::execute()
 {
+	if (!this->validateExecveArgs(this->_args, this->_envp))
+	{
+		this->closePipeFds(CLOSE_ALL);
+		return false;
+	}
+
     this->_pid = fork();
     if (this->_pid == -1)
     {
@@ -630,33 +701,34 @@ bool CgiHandler::execute()
         return false; 
     }
     
-    if (this->_pid == 0) // child process
+    if (this->_pid == 0)
     {
         if (!this->redirectIO())
-            exit(1);
+            _exit(1);
         execve(this->_interpreterPath.c_str(), this->_args, this->_envp);
-        std::cerr << RED << "CGI Error: execve() failed: " // new
+        std::cerr << RED << "CGI Error: execve() failed: "
 					<< YELLOW << strerror(errno) 
 					<< RED << "\nInterpreter path: " << this->_interpreterPath
 					<< DEFAULT << std::endl;
-        exit(1);
+        _exit(1);
     }
-    else // parent process ("server")
-    {
-        this->closePipeFds(CLOSE_READ_SRV_TO_CGI); // parent does not read CGI stdin
-        this->closePipeFds(CLOSE_WRITE_CGI_TO_SRV); // parent does not write CGI stdout
-        
-        // if (!this->writeRequestBodyToPipe())
-        //     return false;
-            
-        // this->waitAndGetExitCode();
-            
-        // if (!this->readCgiOutputFromPipe())
-        //     return false;
 
-    }
-    return true;
-}   
+	this->closePipeFds(CLOSE_READ_SRV_TO_CGI);
+	this->closePipeFds(CLOSE_WRITE_CGI_TO_SRV);
+	if (!this->writeRequestBodyToPipe())
+	{
+		this->terminateChild();
+		return false;
+	}
+	if (!this->readCgiOutputFromPipe())
+	{
+		this->terminateChild();
+		return false;
+	}
+	this->waitAndGetExitCode();
+	this->_cgi_response = this->_cgiOutput;
+    return (this->_exitCode == 0);
+}
 
 void CgiHandler::setInterpreterPath(const std::string& i_path)
 {

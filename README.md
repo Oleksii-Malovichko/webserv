@@ -11,21 +11,29 @@ The goal of this project is to build a web server from scratch capable of commun
 ## Project Structure 
 ```text
 webserv/
-├── CGI/              # xxx
-├── Client/           # xxx
-├── ConfigParser/     # xxx
-├── HttpResponce/     # xxx
-├── LocationConfig/   # xxx
-├── RAll/             # xxx
+├── CGI/            
+├── Client/
+├── config/    
+├── ConfigParser/
+├── directory_listing/    
+├── error_handler/   
+├── HttpResponce/   
+├── LocationConfig/ 
+├── RAll/           
 ├──── epoll/
 ├──── sockets/
-├── Server/           # xxx
-├── ServerConfig/     # xxx
-├── Uploads/          # xxx
-├── WebservConfig/    # xxx
-├── client.c          # xxx
-├── main.cpp          # xxx
-├── Makefile          # xxx
+├── resources/
+├──── cgi-bin/
+├──── errors/
+├──── uploads/
+├──── www/
+├── Server/         
+├── ServerConfig/   
+├── uploads/        
+├── WebservConfig/  
+├── client.c        
+├── main.cpp        
+├── Makefile        
 ```
 
 ## Instructions
@@ -68,7 +76,10 @@ The following tests are covered: GET, POST, environment variables, infinite loop
 ```bash
 curl http://localhost:8080/cgi-bin/script.py      # replace script.py with actual script
 ```
-add more here.
+
+```bash
+curl -X POST -d "hello" http://localhost:8080/cgi-bin/test_post.py    # check correct amount of bytes (5)
+```
 
 ## Webserv Concepts
 
@@ -92,8 +103,6 @@ add more here.
 - Non-blocking I/O / select()
 - Custom HTTP parser
 - CGI support
-- Manual memory management
-- Clear modular architecture
 
 ## Resources
 - Allowed function manual pages

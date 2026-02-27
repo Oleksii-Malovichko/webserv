@@ -274,13 +274,9 @@ static void applyCgiOutputToResponse(const std::string &cgiRaw, HttpResponce &re
 		delimSize = 2;
 	}
 
+	// check for malformed CGI (incorrect header ex.) 
 	if (headerEnd == std::string::npos)
-	{
-		resp.setStatus(200, "OK");
-		resp.setHeader("Content-Type", "text/plain");
-		resp.setBody(cgiRaw);
-		return;
-	}
+		throw std::runtime_error("Invalid CGI output: missing header/body separator");
 
 	std::string headers = cgiRaw.substr(0, headerEnd);
 	std::string body = cgiRaw.substr(headerEnd + delimSize);
@@ -298,10 +294,12 @@ static void applyCgiOutputToResponse(const std::string &cgiRaw, HttpResponce &re
 
 		size_t colon = line.find(':');
 		if (colon == std::string::npos)
-			continue;
+			throw std::runtime_error("Invalid CGI header line");
 
 		std::string key = trim(line.substr(0, colon));
 		std::string value = trim(line.substr(colon + 1));
+		if (key.empty())
+			throw std::runtime_error("Invalid CGI header key");
 		std::string lowKey = toLower(key);
 
 		if (lowKey == "status")
@@ -327,7 +325,7 @@ static void applyCgiOutputToResponse(const std::string &cgiRaw, HttpResponce &re
 	}
 
 	if (!hasContentType)
-		resp.setHeader("Content-Type", "text/html");
+		throw std::runtime_error("Invalid CGI output: missing Content-Type");
 	resp.setBody(body);
 }
 
